@@ -1,0 +1,115 @@
+import { Trophy, BookOpen, Users, CreditCard, Shield, Settings, LogOut, Terminal, LayoutDashboard } from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+export function AppSidebar() {
+  const { profile, role, signOut } = useAuth();
+  const { state } = useSidebar();
+  const navigate = useNavigate();
+  const collapsed = state === "collapsed";
+
+  const commonItems = [
+    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+    { title: "Tournaments", url: "/tournaments", icon: Trophy },
+    { title: "Subscription", url: "/subscription", icon: CreditCard },
+  ];
+
+  const studentItems = [
+    ...commonItems,
+    { title: "My Progress", url: "/progress", icon: BookOpen },
+  ];
+
+  const trainerItems = [
+    ...commonItems,
+    { title: "Task Library", url: "/tasks", icon: BookOpen },
+    { title: "Students", url: "/students", icon: Users },
+  ];
+
+  const adminItems = [
+    ...trainerItems,
+    { title: "Admin", url: "/admin", icon: Shield },
+  ];
+
+  const items = role === "admin" ? adminItems : role === "trainer" ? trainerItems : studentItems;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  return (
+    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+      <div className="p-4 flex items-center gap-2 border-b border-border">
+        <Terminal className="w-6 h-6 text-primary shrink-0" />
+        {!collapsed && (
+          <span className="font-mono font-bold text-primary text-lg neon-text">
+            CodeArena
+          </span>
+        )}
+      </div>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
+            {!collapsed && "Navigation"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title}>
+                    <NavLink
+                      to={item.url}
+                      end
+                      className="font-mono text-sm text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
+                      activeClassName="text-primary bg-sidebar-accent neon-text"
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-border p-3">
+        <div className="flex items-center gap-2">
+          <Avatar className="w-8 h-8 border border-border">
+            <AvatarImage src={profile?.avatar_url ?? undefined} />
+            <AvatarFallback className="bg-muted text-muted-foreground font-mono text-xs">
+              {profile?.nickname?.slice(0, 2).toUpperCase() ?? "??"}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-mono text-sidebar-foreground truncate">{profile?.nickname}</p>
+              <p className="text-xs font-mono text-muted-foreground">{role}</p>
+            </div>
+          )}
+          {!collapsed && (
+            <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive transition-colors">
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
