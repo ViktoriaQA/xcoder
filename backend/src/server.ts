@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
 
 import { errorHandler } from './middleware/errorHandler';
 import { authMiddleware } from './middleware/auth';
@@ -39,6 +40,14 @@ app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/subscriptions', authMiddleware, subscriptionRoutes);
 app.use('/api/tournaments', authMiddleware, tournamentRoutes);
 app.use('/api/tasks', authMiddleware, taskRoutes);
+
+// Serve static files from frontend build
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+
+// Catch all handler for SPA (must be after API routes)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+});
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
