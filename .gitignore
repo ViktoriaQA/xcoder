@@ -6,3 +6,6 @@ build/
 .env.development.local
 .DS_Store
 *.log       
+
+ backend/.env
+ frontend/.env
