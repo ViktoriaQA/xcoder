@@ -133,7 +133,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setIsTrainer(false)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   <GraduationCap className="h-3.5 w-3.5" />
                   <span>Student</span>
@@ -141,7 +141,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setIsTrainer(true)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                   <User className="h-3.5 w-3.5" />
                   <span>Trainer</span>

@@ -270,7 +270,16 @@ const Tournaments = () => {
               <Button 
                 size="lg" 
                 className="font-mono"
-                onClick={() => navigate("/auth")}
+                onClick={() => {
+                  // For mobile, trigger the registration sheet
+                  if (isMobile) {
+                    // We need to trigger the AuthFab's registration sheet
+                    const event = new CustomEvent('openRegistrationSheet');
+                    window.dispatchEvent(event);
+                  } else {
+                    navigate("/auth");
+                  }
+                }}
               >
                 {t('tournaments.createAccount')}
               </Button>

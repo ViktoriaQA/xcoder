@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +92,18 @@ export function AuthFab({ isMobile }: AuthFabProps) {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleOpenRegistrationSheet = () => {
+      setShowRegisterSheet(true);
+    };
+
+    window.addEventListener('openRegistrationSheet', handleOpenRegistrationSheet);
+    
+    return () => {
+      window.removeEventListener('openRegistrationSheet', handleOpenRegistrationSheet);
+    };
+  }, []);
 
   const handleGoogleAuth = async () => {
     try {
@@ -245,7 +257,7 @@ export function AuthFab({ isMobile }: AuthFabProps) {
                     type="button"
                     onClick={() => setIsTrainer(false)}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${
-                      !isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      !isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     <GraduationCap className="h-3.5 w-3.5" />
@@ -255,7 +267,7 @@ export function AuthFab({ isMobile }: AuthFabProps) {
                     type="button"
                     onClick={() => setIsTrainer(true)}
                     className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${
-                      isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     <User className="h-3.5 w-3.5" />
