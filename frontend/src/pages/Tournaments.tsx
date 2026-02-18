@@ -6,9 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2 } from "lucide-react";
 import { AuthFab } from "@/components/AuthFab";
+import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Tournament {
   id: string;
@@ -27,8 +30,11 @@ const Tournaments = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { toast, signInWithGoogle } = useAuth();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showRegistrationSheet, setShowRegistrationSheet] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     // Mock data for tournaments
@@ -41,7 +47,7 @@ const Tournaments = () => {
         participants: 45,
         maxParticipants: 100,
         startDate: "2024-03-15",
-        endDate: "2024-03-20",
+        endDate: "2027-03-20",
         difficulty: "medium",
         prize: "Premium subscription + Certificate"
       },
@@ -53,9 +59,9 @@ const Tournaments = () => {
         participants: 12,
         maxParticipants: 50,
         startDate: "2024-03-25",
-        endDate: "2024-03-30",
+        endDate: "2027-03-30",
         difficulty: "hard",
-        prize: "$500 + Mentorship session"
+        prize: "Mentorship session"
       },
       {
         id: "3",
@@ -64,8 +70,8 @@ const Tournaments = () => {
         status: "completed",
         participants: 78,
         maxParticipants: 80,
-        startDate: "2024-03-01",
-        endDate: "2024-03-05",
+        startDate: "2025-03-01",
+        endDate: "2025-03-05",
         difficulty: "easy",
         prize: "Certificate + Badge"
       },
@@ -121,6 +127,49 @@ const Tournaments = () => {
 
   const getDifficultyText = (difficulty: Tournament["difficulty"]) => {
     return t(`tournaments.difficultyLevel.${difficulty}`);
+  };
+
+  const handleRegister = async (email: string, password: string, isTrainer: boolean) => {
+    if (!email || !password) {
+      toast({
+        title: t('common.error'),
+        description: t('auth.fillAllFields'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      // TODO: Implement email/password registration
+      console.log("Registering with:", { email, role: isTrainer ? 'trainer' : 'student' });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: t('common.success'),
+        description: t('auth.checkEmailForRegistration'),
+      });
+      setShowRegistrationSheet(false);
+      navigate("/auth");
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast({
+        title: t('common.error'),
+        description: t('auth.registrationFailed'),
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      await signInWithGoogle();
+      setShowRegistrationSheet(false);
+    } catch (error) {
+      console.error("Google auth error:", error);
+    }
   };
 
   if (loading) {
@@ -271,11 +320,9 @@ const Tournaments = () => {
                 size="lg" 
                 className="font-mono"
                 onClick={() => {
-                  // For mobile, trigger the registration sheet
+                  // For mobile, open registration sheet directly
                   if (isMobile) {
-                    // We need to trigger the AuthFab's registration sheet
-                    const event = new CustomEvent('openRegistrationSheet');
-                    window.dispatchEvent(event);
+                    setShowRegistrationSheet(true);
                   } else {
                     navigate("/auth");
                   }
@@ -298,6 +345,17 @@ const Tournaments = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* Registration Sheet */}
+      {isMobile && (
+        <RegistrationSheet
+          open={showRegistrationSheet}
+          onOpenChange={setShowRegistrationSheet}
+          onSubmit={handleRegister}
+          onGoogleAuth={handleGoogleAuth}
+          isLoading={isRegistering}
+        />
+      )}
 
       {/* Mobile FAB */}
       <AuthFab isMobile={isMobile} />

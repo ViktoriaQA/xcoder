@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, LogIn, UserPlus, X, Mail, Lock, GraduationCap, User } from "lucide-react";
+import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, LogIn, UserPlus, X, Mail, Lock } from "lucide-react";
 import { AuthFab } from "@/components/AuthFab";
+import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Tournament {
   id: string;
@@ -31,15 +32,15 @@ const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toast } = useToast();
+  const { toast, signInWithGoogle } = useAuth();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showRegisterSheet, setShowRegisterSheet] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isTrainer, setIsTrainer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     // Mock data for tournaments
@@ -134,8 +135,7 @@ const Home = () => {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async (email: string, password: string, isTrainer: boolean) => {
     if (!email || !password) {
       toast({
         title: t('common.error'),
@@ -145,7 +145,7 @@ const Home = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsRegistering(true);
     try {
       // TODO: Implement email/password registration
       console.log("Registering with:", { email, role: isTrainer ? 'trainer' : 'student' });
@@ -155,6 +155,7 @@ const Home = () => {
         title: t('common.success'),
         description: t('auth.checkEmailForRegistration'),
       });
+      setShowRegisterSheet(false);
       navigate("/auth");
     } catch (error) {
       console.error("Registration error:", error);
@@ -164,7 +165,16 @@ const Home = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setIsRegistering(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      await signInWithGoogle();
+      setShowRegisterSheet(false);
+    } catch (error) {
+      console.error("Google auth error:", error);
     }
   };
 
@@ -235,7 +245,13 @@ const Home = () => {
             <Button 
               size="lg" 
               className="font-mono text-base px-8 py-3"
-              onClick={() => setShowRegisterSheet(true)}
+              onClick={() => {
+                if (isMobile) {
+                  setShowRegisterSheet(true);
+                } else {
+                  navigate("/auth");
+                }
+              }}
             >
               <UserPlus className="h-5 w-5 mr-2" />
               {t('auth.register')}
@@ -405,7 +421,13 @@ const Home = () => {
             <Button 
               size="lg" 
               className="font-mono text-base px-8 py-3"
-              onClick={() => setShowRegisterSheet(true)}
+              onClick={() => {
+                if (isMobile) {
+                  setShowRegisterSheet(true);
+                } else {
+                  navigate("/auth");
+                }
+              }}
             >
               <UserPlus className="h-5 w-5 mr-2" />
               {t('auth.register')}
@@ -413,7 +435,7 @@ const Home = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="font-mono text-base px-8 py-3 border-primary/20 hover:bg-primary/5"
+              className="font-mono text-base px-8 py-3 border-primary/20 hover:bg-primary/5 hover:text-green-500"
               onClick={() => setShowEmailForm(true)}
             >
               <LogIn className="h-5 w-5 mr-2" />
@@ -427,136 +449,14 @@ const Home = () => {
       <Footer />
 
       {/* Registration Sheet */}
-      {showRegisterSheet && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-t-2xl w-full max-w-lg animate-in slide-in-from-bottom-3 duration-200">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-mono text-xl font-bold text-primary">{t('auth.register')}</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => setShowRegisterSheet(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-6">
-                {/* Role Selector */}
-                <div className="space-y-2">
-                  <Label className="block text-sm font-mono text-muted-foreground mb-2">
-                    <span className="text-primary">$</span> оберіть роль
-                  </Label>
-                  <div className="flex items-center justify-between p-0.5 bg-muted/30 rounded-lg border border-border h-9">
-                    <button
-                      type="button"
-                      onClick={() => setIsTrainer(false)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${
-                        !isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <GraduationCap className="h-3.5 w-3.5" />
-                      <span>Студент</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsTrainer(true)}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${
-                        isTrainer ? 'bg-background shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <User className="h-3.5 w-3.5" />
-                      <span>Тренер</span>
-                    </button>
-                  </div>
-                </div>
-
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="home-register-email" className="font-mono text-sm">
-                      <span className="text-primary">$</span> {t('auth.email')}
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="home-register-email"
-                        type="email"
-                        placeholder={t('auth.emailPlaceholder')}
-                        className="pl-10 font-mono text-sm h-11"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="home-register-password" className="font-mono text-sm">
-                      <span className="text-primary">$</span> {t('auth.password')}
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="home-register-password"
-                        type="password"
-                        placeholder={t('auth.passwordPlaceholder')}
-                        className="pl-10 font-mono text-sm h-11"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full h-11 font-mono text-sm"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? t('auth.registering') : t('auth.register')}
-                  </Button>
-                </form>
-
-                <div className="relative my-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border"></span>
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground font-mono">{t('auth.continueWith')}</span>
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full h-11 font-mono text-sm bg-transparent border border-border text-foreground hover:bg-accent/50 transition-colors"
-                  variant="outline"
-                  disabled={isLoading}
-                >
-                  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                  </svg>
-                  Google
-                </Button>
-
-                <div className="text-center mt-4">
-                  <button
-                    className="text-sm text-primary hover:underline font-mono"
-                    onClick={() => {
-                      setShowRegisterSheet(false);
-                      navigate("/auth");
-                    }}
-                  >
-                    {t('common.alreadyHaveAccountLogin')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {isMobile && (
+        <RegistrationSheet
+          open={showRegisterSheet}
+          onOpenChange={setShowRegisterSheet}
+          onSubmit={handleRegister}
+          onGoogleAuth={handleGoogleAuth}
+          isLoading={isRegistering}
+        />
       )}
 
       {/* Mobile FAB */}
