@@ -9,6 +9,8 @@ import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
 import Onboarding from "@/pages/Onboarding";
 import Dashboard from "@/pages/Dashboard";
+import Home from "@/pages/Home";
+import Tournaments from "@/pages/Tournaments";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,9 +23,11 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/tournaments" element={<Tournaments />} />
             <Route
               path="/dashboard"
               element={
@@ -32,7 +36,6 @@ const App = () => (
                 </AppLayout>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

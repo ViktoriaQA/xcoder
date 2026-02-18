@@ -2,6 +2,7 @@ import { useState, useEffect, createContext, useContext, ReactNode } from "react
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
 
 type Profile = {
   id: string;
@@ -20,6 +21,7 @@ type AuthContextType = {
   profile: Profile | null;
   role: string | null;
   loading: boolean;
+  toast: any;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -107,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user, profile, role, loading, signInWithGoogle, signOut, refreshProfile }}
+      value={{ session, user, profile, role, loading, toast, signInWithGoogle, signOut, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

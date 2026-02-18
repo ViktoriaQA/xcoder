@@ -53,7 +53,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
-      <div className="p-4 flex items-center gap-2 border-b border-border">
+      <div 
+        className="p-4 flex items-center gap-2 border-b border-border cursor-pointer hover:bg-sidebar-accent/50 transition-colors"
+        onClick={() => navigate("/")}
+      >
         <Terminal className="w-6 h-6 text-primary shrink-0" />
         {!collapsed && (
           <span className="font-mono font-bold text-primary text-lg neon-text">

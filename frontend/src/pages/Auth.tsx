@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Terminal, Mail, Lock, User, GraduationCap } from "lucide-react";
+import { Terminal, Mail, Lock, User, GraduationCap, Trophy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AuthFab } from "@/components/AuthFab";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -81,23 +81,40 @@ const Auth = () => {
       <header className="w-full border-b border-border/40 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/5 neon-glow">
+            <div 
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/5 neon-glow cursor-pointer hover:bg-primary/10 transition-colors"
+              onClick={() => navigate("/")}
+            >
               <Terminal className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-xl font-bold text-transparent font-mono">
+            <h1 
+              className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-xl font-bold text-transparent font-mono cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate("/")}
+            >
               CodeArena
             </h1>
           </div>
-          {!isMobile && (
+          <div className="flex items-center gap-2">
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
-              className="font-mono text-xs h-8 px-3 border-primary/20 hover:bg-primary/5"
-              onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+              className="font-mono text-xs h-8 px-3 hover:bg-primary/5 text-muted-foreground hover:text-primary"
+              onClick={() => navigate("/tournaments")}
             >
-              Увійти
+              <Trophy className="h-4 w-4 mr-1" />
+              Турніри
             </Button>
-          )}
+            {!isMobile && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="font-mono text-xs h-8 px-3 border-primary/20 hover:bg-primary/5"
+                onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+              >
+                Увійти
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
