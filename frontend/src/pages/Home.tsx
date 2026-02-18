@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, LogIn, UserPlus, X, Mail, Lock, GraduationCap, User } from "lucide-react";
 import { AuthFab } from "@/components/AuthFab";
+import { Footer } from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -25,6 +27,7 @@ interface Tournament {
 }
 
 const Home = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { toast } = useToast();
@@ -114,15 +117,15 @@ const Home = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
-        title: "Успіх",
-        description: "Перевірте пошту для входу",
+        title: t('common.success'),
+        description: t('common.checkEmailForLogin'),
       });
       navigate("/auth");
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "Помилка",
-        description: "Не вдалося увійти. Спробуйте ще раз.",
+        title: t('common.error'),
+        description: t('common.loginError'),
         variant: "destructive",
       });
     } finally {
@@ -191,35 +194,17 @@ const Home = () => {
   };
 
   const getStatusText = (status: Tournament["status"]) => {
-    switch (status) {
-      case "active":
-        return "Активний";
-      case "upcoming":
-        return "Незабаром";
-      case "completed":
-        return "Завершено";
-      default:
-        return status;
-    }
+    return t(`tournaments.statusText.${status}`);
   };
 
   const getDifficultyText = (difficulty: Tournament["difficulty"]) => {
-    switch (difficulty) {
-      case "easy":
-        return "Легкий";
-      case "medium":
-        return "Середній";
-      case "hard":
-        return "Складний";
-      default:
-        return difficulty;
-    }
+    return t(`tournaments.difficultyLevel.${difficulty}`);
   };
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background matrix-bg">
-        <div className="animate-pulse-glow text-primary font-mono text-lg">Loading tournaments...</div>
+        <div className="animate-pulse-glow text-primary font-mono text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -251,7 +236,7 @@ const Home = () => {
               onClick={() => navigate("/tournaments")}
             >
               <Trophy className="h-4 w-4 mr-1" />
-              Турніри
+              {t('navigation.tournaments')}
             </Button>
             {!isMobile ? (
               <>
@@ -262,7 +247,7 @@ const Home = () => {
                   onClick={() => setShowEmailForm(true)}
                 >
                   <LogIn className="h-4 w-4 mr-1" />
-                  Увійти
+                  {t('auth.login')}
                 </Button>
                 <Button 
                   size="lg" 
@@ -270,7 +255,7 @@ const Home = () => {
                   onClick={() => setShowRegisterSheet(true)}
                 >
                   <UserPlus className="h-4 w-4 mr-1" />
-                  Реєстрація
+                  {t('auth.register')}
                 </Button>
               </>
             ) : null}
@@ -284,15 +269,15 @@ const Home = () => {
           <div className="flex items-center justify-center gap-4">
             <Trophy className="h-12 w-12 text-primary animate-pulse-glow" />
             <h1 className="text-4xl md:text-6xl font-bold font-mono text-primary neon-text">
-              CodeArena
+              {t('home.title')}
             </h1>
             <Trophy className="h-12 w-12 text-primary animate-pulse-glow" />
           </div>
           <p className="text-xl md:text-2xl text-muted-foreground font-mono">
-            Приєднуйтесь до захоплюючих змагань з програмування
+            {t('home.subtitle')}
           </p>
           <p className="text-lg text-muted-foreground font-mono max-w-2xl mx-auto">
-            Випробуйте свої навички проти інших розробників, вигравайте призи та станьте чемпіоном з кодингу
+            {t('home.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Button 
@@ -301,7 +286,7 @@ const Home = () => {
               onClick={() => setShowRegisterSheet(true)}
             >
               <UserPlus className="h-5 w-5 mr-2" />
-              Створити акаунт
+              {t('auth.register')}
             </Button>
             <Button 
               variant="outline" 
@@ -310,7 +295,7 @@ const Home = () => {
               onClick={() => navigate("/tournaments")}
             >
               <Trophy className="h-5 w-5 mr-2" />
-              Переглянути турніри
+              {t('home.viewDetails')}
             </Button>
           </div>
         </div>
@@ -324,7 +309,7 @@ const Home = () => {
               <div className="text-3xl font-bold text-primary font-mono">
                 {tournaments.filter(t => t.status === "active").length}
               </div>
-              <div className="text-sm text-muted-foreground font-mono">Активні турніри</div>
+              <div className="text-sm text-muted-foreground font-mono">{t('home.activeTournaments')}</div>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -332,7 +317,7 @@ const Home = () => {
               <div className="text-3xl font-bold text-accent font-mono">
                 {tournaments.filter(t => t.status === "upcoming").length}
               </div>
-              <div className="text-sm text-muted-foreground font-mono">Незабаром</div>
+              <div className="text-sm text-muted-foreground font-mono">{t('home.upcomingTournaments')}</div>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -340,7 +325,7 @@ const Home = () => {
               <div className="text-3xl font-bold text-neon-cyan font-mono">
                 {tournaments.reduce((sum, t) => sum + t.participants, 0)}
               </div>
-              <div className="text-sm text-muted-foreground font-mono">Учасників</div>
+              <div className="text-sm text-muted-foreground font-mono">{t('tournaments.participants')}</div>
             </CardContent>
           </Card>
           <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -348,7 +333,7 @@ const Home = () => {
               <div className="text-3xl font-bold text-neon-green font-mono">
                 {tournaments.length}
               </div>
-              <div className="text-sm text-muted-foreground font-mono">Всього турнірів</div>
+              <div className="text-sm text-muted-foreground font-mono">{t('tournaments.title')}</div>
             </CardContent>
           </Card>
         </div>
@@ -358,10 +343,10 @@ const Home = () => {
       <section className="container mx-auto px-4 py-12">
         <div className="text-center space-y-4 mb-8">
           <h2 className="text-3xl font-bold font-mono text-primary">
-            Популярні турніри
+            {t('home.activeTournaments')}
           </h2>
           <p className="text-muted-foreground font-mono max-w-2xl mx-auto">
-            Оберіть турнір за вашим рівнем та інтересами
+            {t('home.features.tournaments.description')}
           </p>
         </div>
 
@@ -449,7 +434,7 @@ const Home = () => {
             className="font-mono border-primary/20 hover:bg-primary/5"
             onClick={() => navigate("/tournaments")}
           >
-            Переглянути всі турніри
+            {t('common.viewAllTournaments')}
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
@@ -459,10 +444,10 @@ const Home = () => {
       <section className="container mx-auto px-4 py-16">
         <div className="text-center space-y-6 max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold font-mono text-primary">
-            Готові до виклику?
+            {t('common.readyForChallenge')}
           </h2>
           <p className="text-xl text-muted-foreground font-mono">
-            Створіть акаунт та приєднуйтесь до спільноти програмістів
+            {t('common.createAccountAndJoin')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -471,7 +456,7 @@ const Home = () => {
               onClick={() => setShowRegisterSheet(true)}
             >
               <UserPlus className="h-5 w-5 mr-2" />
-              Створити акаунт
+              {t('auth.register')}
             </Button>
             <Button 
               variant="outline" 
@@ -480,31 +465,14 @@ const Home = () => {
               onClick={() => setShowEmailForm(true)}
             >
               <LogIn className="h-5 w-5 mr-2" />
-              Увійти
+              {t('auth.login')}
             </Button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="w-full border-t border-border/40 py-8">
-        <div className="container mx-auto px-4">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/30 bg-primary/5">
-                <Terminal className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="font-mono text-lg text-primary">CodeArena</h3>
-            </div>
-            <p className="text-sm text-muted-foreground font-mono">
-              Платформа для змагань з програмування
-            </p>
-            <p className="text-xs text-muted-foreground font-mono">
-              v1.0.0 | &copy; {new Date().getFullYear()} CodeArena
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Email Form Modal */}
       {showEmailForm && (
@@ -564,7 +532,7 @@ const Home = () => {
                 className="w-full h-11 font-mono text-sm"
                 disabled={isLoading}
               >
-                {isLoading ? 'Вхід...' : 'Увійти'}
+                {isLoading ? t('common.signingIn') : t('auth.login')}
               </Button>
             </form>
 
@@ -707,7 +675,7 @@ const Home = () => {
                       setShowEmailForm(true);
                     }}
                   >
-                    Вже є акаунт? Увійти
+                    {t('common.alreadyHaveAccountLogin')}
                   </button>
                 </div>
               </div>

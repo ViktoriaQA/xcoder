@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Завантаження...",
+    "error": "Помилка",
+    "success": "Успіх",
+    "cancel": "Скасувати",
+    "save": "Зберегти",
+    "delete": "Видалити",
+    "edit": "Редагувати",
+    "close": "Закрити",
+    "submit": "Надіслати",
+    "back": "Назад",
+    "next": "Далі",
+    "previous": "Попередній",
+    "readyForChallenge": "Готові до виклику?",
+    "createAccountAndJoin": "Створіть акаунт та приєднуйтесь до спільноти програмістів",
+    "viewAllTournaments": "Переглянути всі турніри",
+    "alreadyHaveAccountLogin": "Вже є акаунт? Увійти",
+    "loginError": "Не вдалося увійти. Спробуйте ще раз.",
+    "signingIn": "Вхід...",
+    "checkEmailForLogin": "Перевірте пошту для входу"
+  },
+  "navigation": {
+    "home": "Головна",
+    "dashboard": "Панель",
+    "tournaments": "Турніри",
+    "profile": "Профіль",
+    "settings": "Налаштування",
+    "logout": "Вийти"
+  },
+  "auth": {
+    "login": "Увійти",
+    "register": "Реєстрація",
+    "email": "Email",
+    "password": "Пароль",
+    "forgotPassword": "Забули пароль?",
+    "rememberMe": "Запам'ятати мене",
+    "loginTitle": "Ласкаво просимо",
+    "registerTitle": "Створити акаунт",
+    "alreadyHaveAccount": "Вже є акаунт?",
+    "dontHaveAccount": "Немає акаунту?",
+    "loginSuccess": "Вхід успішний",
+    "registerSuccess": "Реєстрація успішна"
+  },
+  "home": {
+    "title": "Ласкаво просимо до CodeArena",
+    "subtitle": "Змагайтеся, Навчайтеся та Відточуйте навички у програмуванні",
+    "description": "Приєднуйтесь до нашої спільноти розробників та перевірте свої навички у захоплюючих змаганнях з програмування",
+    "getStarted": "Почати",
+    "learnMore": "Дізнатися більше",
+    "features": {
+      "tournaments": {
+        "title": "Турніри",
+        "description": "Беріть участь у змаганнях з програмування"
+      },
+      "learning": {
+        "title": "Навчання",
+        "description": "Покращуйте свої навички за допомогою детальних уроків"
+      },
+      "community": {
+        "title": "Спільнота",
+        "description": "Спілкуйтесь з іншими розробниками"
+      }
+    },
+    "upcomingTournaments": "Майбутні турніри",
+    "activeTournaments": "Активні турніри",
+    "participate": "Брати участь",
+    "viewDetails": "Детальніше"
+  },
+  "tournaments": {
+    "title": "Турніри",
+    "noTournaments": "Турніри відсутні",
+    "createTournament": "Створити турнір",
+    "tournamentName": "Назва турніру",
+    "description": "Опис",
+    "startDate": "Дата початку",
+    "endDate": "Дата завершення",
+    "participants": "Учасники",
+    "difficulty": "Складність",
+    "prize": "Приз",
+    "statusText": {
+      "upcoming": "Майбутній",
+      "active": "Активний",
+      "completed": "Завершений"
+    },
+    "difficultyLevel": {
+      "easy": "Легкий",
+      "medium": "Середній",
+      "hard": "Складний"
+    },
+    "pageSubtitle": "Приєднуйтесь до захоплюючих змагань з програмування та випробуйте свої навички проти інших розробників",
+    "join": "Приєднатися",
+    "register": "Зареєструватися",
+    "participantsCount": "{{current}}/{{max}} учасників",
+    "readyToChallenge": "Готові до виклику?",
+    "createAccountToJoin": "Створіть акаунт, щоб приєднатися до турнірів та відстежувати свій прогрес",
+    "createAccount": "Створити акаунт",
+    "learnMoreAboutPlatform": "Детальніше про платформу"
+  },
+  "footer": {
+    "copyright": "© {{year}} CodeArena",
+    "version": "Версія",
+    "allRightsReserved": "Всі права захищено"
+  },
+  "language": {
+    "english": "English",
+    "ukrainian": "Українська"
+  }
+}

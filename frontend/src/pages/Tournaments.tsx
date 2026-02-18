@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2 } from "lucide-react";
 import { AuthFab } from "@/components/AuthFab";
+import { Footer } from "@/components/Footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Tournament {
@@ -21,6 +23,7 @@ interface Tournament {
 }
 
 const Tournaments = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -112,35 +115,17 @@ const Tournaments = () => {
   };
 
   const getStatusText = (status: Tournament["status"]) => {
-    switch (status) {
-      case "active":
-        return "Активний";
-      case "upcoming":
-        return "Незабаром";
-      case "completed":
-        return "Завершено";
-      default:
-        return status;
-    }
+    return t(`tournaments.statusText.${status}`);
   };
 
   const getDifficultyText = (difficulty: Tournament["difficulty"]) => {
-    switch (difficulty) {
-      case "easy":
-        return "Легкий";
-      case "medium":
-        return "Середній";
-      case "hard":
-        return "Складний";
-      default:
-        return difficulty;
-    }
+    return t(`tournaments.difficultyLevel.${difficulty}`);
   };
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background matrix-bg">
-        <div className="animate-pulse-glow text-primary font-mono text-lg">Loading tournaments...</div>
+        <div className="animate-pulse-glow text-primary font-mono text-lg">{t('common.loading')}</div>
       </div>
     );
   }
@@ -170,7 +155,7 @@ const Tournaments = () => {
             className="font-mono text-xs h-8 px-3 border-primary/20 hover:bg-primary/5"
             onClick={() => navigate("/auth")}
           >
-            Увійти
+            {t('auth.login')}
           </Button>
         </div>
       </header>
@@ -183,12 +168,12 @@ const Tournaments = () => {
             <div className="flex items-center justify-center gap-3">
               <Trophy className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold font-mono text-primary neon-text">
-                Турніри
+                {t('tournaments.title')}
               </h1>
               <Trophy className="h-8 w-8 text-primary" />
             </div>
             <p className="text-muted-foreground font-mono max-w-2xl mx-auto">
-              Приєднуйтесь до захоплюючих змагань з програмування та випробуйте свої навички проти інших розробників
+              {t('tournaments.pageSubtitle')}
             </p>
           </div>
 
@@ -199,7 +184,7 @@ const Tournaments = () => {
                 <div className="text-2xl font-bold text-primary font-mono">
                   {tournaments.filter(t => t.status === "active").length}
                 </div>
-                <div className="text-sm text-muted-foreground font-mono">Активні турніри</div>
+                <div className="text-sm text-muted-foreground font-mono">{t('home.activeTournaments')}</div>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -207,7 +192,7 @@ const Tournaments = () => {
                 <div className="text-2xl font-bold text-accent font-mono">
                   {tournaments.filter(t => t.status === "upcoming").length}
                 </div>
-                <div className="text-sm text-muted-foreground font-mono">Незабаром</div>
+                <div className="text-sm text-muted-foreground font-mono">{t('home.upcomingTournaments')}</div>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
@@ -215,7 +200,7 @@ const Tournaments = () => {
                 <div className="text-2xl font-bold text-neon-cyan font-mono">
                   {tournaments.reduce((sum, t) => sum + t.participants, 0)}
                 </div>
-                <div className="text-sm text-muted-foreground font-mono">Учасників</div>
+                <div className="text-sm text-muted-foreground font-mono">{t('tournaments.participants')}</div>
               </CardContent>
             </Card>
           </div>
@@ -254,13 +239,13 @@ const Tournaments = () => {
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="font-mono text-muted-foreground">
-                        {tournament.participants}/{tournament.maxParticipants} учасників
+                        {t('tournaments.participantsCount', { current: tournament.participants, max: tournament.maxParticipants })}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-mono text-muted-foreground">
-                        {new Date(tournament.startDate).toLocaleDateString("uk-UA")} - {new Date(tournament.endDate).toLocaleDateString("uk-UA")}
+                        {new Date(tournament.startDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')} - {new Date(tournament.endDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')}
                       </span>
                     </div>
                     {tournament.prize && (
@@ -289,7 +274,7 @@ const Tournaments = () => {
                       }}
                     >
                       <Gamepad2 className="h-4 w-4 mr-2" />
-                      {tournament.status === "active" ? "Приєднатися" : "Зареєструватися"}
+                      {tournament.status === "active" ? t('tournaments.join') : t('tournaments.register')}
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
@@ -301,10 +286,10 @@ const Tournaments = () => {
           {/* Call to Action */}
           <div className="text-center space-y-4 pt-8">
             <h2 className="text-xl font-bold font-mono text-primary">
-              Готові до виклику?
+              {t('tournaments.readyToChallenge')}
             </h2>
             <p className="text-muted-foreground font-mono">
-              Створіть акаунт, щоб приєднатися до турнірів та відстежувати свій прогрес
+              {t('tournaments.createAccountToJoin')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -312,7 +297,7 @@ const Tournaments = () => {
                 className="font-mono"
                 onClick={() => navigate("/auth")}
               >
-                Створити акаунт
+                {t('tournaments.createAccount')}
               </Button>
               <Button 
                 variant="outline" 
@@ -320,7 +305,7 @@ const Tournaments = () => {
                 className="font-mono border-primary/20 hover:bg-primary/5"
                 onClick={() => navigate("/auth")}
               >
-                Детальніше про платформу
+                {t('tournaments.learnMoreAboutPlatform')}
               </Button>
             </div>
           </div>
@@ -328,13 +313,7 @@ const Tournaments = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-border/40 py-4 mt-16">
-        <div className="container mx-auto px-4">
-          <p className="text-xs text-center text-muted-foreground font-mono">
-            v1.0.0 | &copy; {new Date().getFullYear()} CodeArena
-          </p>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Mobile FAB */}
       <AuthFab isMobile={isMobile} />

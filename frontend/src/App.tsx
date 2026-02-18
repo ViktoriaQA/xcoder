@@ -12,6 +12,7 @@ import Dashboard from "@/pages/Dashboard";
 import Home from "@/pages/Home";
 import Tournaments from "@/pages/Tournaments";
 import NotFound from "@/pages/NotFound";
+import '@/i18n';
 
 const queryClient = new QueryClient();
 

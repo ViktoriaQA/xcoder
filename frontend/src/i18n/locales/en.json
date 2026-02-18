@@ -1,0 +1,109 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "readyForChallenge": "Ready for the challenge?",
+    "createAccountAndJoin": "Create an account and join the community of programmers",
+    "viewAllTournaments": "View all tournaments",
+    "alreadyHaveAccountLogin": "Already have an account? Login",
+    "loginError": "Failed to login. Please try again.",
+    "signingIn": "Signing in...",
+    "checkEmailForLogin": "Check your email for login instructions"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "tournaments": "Tournaments",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "rememberMe": "Remember me",
+    "loginTitle": "Welcome back",
+    "registerTitle": "Create account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "loginSuccess": "Login successful",
+    "registerSuccess": "Registration successful"
+  },
+  "home": {
+    "title": "Welcome to CodeArena",
+    "subtitle": "Compete, Learn, and Excel in Programming Challenges",
+    "description": "Join our community of developers and test your skills in exciting coding competitions",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "tournaments": {
+        "title": "Tournaments",
+        "description": "Participate in competitive coding tournaments"
+      },
+      "learning": {
+        "title": "Learning",
+        "description": "Improve your skills with comprehensive tutorials"
+      },
+      "community": {
+        "title": "Community",
+        "description": "Connect with other developers"
+      }
+    },
+    "upcomingTournaments": "Upcoming Tournaments",
+    "activeTournaments": "Active Tournaments",
+    "participate": "Participate",
+    "viewDetails": "View Details"
+  },
+  "tournaments": {
+    "title": "Tournaments",
+    "noTournaments": "No tournaments available",
+    "createTournament": "Create Tournament",
+    "tournamentName": "Tournament Name",
+    "description": "Description",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "participants": "Participants",
+    "difficulty": "Difficulty",
+    "prize": "Prize",
+    "statusText": {
+      "upcoming": "Upcoming",
+      "active": "Active",
+      "completed": "Completed"
+    },
+    "difficultyLevel": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "pageSubtitle": "Join exciting programming competitions and test your skills against other developers",
+    "join": "Join",
+    "register": "Register",
+    "participantsCount": "{{current}}/{{max}} participants",
+    "readyToChallenge": "Ready for the challenge?",
+    "createAccountToJoin": "Create an account to join tournaments and track your progress",
+    "createAccount": "Create Account",
+    "learnMoreAboutPlatform": "Learn more about the platform"
+  },
+  "footer": {
+    "copyright": "© {{year}} CodeArena",
+    "version": "Version",
+    "allRightsReserved": "All rights reserved"
+  },
+  "language": {
+    "english": "English",
+    "ukrainian": "Ukrainian"
+  }
+}
