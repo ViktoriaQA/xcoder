@@ -16,20 +16,11 @@ export function AuthButtons({
   const separatorText = variant === "login" ? "or continue with" : "continue with";
   
   return (
-    <>
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border"></span>
-        </div>
-        {/* <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground font-mono">{separatorText}</span>
-        </div> */}
-      </div>
-
+<>
       <div className="flex gap-3">
         <Button
           onClick={onGoogleAuth}
-          className="flex-1 h-11 font-mono text-sm bg-transparent border border-border text-foreground hover:bg-accent/50 transition-colors group"
+          className="flex-1 h-11 font-mono text-sm bg-transparent border border-border text-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors group"
           variant="outline"
           disabled={isLoading}
         >
@@ -44,7 +35,7 @@ export function AuthButtons({
         
         <Button
           onClick={onDiscordAuth}
-          className="flex-1 h-11 font-mono text-sm bg-transparent border border-border text-foreground hover:bg-accent/50 transition-colors group"
+          className="flex-1 h-11 font-mono text-sm bg-transparent border border-border text-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors group"
           variant="outline"
           disabled={isLoading}
         >

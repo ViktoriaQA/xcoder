@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
+import { AuthButtons } from "@/components/AuthButtons";
 
 interface HeaderProps {
   showTournamentsButton?: boolean;
@@ -263,6 +264,22 @@ export function Header({
                 {isLoading ? t('auth.signingIn') : t('auth.login')}
               </Button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground font-mono">{t('auth.orContinueWith')}</span>
+              </div>
+            </div>
+
+            <AuthButtons
+              onGoogleAuth={handleGoogleAuth}
+              onDiscordAuth={handleDiscordAuth}
+              isLoading={isLoading}
+              variant="login"
+            />
 
             <div className="text-center mt-4">
               <button
