@@ -15,8 +15,16 @@ export class LiqPayService {
     this.resultUrl = process.env.LIQPAY_RESULT_URL || '';
     this.sandbox = process.env.NODE_ENV !== 'production';
 
+    // In development, allow missing keys but log a warning
     if (!this.publicKey || !this.privateKey) {
-      throw new Error('LiqPay public and private keys are required');
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('LiqPay keys not configured. Payment functionality will be limited.');
+        // Set default sandbox values for development
+        this.publicKey = 'sandbox_public_key';
+        this.privateKey = 'sandbox_private_key';
+      } else {
+        throw new Error('LiqPay public and private keys are required');
+      }
     }
   }
 
@@ -36,6 +44,32 @@ export class LiqPayService {
   }
 
   async createPaymentURL(request: PaymentRequest): Promise<PaymentResponse> {
+    // If using sandbox keys, return a mock response
+    if (this.publicKey === 'sandbox_public_key') {
+      return {
+        checkout_url: 'https://sandbox.liqpay.ua/api/3/checkout',
+        payment_id: 'sandbox_payment_id',
+        order_id: request.order_id,
+        status: 'sandbox',
+        amount: request.amount,
+        currency: request.currency || 'UAH',
+        description: request.description,
+        result_url: this.resultUrl,
+        server_url: this.callbackUrl,
+        order_type: request.order_type,
+        language: request.language || 'uk',
+        create_date: new Date().toISOString(),
+        public_key: this.publicKey,
+        acq_id: 'sandbox',
+        card_type: 'sandbox',
+        ip: '127.0.0.1',
+        commission: 0,
+        amount_debit: request.amount,
+        currency_debit: request.currency || 'UAH',
+        payment_system: 'liqpay_sandbox',
+        payment_method: 'card',
+      };
+    }
     const requestData = {
       public_key: this.publicKey,
       version: '3',
