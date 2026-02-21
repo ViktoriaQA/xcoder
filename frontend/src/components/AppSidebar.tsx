@@ -2,6 +2,7 @@ import { Trophy, BookOpen, Users, CreditCard, Shield, Settings, LogOut, Terminal
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Sidebar,
   SidebarContent,
@@ -22,28 +23,29 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const { state } = useSidebar();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
 
   const commonItems = [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    { title: "Tournaments", url: "/tournaments", icon: Trophy },
-    { title: "Subscription", url: "/subscription", icon: CreditCard },
+    { title: t('navigation.dashboard'), url: "/dashboard", icon: LayoutDashboard },
+    { title: t('navigation.tournaments'), url: "/tournaments", icon: Trophy },
+    { title: t('navigation.subscription'), url: "/subscription", icon: CreditCard },
   ];
 
   const studentItems = [
     ...commonItems,
-    { title: "My Progress", url: "/progress", icon: BookOpen },
+    { title: t('navigation.myProgress'), url: "/progress", icon: BookOpen },
   ];
 
   const trainerItems = [
     ...commonItems,
-    { title: "Task Library", url: "/tasks", icon: BookOpen },
-    { title: "Students", url: "/students", icon: Users },
+    { title: t('navigation.taskLibrary'), url: "/tasks", icon: BookOpen },
+    { title: t('navigation.students'), url: "/students", icon: Users },
   ];
 
   const adminItems = [
     ...trainerItems,
-    { title: "Admin", url: "/admin", icon: Shield },
+    { title: t('navigation.admin'), url: "/admin", icon: Shield },
   ];
 
   const items = user?.role === "admin" ? adminItems : user?.role === "trainer" ? trainerItems : studentItems;
@@ -75,7 +77,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="font-mono text-xs text-muted-foreground uppercase tracking-wider">
-            {!collapsed && "Navigation"}
+            {!collapsed && t('navigation.navigationLabel')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

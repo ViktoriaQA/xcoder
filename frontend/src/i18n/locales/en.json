@@ -26,7 +26,13 @@
     "tournaments": "Tournaments",
     "profile": "Profile",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "subscription": "Subscription",
+    "myProgress": "My Progress",
+    "taskLibrary": "Task Library",
+    "students": "Students",
+    "admin": "Admin",
+    "navigationLabel": "Navigation"
   },
   "auth": {
     "login": "Login",

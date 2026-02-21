@@ -26,7 +26,13 @@
     "tournaments": "Турніри",
     "profile": "Профіль",
     "settings": "Налаштування",
-    "logout": "Вийти"
+    "logout": "Вийти",
+    "subscription": "Підписка",
+    "myProgress": "Мій прогрес",
+    "taskLibrary": "Бібліотека завдань",
+    "students": "Студенти",
+    "admin": "Адміністратор",
+    "navigationLabel": "Навігація"
   },
   "auth": {
     "login": "Увійти",
