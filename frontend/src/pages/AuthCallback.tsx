@@ -9,18 +9,13 @@ const AuthCallback = () => {
   useEffect(() => {
     if (!loading) {
       if (session) {
-        if (profile && !profile.onboarded) {
-          navigate("/onboarding");
-        } else if (profile?.onboarded) {
-          navigate("/dashboard");
-        }
-        // If profile is still loading, wait
+        navigate("/dashboard");
       } else {
         // If no session, something went wrong, go to auth
         navigate("/auth");
       }
     }
-  }, [loading, session, profile, navigate]);
+  }, [loading, session, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background matrix-bg">

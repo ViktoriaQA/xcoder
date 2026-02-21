@@ -9,8 +9,8 @@ import { AuthFab } from "@/components/AuthFab";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Tournament {
@@ -30,7 +30,8 @@ const Tournaments = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toast, signInWithGoogle, signInWithDiscord } = useAuth();
+  const { loginWithGoogle, register } = useAuth();
+  const { toast } = useToast();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRegistrationSheet, setShowRegistrationSheet] = useState(false);
@@ -129,7 +130,7 @@ const Tournaments = () => {
     return t(`tournaments.difficultyLevel.${difficulty}`);
   };
 
-  const handleRegister = async (email: string, password: string, isTrainer: boolean) => {
+  const handleRegister = async (email: string, password: string, firstName: string, lastName: string, isTrainer: boolean) => {
     if (!email || !password) {
       toast({
         title: t('common.error'),
@@ -141,23 +142,16 @@ const Tournaments = () => {
 
     setIsRegistering(true);
     try {
-      // TODO: Implement email/password registration
-      console.log("Registering with:", { email, role: isTrainer ? 'trainer' : 'student' });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForRegistration'),
+      await register({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName
       });
       setShowRegistrationSheet(false);
-      navigate("/auth");
     } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.registrationFailed'),
-        variant: "destructive",
-      });
+      console.error("❌ Registration error:", error);
+      // Error handling is done in auth context
     } finally {
       setIsRegistering(false);
     }
@@ -165,7 +159,7 @@ const Tournaments = () => {
 
   const handleGoogleAuth = async () => {
     try {
-      await signInWithGoogle();
+      await loginWithGoogle();
       setShowRegistrationSheet(false);
     } catch (error) {
       console.error("Google auth error:", error);
@@ -174,7 +168,8 @@ const Tournaments = () => {
 
   const handleDiscordAuth = async () => {
     try {
-      await signInWithDiscord();
+      // Discord auth not implemented yet
+      console.log("Discord auth not implemented");
       setShowRegistrationSheet(false);
     } catch (error) {
       console.error("Discord auth error:", error);

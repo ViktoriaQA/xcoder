@@ -11,7 +11,7 @@ import { AuthButtons } from "@/components/AuthButtons";
 interface RegistrationSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (email: string, password: string, isTrainer: boolean) => Promise<void>;
+  onSubmit: (email: string, password: string, firstName: string, lastName: string, isTrainer: boolean) => Promise<void>;
   onGoogleAuth: () => Promise<void>;
   onDiscordAuth: () => Promise<void>;
   isLoading?: boolean;
@@ -29,6 +29,8 @@ export function RegistrationSheet({
   const isMobile = useIsMobile();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isTrainer, setIsTrainer] = useState(false);
 
@@ -39,8 +41,8 @@ export function RegistrationSheet({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
-    await onSubmit(email, password, isTrainer);
+    if (!email || !password || !firstName || !lastName) return;
+    await onSubmit(email, password, firstName, lastName, isTrainer);
   };
 
   return (
@@ -82,58 +84,110 @@ export function RegistrationSheet({
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="register-email" className="font-mono text-sm">
-                <span className="text-primary">$</span> {t('auth.email')}
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="register-email"
-                  type="email"
-                  placeholder={t('auth.emailPlaceholder')}
-                  className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
+          {/* Email field */}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="font-mono text-sm">
+              <span className="text-primary">$</span> {t('auth.email')}
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder={t('auth.emailPlaceholder')}
+                className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="register-password" className="font-mono text-sm">
-                <span className="text-primary">$</span> {t('auth.password')}
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="register-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder={t('auth.passwordPlaceholder')}
-                  className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+          {/* First Name field */}
+          <div className="space-y-2">
+            <Label htmlFor="firstName" className="font-mono text-sm">
+              <span className="text-primary">$</span> {t('auth.firstName') || 'First Name'}
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="firstName"
+                type="text"
+                placeholder="Enter your first name"
+                className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
+          </div>
 
+          {/* Last Name field */}
+          <div className="space-y-2">
+            <Label htmlFor="lastName" className="font-mono text-sm">
+              <span className="text-primary">$</span> {t('auth.lastName') || 'Last Name'}
+            </Label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="lastName"
+                type="text"
+                placeholder="Enter your last name"
+                className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Password field */}
+          <div className="space-y-2">
+            <Label htmlFor="password" className="font-mono text-sm">
+              <span className="text-primary">$</span> {t('auth.password')}
+            </Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder={t('auth.passwordPlaceholder')}
+                className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Submit button */}
+          <form onSubmit={handleSubmit}>
             <Button
               type="submit"
               className="w-full h-11 font-mono text-sm"
               disabled={isLoading}
             >
-              {isLoading ? t('auth.registering') : t('auth.register')}
+              {isLoading ? 'Registering...' : 'Register'}
             </Button>
           </form>
+
+          <div className="space-y-4">
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800 font-mono">
+                <span className="text-yellow-600">$</span> Email registration temporarily unavailable
+              </p>
+              <p className="text-xs text-yellow-700 mt-1">
+                Please use Google or Discord sign-in below
+              </p>
+            </div>
+          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

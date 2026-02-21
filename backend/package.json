@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -36,7 +38,13 @@
     "tsx": "^4.19.1",
     "typescript": "^5.8.3"
   },
-  "keywords": ["codearena", "backend", "api", "programming", "tournaments"],
+  "keywords": [
+    "codearena",
+    "backend",
+    "api",
+    "programming",
+    "tournaments"
+  ],
   "author": "CodeArena Team",
   "license": "MIT"
 }

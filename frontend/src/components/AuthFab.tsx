@@ -24,7 +24,8 @@ export function AuthFab({ isMobile }: AuthFabProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast, signInWithGoogle, signInWithDiscord } = useAuth();
+  const { toast } = useToast();
+  const { loginWithGoogle, login, register } = useAuth();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,22 +40,14 @@ export function AuthFab({ isMobile }: AuthFabProps) {
 
     setIsLoading(true);
     try {
-      // TODO: Implement email/password auth
-      console.log("Signing in with:", { email });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForLogin'),
+      await login({
+        email,
+        password
       });
-      navigate("/auth");
+      setShowEmailForm(false);
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.loginFailed'),
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsLoading(false);
     }
@@ -72,23 +65,16 @@ export function AuthFab({ isMobile }: AuthFabProps) {
 
     setIsLoading(true);
     try {
-      // TODO: Implement email/password registration
-      console.log("Registering with:", { email, role: isTrainer ? 'trainer' : 'student' });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForRegistration'),
+      await register({
+        email,
+        password,
+        first_name: isTrainer ? 'Trainer' : 'Student',
+        last_name: 'User'
       });
       setShowRegisterSheet(false);
-      navigate("/auth");
     } catch (error) {
       console.error("Registration error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.registrationFailed'),
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +82,7 @@ export function AuthFab({ isMobile }: AuthFabProps) {
 
   const handleGoogleAuth = async () => {
     try {
-      await signInWithGoogle();
+      await loginWithGoogle();
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Google auth error:", error);
@@ -105,7 +91,8 @@ export function AuthFab({ isMobile }: AuthFabProps) {
 
   const handleDiscordAuth = async () => {
     try {
-      await signInWithDiscord();
+      // Discord auth not implemented yet
+      console.log("Discord auth not implemented");
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Discord auth error:", error);

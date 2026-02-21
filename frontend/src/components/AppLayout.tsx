@@ -6,15 +6,22 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Footer } from "@/components/Footer";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { session, profile, loading } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading) {
-      if (!session) navigate("/auth");
-      else if (profile && !profile.onboarded) navigate("/onboarding");
+      if (!isAuthenticated) {
+        // Only redirect to /auth if user is not on the home page
+        // This allows users to register from home without being redirected
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/' && currentPath !== '/tournaments') {
+          navigate("/auth");
+        }
+      }
+      // TODO: Add onboarding check when user profile is implemented
     }
-  }, [loading, session, profile, navigate]);
+  }, [loading, isAuthenticated, navigate]);
 
   if (loading) {
     return (
@@ -33,12 +40,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <header className="h-12 flex-shrink-0 flex items-center border-b border-border px-4 bg-card/50 backdrop-blur-sm">
               <SidebarTrigger className="text-muted-foreground hover:text-primary" />
               <div className="ml-auto flex items-center gap-3">
-                <span className={`text-xs font-mono px-2 py-1 rounded border ${
-                  profile?.subscription_status === "active"
-                    ? "border-primary/30 text-primary bg-primary/5"
-                    : "border-destructive/30 text-destructive bg-destructive/5"
-                }`}>
-                  {profile?.subscription_status === "active" ? "PRO" : "FREE"}
+                <span className="text-xs font-mono px-2 py-1 rounded border border-primary/30 text-primary bg-primary/5">
+                  USER
                 </span>
               </div>
             </header>

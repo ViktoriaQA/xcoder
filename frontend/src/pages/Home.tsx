@@ -33,7 +33,8 @@ const Home = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toast, signInWithGoogle, signInWithDiscord } = useAuth();
+  const { toast } = useToast();
+  const { loginWithGoogle, register, login } = useAuth();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -116,29 +117,21 @@ const Home = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Implement email/password auth
-      console.log("Signing in with:", { email });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForLogin'),
+      await login({
+        email,
+        password
       });
-      navigate("/auth");
+      setShowEmailForm(false);
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.loginFailed'),
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegister = async (email: string, password: string, isTrainer: boolean) => {
-    if (!email || !password) {
+  const handleRegister = async (email: string, password: string, firstName: string, lastName: string, isTrainer: boolean) => {
+    if (!email || !password || !firstName || !lastName) {
       toast({
         title: t('common.error'),
         description: t('auth.fillAllFields'),
@@ -149,21 +142,22 @@ const Home = () => {
 
     setIsRegistering(true);
     try {
-      // TODO: Implement email/password registration
-      console.log("Registering with:", { email, role: isTrainer ? 'trainer' : 'student' });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('📝 Submitting registration:', { email, firstName, lastName, isTrainer });
       
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForRegistration'),
+      // Use the auth context's register function instead of direct API call
+      await register({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName
       });
+      
       setShowRegisterSheet(false);
-      navigate("/auth");
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("❌ Registration error:", error);
       toast({
         title: t('common.error'),
-        description: t('auth.registrationFailed'),
+        description: error instanceof Error ? error.message : t('auth.registrationFailed'),
         variant: "destructive",
       });
     } finally {
@@ -173,7 +167,7 @@ const Home = () => {
 
   const handleGoogleAuth = async () => {
     try {
-      await signInWithGoogle();
+      await loginWithGoogle();
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Google auth error:", error);
@@ -182,7 +176,8 @@ const Home = () => {
 
   const handleDiscordAuth = async () => {
     try {
-      await signInWithDiscord();
+      // TODO: Implement Discord auth when available
+      console.log("Discord auth not yet implemented");
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Discord auth error:", error);

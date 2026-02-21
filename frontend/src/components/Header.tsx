@@ -25,7 +25,8 @@ export function Header({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { toast, signInWithGoogle, signInWithDiscord } = useAuth();
+  const { toast } = useToast();
+  const { loginWithGoogle, register, login } = useAuth();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showRegisterSheet, setShowRegisterSheet] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,47 +48,32 @@ export function Header({
 
     setIsLoading(true);
     try {
-      // TODO: Implement email/password auth
-      console.log("Signing in with:", { email });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForLogin'),
+      await login({
+        email,
+        password
       });
-      navigate("/auth");
+      setShowEmailForm(false);
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.loginFailed'),
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegister = async (email: string, password: string, isTrainer: boolean) => {
+  const handleRegister = async (email: string, password: string, firstName: string, lastName: string, isTrainer: boolean) => {
     setIsRegistering(true);
     try {
-      // TODO: Implement registration logic
-      console.log("Registering:", { email, isTrainer });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: t('common.success'),
-        description: t('auth.checkEmailForRegistration'),
+      await register({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName
       });
       setShowRegisterSheet(false);
-      navigate("/auth");
     } catch (error) {
       console.error("Registration error:", error);
-      toast({
-        title: t('common.error'),
-        description: t('auth.registrationFailed'),
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsRegistering(false);
     }
@@ -95,7 +81,7 @@ export function Header({
 
   const handleGoogleAuth = async () => {
     try {
-      await signInWithGoogle();
+      await loginWithGoogle();
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Google auth error:", error);
@@ -109,7 +95,8 @@ export function Header({
 
   const handleDiscordAuth = async () => {
     try {
-      await signInWithDiscord();
+      // Discord auth not implemented yet
+      console.log("Discord auth not implemented");
       setShowRegisterSheet(false);
     } catch (error) {
       console.error("Discord auth error:", error);

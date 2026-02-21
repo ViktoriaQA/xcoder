@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "@/pages/Auth";
 import AuthCallback from "@/pages/AuthCallback";
-import Onboarding from "@/pages/Onboarding";
 import Dashboard from "@/pages/Dashboard";
 import Home from "@/pages/Home";
 import Tournaments from "@/pages/Tournaments";
@@ -27,7 +26,6 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/tournaments" element={<Tournaments />} />
             <Route
               path="/dashboard"

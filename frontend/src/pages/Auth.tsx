@@ -4,68 +4,130 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Terminal, Mail, Lock, User, GraduationCap, Trophy, Eye, EyeOff } from "lucide-react";
+import { Terminal, Mail, Lock, User, GraduationCap, Trophy, Eye, EyeOff, Phone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AuthFab } from "@/components/AuthFab";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthButtons } from "@/components/AuthButtons";
 
 const Auth = () => {
-  const { session, loading, signInWithGoogle, signInWithDiscord, profile } = useAuth();
+  const { isAuthenticated, loading, login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Form state
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+380");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isTrainer, setIsTrainer] = useState(false);
+  const [usePhone, setUsePhone] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const validatePhone = (phone: string) => {
+    return /^\+?[1-9]\d{1,14}$/.test(phone);
+  };
+
+  const validatePassword = (password: string) => {
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    
+    // Validation
+    if (usePhone ? !phone : !email) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: `Please fill in ${usePhone ? 'phone number' : 'email'}`,
         variant: "destructive",
       });
       return;
     }
-    
-    const role = isTrainer ? 'trainer' : 'student';
+
+    if (!isLogin && (!firstName || !lastName)) {
+      toast({
+        title: "Error",
+        description: "Please fill in first name and last name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password) {
+      toast({
+        title: "Error",
+        description: "Please fill in password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isLogin && !validatePassword(password)) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters with uppercase, lowercase, and number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (usePhone && !validatePhone(phone)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!usePhone && !validateEmail(email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
-      // TODO: Implement email/password sign in
-      console.log("Signing in with:", { email, role });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Success",
-        description: "Check your email for a magic link",
-      });
+      if (isLogin) {
+        await login({
+          email: usePhone ? undefined : email,
+          phone: usePhone ? phone : undefined,
+          password
+        });
+      } else {
+        await register({
+          email: usePhone ? undefined : email,
+          phone: usePhone ? phone : undefined,
+          country_code: usePhone ? countryCode : "",
+          first_name: firstName,
+          last_name: lastName,
+          password
+        });
+      }
     } catch (error) {
-      console.error("Sign in error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to sign in. Please try again.",
-        variant: "destructive",
-      });
+      // Error handling is done in auth context
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!loading && session) {
-      if (profile && !profile.onboarded) {
-        navigate("/onboarding");
-      } else if (profile?.onboarded) {
-        navigate("/dashboard");
-      }
+    if (!loading && isAuthenticated) {
+      navigate("/dashboard");
     }
-  }, [loading, session, profile, navigate]);
+  }, [loading, isAuthenticated, navigate]);
 
   if (loading) {
     return (
@@ -121,102 +183,171 @@ const Auth = () => {
       </header>
 
       <div className="flex-1 flex items-center justify-center p-4">
-        {!isMobile && (
-          <div className="w-full max-w-md space-y-8">
-            {/* Login card */}
-            <div className="rounded-lg border border-border bg-card p-6 space-y-6 neon-border">
-          <form onSubmit={handleEmailSignIn} className="space-y-6">
-            {/* Role Selector */}
-            <div className="space-y-2">
-              <Label className="block text-sm font-mono text-muted-foreground mb-2">
-                <span className="text-primary">$</span> select role
-              </Label>
-              <div className="flex items-center justify-between p-0.5 bg-muted/30 rounded-lg border border-border h-9">
-                <button
-                  type="button"
-                  onClick={() => setIsTrainer(false)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <GraduationCap className="h-3.5 w-3.5" />
-                  <span>Student</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsTrainer(true)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${isTrainer ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                  <User className="h-3.5 w-3.5" />
-                  <span>Trainer</span>
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2 pt-2">
-              <Label htmlFor="email" className="font-mono text-sm">
-                <span className="text-primary">$</span> email
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
+        <div className="w-full max-w-md space-y-8">
+          {/* Auth card */}
+          <div className="rounded-lg border border-border bg-card p-6 space-y-6 neon-border">
+            {/* Login/Register toggle */}
+            <div className="flex items-center justify-between p-0.5 bg-muted/30 rounded-lg border border-border h-9">
+              <button
+                type="button"
+                onClick={() => setIsLogin(true)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Lock className="h-3.5 w-3.5" />
+                <span>Login</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <User className="h-3.5 w-3.5" />
+                <span>Register</span>
+              </button>
             </div>
 
-            <div className="space-y-2 pt-2">
-              <Label htmlFor="password" className="font-mono text-sm">
-                <span className="text-primary">$</span> password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email/Phone toggle */}
+              <div className="space-y-2">
+                <Label className="block text-sm font-mono text-muted-foreground mb-2">
+                  <span className="text-primary">$</span> contact method
+                </Label>
+                <div className="flex items-center justify-between p-0.5 bg-muted/30 rounded-lg border border-border h-9">
+                  <button
+                    type="button"
+                    onClick={() => setUsePhone(false)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!usePhone ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUsePhone(true)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${usePhone ? 'bg-green-500 text-black shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    <span>Phone</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-11 font-mono text-sm mt-6"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </form>
+              {/* Email/Phone field */}
+              <div className="space-y-2">
+                <Label htmlFor={usePhone ? "phone" : "email"} className="font-mono text-sm">
+                  <span className="text-primary">$</span> {usePhone ? "phone" : "email"}
+                </Label>
+                <div className="relative">
+                  {usePhone ? (
+                    <>
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+380123456789"
+                        className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
 
-          <AuthButtons
-            onGoogleAuth={signInWithGoogle}
-            onDiscordAuth={signInWithDiscord}
-            isLoading={isLoading}
-            variant="login"
-          />
+              {/* Registration fields */}
+              {!isLogin && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="font-mono text-sm">
+                        <span className="text-primary">$</span> first_name
+                      </Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="John"
+                        className="font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="font-mono text-sm">
+                        <span className="text-primary">$</span> last_name
+                      </Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Doe"
+                        className="font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
-          {/* <div className="text-xs text-muted-foreground font-mono text-center">
-            <span className="text-primary/50">//</span> secure authentication via OAuth 2.0
-          </div> */}
+              {/* Password field */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-mono text-sm">
+                  <span className="text-primary">$</span> password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit button */}
+              <Button
+                type="submit"
+                className="w-full h-11 font-mono text-sm mt-6"
+                disabled={isLoading}
+              >
+                {isLoading ? (isLogin ? 'Signing in...' : 'Registering...') : (isLogin ? 'Sign in' : 'Register')}
+              </Button>
+            </form>
+
+            <AuthButtons
+              onGoogleAuth={loginWithGoogle}
+              onDiscordAuth={async () => {}} // TODO: implement Discord
+              isLoading={isLoading}
+              variant="login"
+            />
+          </div>
         </div>
-
-        </div>
-          )
-        }
       </div>
 
       {/* Footer */}

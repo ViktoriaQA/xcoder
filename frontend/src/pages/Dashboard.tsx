@@ -9,8 +9,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!loading && !session) navigate("/auth");
-    if (!loading && session && profile && !profile.onboarded) navigate("/onboarding");
-  }, [loading, session, profile, navigate]);
+  }, [loading, session, navigate]);
 
   if (loading) {
     return (

@@ -1,75 +1,28 @@
 import { Router } from 'express';
-import { AuthRequest } from '../middleware/auth';
-import { supabase } from '../utils/supabase';
-import { createError } from '../middleware/errorHandler';
+import { AuthController } from '../controllers/authController';
 
 const router = Router();
 
-// Verify token endpoint
-router.post('/verify', async (req, res, next) => {
-  try {
-    const { token } = req.body;
+// Registration endpoint
+router.post('/register', AuthController.register);
 
-    if (!token) {
-      throw createError('Token required', 400);
-    }
+// Login endpoint
+router.post('/login', AuthController.login);
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+// Get current user
+router.get('/me', AuthController.getCurrentUser);
 
-    if (error || !user) {
-      throw createError('Invalid token', 401);
-    }
+// Verify phone
+router.post('/verify-phone', AuthController.verifyPhone);
 
-    // Get user profile and role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+// Verify email
+router.post('/verify-email', AuthController.verifyEmail);
 
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
+// Resend SMS code
+router.post('/resend-sms/:phone', AuthController.resendSMS);
 
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        profile,
-        role: roleData?.role
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Refresh token endpoint
-router.post('/refresh', async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-
-    if (!refreshToken) {
-      throw createError('Refresh token required', 400);
-    }
-
-    const { data, error } = await supabase.auth.refreshSession({
-      refresh_token: refreshToken
-    });
-
-    if (error || !data.session) {
-      throw createError('Invalid refresh token', 401);
-    }
-
-    res.json({
-      session: data.session,
-      user: data.user
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+// Google OAuth (TODO: implement)
+router.get('/google/login', AuthController.googleLogin);
+router.get('/google/callback', AuthController.googleCallback);
 
 export default router;

@@ -17,7 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppSidebar() {
-  const { profile, role, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const { state } = useSidebar();
   const navigate = useNavigate();
   const collapsed = state === "collapsed";
@@ -44,11 +44,10 @@ export function AppSidebar() {
     { title: "Admin", url: "/admin", icon: Shield },
   ];
 
-  const items = role === "admin" ? adminItems : role === "trainer" ? trainerItems : studentItems;
+  const items = user?.role === "admin" ? adminItems : user?.role === "trainer" ? trainerItems : studentItems;
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
+  const handleSignOut = () => {
+    logout();
   };
 
   return (
@@ -95,15 +94,14 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-border p-3">
         <div className="flex items-center gap-2">
           <Avatar className="w-8 h-8 border border-border">
-            <AvatarImage src={profile?.avatar_url ?? undefined} />
             <AvatarFallback className="bg-muted text-muted-foreground font-mono text-xs">
-              {profile?.nickname?.slice(0, 2).toUpperCase() ?? "??"}
+              {user?.first_name?.slice(0, 2).toUpperCase() ?? user?.email?.slice(0, 2).toUpperCase() ?? "?"}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-mono text-sidebar-foreground truncate">{profile?.nickname}</p>
-              <p className="text-xs font-mono text-muted-foreground">{role}</p>
+              <p className="text-xs font-mono text-sidebar-foreground truncate">{user?.first_name || user?.email || "User"}</p>
+              <p className="text-xs font-mono text-muted-foreground">{user?.role || "student"}</p>
             </div>
           )}
           {!collapsed && (
