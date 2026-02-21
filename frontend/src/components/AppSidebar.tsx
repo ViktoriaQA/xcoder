@@ -1,4 +1,4 @@
-import { Trophy, BookOpen, Users, CreditCard, Shield, Settings, LogOut, Terminal, LayoutDashboard } from "lucide-react";
+import { Trophy, BookOpen, Users, CreditCard, Shield, Settings, LogOut, Terminal, LayoutDashboard, PanelLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarHeader,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,17 +54,23 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
-      <div 
-        className="p-4 flex items-center gap-2 border-b border-border cursor-pointer hover:bg-sidebar-accent/50 transition-colors"
-        onClick={() => navigate("/")}
-      >
-        <Terminal className="w-6 h-6 text-primary shrink-0" />
-        {!collapsed && (
-          <span className="font-mono font-bold text-primary text-lg neon-text">
-            CodeArena
-          </span>
-        )}
-      </div>
+      <SidebarHeader className="border-b border-border h-12">
+        <div className="h-full flex items-center justify-between px-4">
+          {!collapsed && (
+            <div className="flex items-center gap-2 cursor-pointer hover:bg-sidebar-accent/50 transition-colors rounded-md p-1"
+              onClick={() => navigate("/")}
+            >
+              <Terminal className="w-6 h-6 text-primary shrink-0" />
+              <span className="font-mono font-bold text-primary text-lg neon-text">
+                CodeArena
+              </span>
+            </div>
+          )}
+          <div className={collapsed ? "flex justify-center w-full" : ""}>
+            <SidebarTrigger className="text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent" />
+          </div>
+        </div>
+      </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>

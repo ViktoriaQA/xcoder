@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Footer } from "@/components/Footer";
 
@@ -38,7 +38,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <AppSidebar />
           <main className="flex-1 flex flex-col min-w-0">
             <header className="h-12 flex-shrink-0 flex items-center border-b border-border px-4 bg-card/50 backdrop-blur-sm">
-              <SidebarTrigger className="text-muted-foreground hover:text-primary" />
               <div className="ml-auto flex items-center gap-3">
                 <span className="text-xs font-mono px-2 py-1 rounded border border-primary/30 text-primary bg-primary/5">
                   USER
