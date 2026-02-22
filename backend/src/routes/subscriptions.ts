@@ -101,7 +101,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
   try {
     const userId = req.user!.id;
 
-    // Get payment history with plan details
+    // Get only COMPLETED payment history with plan details
     const { data: payments, error } = await supabase
       .from('payment_attempts')
       .select(`
@@ -109,6 +109,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
         subscription_plans(name, price_monthly, price_yearly, features)
       `)
       .eq('user_id', userId)
+      .eq('status', 'completed') // Only show completed payments
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -121,22 +122,15 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
       const price = payment.billing_period === 'year' ? plan?.price_yearly : plan?.price_monthly;
       const duration = payment.billing_period === 'year' ? 'рік' : 'місяць';
       
-      // Determine subscription status based on payment status and dates
+      // Determine subscription status based on payment dates
       let status: 'active' | 'cancelled' | 'expired' | 'pending';
-      if (payment.status === 'pending') {
-        status = 'pending';
-      } else if (payment.status === 'failed') {
-        status = 'cancelled';
-      } else if (payment.status === 'completed') {
-        // Check if subscription is still active
-        const endDate = new Date(payment.created_at);
-        endDate.setMonth(endDate.getMonth() + (payment.billing_period === 'year' ? 12 : 1));
-        
-        if (endDate > new Date()) {
-          status = 'active';
-        } else {
-          status = 'expired';
-        }
+      
+      // Check if subscription is still active
+      const endDate = new Date(payment.created_at);
+      endDate.setMonth(endDate.getMonth() + (payment.billing_period === 'year' ? 12 : 1));
+      
+      if (endDate > new Date()) {
+        status = 'active';
       } else {
         status = 'expired';
       }
@@ -152,7 +146,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
         price: price || 0,
         duration,
         payment_method: payment.response_data?.payment_method || 'LiqPay',
-        auto_renewal: payment.response_data?.rec_token ? true : false
+        auto_renewal: true // All subscriptions have auto-renewal enabled
       };
     });
 
