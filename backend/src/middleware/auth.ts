@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { createError } from './errorHandler';
 import { supabase } from '../utils/supabase';
+import { JWTService } from '../services/jwtService';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -24,27 +25,48 @@ export const authMiddleware = async (
       throw createError('Access token required', 401);
     }
 
-    // Verify JWT token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Try JWT verification first (for regular auth endpoints)
+    try {
+      const decoded = JWTService.verifyJWT(token);
+      
+      // Get user role from database
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', decoded.sub)
+        .single();
 
-    if (error || !user) {
-      throw createError('Invalid or expired token', 401);
+      req.user = {
+        id: decoded.sub,
+        email: decoded.email || '',
+        role: roleData?.role
+      };
+
+      next();
+      return;
+    } catch (jwtError) {
+      // If JWT fails, try Supabase token (for Supabase auth)
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+
+      if (error || !user) {
+        throw createError('Invalid or expired token', 401);
+      }
+
+      // Get user role from database
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      req.user = {
+        id: user.id,
+        email: user.email || '',
+        role: roleData?.role
+      };
+
+      next();
     }
-
-    // Get user role from database
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    req.user = {
-      id: user.id,
-      email: user.email || '',
-      role: roleData?.role
-    };
-
-    next();
   } catch (error) {
     next(error);
   }

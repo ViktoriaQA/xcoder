@@ -11,6 +11,7 @@ import {
   Package,
   Subscription
 } from '../models/subscription';
+import { supabase } from '../utils/supabase';
 
 export class PaymentController {
   private liqPayService: LiqPayService;
@@ -38,8 +39,12 @@ export class PaymentController {
       }
 
       // Get package details
+      console.log('Looking for package with ID:', package_id);
       const packageDetails = await this.getPackageById(package_id);
+      console.log('Found package:', packageDetails);
+      
       if (!packageDetails) {
+        console.error('Package not found with ID:', package_id);
         res.status(404).json({ error: 'Package not found' });
         return;
       }
@@ -61,7 +66,7 @@ export class PaymentController {
         order_id: orderId,
         amount: amount,
         currency: packageDetails.currency,
-        description: `Підписка на ${packageDetails.name} - ${billing_cycle === 'monthly' ? 'щомісячна' : 'річна'}`,
+        description: `Оплата за надання доступу до SaaS платформи (програмне забезпечення як послуга) за пакет '${packageDetails.name}'`,
         order_type: orderType,
         customer: userId,
         email: req.user?.email,
@@ -103,7 +108,13 @@ export class PaymentController {
       res.json(response);
     } catch (error) {
       console.error('Error initiating subscription payment:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      
+      // Return actual error message if available
+      const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+      res.status(500).json({ 
+        error: 'Payment initiation failed',
+        details: errorMessage 
+      });
     }
   }
 
@@ -425,7 +436,37 @@ export class PaymentController {
 
   // Database helper methods (these would be implemented with your actual database)
   private async getPackageById(packageId: string): Promise<Package | null> {
-    // Database implementation
+    console.log('Querying database for package:', packageId);
+    
+    // Query the subscription_plans table
+    const { data, error } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', packageId)
+      .eq('is_active', true)
+      .single();
+    
+    if (error) {
+      console.error('Database error:', error);
+      return null;
+    }
+    
+    console.log('Database result:', data);
+    
+    // Transform to match Package interface
+    if (data) {
+      return {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        price: data.price_monthly || data.price_yearly || 0,
+        currency: data.currency || 'UAH',
+        duration_months: data.price_yearly ? 12 : 1,
+        features: data.features || [],
+        is_active: data.is_active
+      } as Package;
+    }
+    
     return null;
   }
 

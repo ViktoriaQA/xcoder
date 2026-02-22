@@ -176,6 +176,9 @@ export interface PaymentRequest {
 
 export interface PaymentResponse {
   checkout_url: string;
+  checkout_form?: string;
+  data?: string;
+  signature?: string;
   payment_id: string;
   order_id: string;
   status: string;

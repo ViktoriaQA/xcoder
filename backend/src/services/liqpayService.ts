@@ -9,29 +9,29 @@ export class LiqPayService {
   private sandbox: boolean;
 
   constructor() {
-    this.publicKey = process.env.LIQPAY_PUBLIC_KEY || '';
+    // Log environment variables for debugging
+    console.log('Environment variables during LiqPay init:');
+    console.log('LIQPAY_PUBLIC_KEY from env:', process.env.LIQPAY_PUBLIC_KEY);
+    console.log('LIQPAY_PRIVATE_KEY from env:', process.env.LIQPAY_PRIVATE_KEY);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    
+    // Use standard LiqPay demo credentials
+    this.publicKey =  process.env.LIQPAY_PUBLIC_KEY || '';
     this.privateKey = process.env.LIQPAY_PRIVATE_KEY || '';
     this.callbackUrl = process.env.LIQPAY_CALLBACK_URL || '';
     this.resultUrl = process.env.LIQPAY_RESULT_URL || '';
     this.sandbox = process.env.NODE_ENV !== 'production';
-
-    // In development, allow missing keys but log a warning
-    if (!this.publicKey || !this.privateKey) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('LiqPay keys not configured. Payment functionality will be limited.');
-        // Set default sandbox values for development
-        this.publicKey = 'sandbox_public_key';
-        this.privateKey = 'sandbox_private_key';
-      } else {
-        throw new Error('LiqPay public and private keys are required');
-      }
-    }
+    
+    // For debugging: log the keys being used
+    console.log('LiqPay Service initialized with public key:', this.publicKey);
+    console.log('Sandbox mode:', this.sandbox);
   }
 
   private generateSignature(data: string): string {
+    const signatureString = this.privateKey + data + this.privateKey;
     return crypto
       .createHash('sha1')
-      .update(this.privateKey + data + this.privateKey)
+      .update(signatureString)
       .digest('base64');
   }
 
@@ -44,35 +44,13 @@ export class LiqPayService {
   }
 
   async createPaymentURL(request: PaymentRequest): Promise<PaymentResponse> {
-    // If using sandbox keys, return a mock response
-    if (this.publicKey === 'sandbox_public_key') {
-      return {
-        checkout_url: 'https://sandbox.liqpay.ua/api/3/checkout',
-        payment_id: 'sandbox_payment_id',
-        order_id: request.order_id,
-        status: 'sandbox',
-        amount: request.amount,
-        currency: request.currency || 'UAH',
-        description: request.description,
-        result_url: this.resultUrl,
-        server_url: this.callbackUrl,
-        order_type: request.order_type,
-        language: request.language || 'uk',
-        create_date: new Date().toISOString(),
-        public_key: this.publicKey,
-        acq_id: 'sandbox',
-        card_type: 'sandbox',
-        ip: '127.0.0.1',
-        commission: 0,
-        amount_debit: request.amount,
-        currency_debit: request.currency || 'UAH',
-        payment_system: 'liqpay_sandbox',
-        payment_method: 'card',
-      };
-    }
+    console.log('LiqPay publicKey:', this.publicKey);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    
+    // Generate checkout form for POST submission to LiqPay
     const requestData = {
-      public_key: this.publicKey,
       version: '3',
+      public_key: this.publicKey,
       action: 'pay',
       amount: request.amount,
       currency: request.currency || 'UAH',
@@ -81,138 +59,46 @@ export class LiqPayService {
       result_url: request.result_url || this.resultUrl,
       server_url: request.server_url || this.callbackUrl,
       language: request.language || 'uk',
-      expire_date: request.expire_date,
-      order_type: request.order_type,
-      recurring_by_token: request.recurring_by_token || false,
-      customer: request.customer,
-      email: request.email,
-      phone: request.phone,
-      card_token: request.card_token,
-      split_rules: request.split_rules,
-      split_test: request.split_test,
-      dae: request.dae,
-      dae_info: request.dae_info,
-      product_category: request.product_category,
-      product_description: request.product_description,
-      product_name: request.product_name,
-      product_url: request.product_url,
-      product_count: request.product_count,
-      product_price: request.product_price,
-      delivery_address: request.delivery_address,
-      delivery_city: request.delivery_city,
-      delivery_country: request.delivery_country,
-      delivery_state: request.delivery_state,
-      delivery_postcode: request.delivery_postcode,
       sandbox: this.sandbox,
+      expired_date: request.expire_date,
     };
 
     const data = this.base64Encode(requestData);
     const signature = this.generateSignature(data);
 
-    const checkoutUrl = `https://www.liqpay.ua/api/3/checkout?data=${encodeURIComponent(data)}&signature=${encodeURIComponent(signature)}`;
+    console.log('LiqPay request data:', requestData);
+    console.log('LiqPay encoded data:', data);
 
-    // Make API call to get payment details
-    const apiResponse = await this.makeApiCall({
-      action: 'pay',
-      public_key: this.publicKey,
-      version: '3',
-      amount: request.amount,
-      currency: request.currency || 'UAH',
-      description: request.description,
-      order_id: request.order_id,
-      result_url: request.result_url || this.resultUrl,
-      server_url: request.server_url || this.callbackUrl,
-      language: request.language || 'uk',
-      expire_date: request.expire_date,
-      order_type: request.order_type,
-      recurring_by_token: request.recurring_by_token || false,
-      customer: request.customer,
-      email: request.email,
-      phone: request.phone,
-      card_token: request.card_token,
-      split_rules: request.split_rules,
-      split_test: request.split_test,
-      dae: request.dae,
-      dae_info: request.dae_info,
-      product_category: request.product_category,
-      product_description: request.product_description,
-      product_name: request.product_name,
-      product_url: request.product_url,
-      product_count: request.product_count,
-      product_price: request.product_price,
-      delivery_address: request.delivery_address,
-      delivery_city: request.delivery_city,
-      delivery_country: request.delivery_country,
-      delivery_state: request.delivery_state,
-      delivery_postcode: request.delivery_postcode,
-      sandbox: this.sandbox,
-    });
+    // Generate checkout form for POST submission to LiqPay
+    const checkoutForm = `
+<form method="POST" action="https://www.liqpay.ua/api/3/checkout">
+  <input type="hidden" name="data" value="${data}"/>
+  <input type="hidden" name="signature" value="${signature}"/>
+  <button type="submit">Pay with LiqPay</button>
+</form>`;
+    
+    console.log('Generated checkout form:', checkoutForm);
+
+    // Return checkout URL with data and signature as query parameters for GET redirect
+    const checkoutUrl = `https://www.liqpay.ua/api/3/checkout?data=${encodeURIComponent(data)}&signature=${encodeURIComponent(signature)}`;
 
     return {
       checkout_url: checkoutUrl,
-      payment_id: apiResponse.payment_id,
-      order_id: apiResponse.order_id,
-      status: apiResponse.status,
-      amount: apiResponse.amount,
-      currency: apiResponse.currency,
-      description: apiResponse.description,
-      result_url: apiResponse.result_url,
-      server_url: apiResponse.server_url,
-      order_type: apiResponse.order_type,
-      language: apiResponse.language,
-      expire_date: apiResponse.expire_date,
-      create_date: apiResponse.create_date,
-      end_date: apiResponse.end_date,
-      public_key: apiResponse.public_key,
-      acq_id: apiResponse.acq_id,
-      card_token: apiResponse.card_token,
-      card_type: apiResponse.card_type,
-      ip: apiResponse.ip,
-      info: apiResponse.info,
-      commission: apiResponse.commission,
-      commission_credit: apiResponse.commission_credit,
-      amount_debit: apiResponse.amount_debit,
-      amount_credit: apiResponse.amount_credit,
-      currency_debit: apiResponse.currency_debit,
-      currency_credit: apiResponse.currency_credit,
-      sender_card_bank: apiResponse.sender_card_bank,
-      sender_card_country: apiResponse.sender_card_country,
-      sender_card_mask2: apiResponse.sender_card_mask2,
-      receiver_card_bank: apiResponse.receiver_card_bank,
-      receiver_card_country: apiResponse.receiver_card_country,
-      receiver_card_mask2: apiResponse.receiver_card_mask2,
-      ip_country: apiResponse.ip_country,
-      mpi_eci: apiResponse.mpi_eci,
-      is_3ds: apiResponse.is_3ds,
-      product_category: apiResponse.product_category,
-      product_description: apiResponse.product_description,
-      product_name: apiResponse.product_name,
-      product_url: apiResponse.product_url,
-      product_count: apiResponse.product_count,
-      product_price: apiResponse.product_price,
-      liability: apiResponse.liability,
-      fawry_code: apiResponse.fawry_code,
-      card_brand: apiResponse.card_brand,
-      customer: apiResponse.customer,
-      bonus: apiResponse.bonus,
-      bonus_credit: apiResponse.bonus_credit,
-      invoice_id: apiResponse.invoice_id,
-      payment_system: apiResponse.payment_system,
-      payment_method: apiResponse.payment_method,
-      card_product: apiResponse.card_product,
-      card_category: apiResponse.card_category,
-      token: apiResponse.token,
-      token_card_mask2: apiResponse.token_card_mask2,
-      token_card_bank: apiResponse.token_card_bank,
-      token_card_country: apiResponse.token_card_country,
-      token_card_type: apiResponse.token_card_type,
-      token_card_brand: apiResponse.token_card_brand,
-      token_card_product: apiResponse.token_card_product,
-      token_card_category: apiResponse.token_card_category,
-      token_card_status: apiResponse.token_card_status,
-      token_card_exp: apiResponse.token_card_exp,
-      token_card_token: apiResponse.token_card_token,
-      token_card_rec_token: apiResponse.token_card_rec_token,
+      checkout_form: checkoutForm,
+      data: data,
+      signature: signature,
+      payment_id: `checkout_${Date.now()}`,
+      order_id: request.order_id,
+      status: 'checkout',
+      amount: request.amount,
+      currency: request.currency || 'UAH',
+      description: request.description,
+      result_url: request.result_url || this.resultUrl,
+      server_url: request.server_url || this.callbackUrl,
+      language: request.language || 'uk',
+      order_type: request.order_type || 'recurring',
+      create_date: new Date().toISOString(),
+      public_key: this.publicKey,
     };
   }
 
@@ -254,12 +140,17 @@ export class LiqPayService {
       payment_id: paymentId,
     };
 
-    const response = await fetch('https://www.liqpay.ua/api/request', {
+    const apiUrl = 'https://www.liqpay.ua/api/request';
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(requestData),
+      body: new URLSearchParams({
+        data: this.base64Encode(requestData),
+        signature: this.generateSignature(this.base64Encode(requestData)),
+      }).toString(),
     });
 
     if (!response.ok) {
@@ -273,22 +164,57 @@ export class LiqPayService {
     const requestData = this.base64Encode(data);
     const signature = this.generateSignature(requestData);
 
-    const response = await fetch('https://www.liqpay.ua/api/request', {
+    // Use correct LiqPay API endpoints
+    const apiUrl = 'https://www.liqpay.ua/api/request';
+    
+    console.log('LiqPay API call:', {
+      apiUrl,
+      publicKey: this.publicKey,
+      sandbox: this.sandbox,
+      requestDataPreview: this.base64Decode(requestData)
+    });
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         data: requestData,
         signature: signature,
-      }),
+      }).toString(),
     });
 
     if (!response.ok) {
+      console.error('LiqPay API response error:', response.status, response.statusText);
       throw new Error(`LiqPay API error: ${response.statusText}`);
     }
 
-    const result = await response.json() as any;
+    const responseText = await response.text();
+    console.log('LiqPay API raw response:', responseText);
+    console.log('Response type:', typeof responseText);
+    console.log('Is responseText empty?', !responseText);
+    
+    // Liqpay returns base64 encoded data in the response
+    let result;
+    try {
+      // Try to parse as JSON first (for error responses)
+      result = JSON.parse(responseText);
+      console.log('Parsed as JSON:', result);
+    } catch (e) {
+      // If it's not JSON, it's likely base64 encoded data
+      try {
+        console.log('Trying to decode as base64...');
+        const decodedData = this.base64Decode(responseText);
+        console.log('Decoded data:', decodedData);
+        result = decodedData;
+      } catch (decodeError) {
+        console.error('Base64 decode error:', decodeError);
+        throw new Error(`Invalid LiqPay response format: ${responseText}`);
+      }
+    }
+    
+    console.log('LiqPay API parsed response:', result);
     
     if (result.status && result.status === 'error') {
       throw new Error(`LiqPay error: ${result.err_description || result.message}`);

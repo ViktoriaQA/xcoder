@@ -65,8 +65,8 @@ const Subscription = () => {
       setProcessing(planId);
       const response = await subscriptionService.initiateSubscription(planId);
       
-      if (response.payment_url) {
-        window.location.href = response.payment_url;
+      if (response.checkout_url) {
+        window.location.href = response.checkout_url;
       } else {
         toast({
           title: "Помилка",
@@ -113,7 +113,7 @@ const Subscription = () => {
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             {user 
-              ? `Вітаємо, ${user.nickname || user.first_name}! Оберіть оптимальний план для вашого ${user.role === 'student' ? 'навчання' : 'тренерської роботи'}`
+              ? `Вітаємо, ${user.nickname || user.first_name}! Оберіть оптимальний план для вашої ${user.role === 'student' ? 'навчальної роботи' : 'тренерської роботи'}`
               : "Оберіть план, який найкраще відповідає вашим потребам"
             }
           </p>

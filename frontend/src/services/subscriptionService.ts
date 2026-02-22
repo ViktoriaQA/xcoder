@@ -19,8 +19,9 @@ export interface SubscriptionResponse {
 }
 
 export interface InitiateSubscriptionResponse {
-  payment_url: string;
+  checkout_url: string;
   order_id: string;
+  payment_id: string;
 }
 
 class SubscriptionService {
@@ -88,12 +89,13 @@ class SubscriptionService {
     };
   }
 
-  async initiateSubscription(planId: string): Promise<InitiateSubscriptionResponse> {
+  async initiateSubscription(planId: string, billingCycle: 'monthly' | 'yearly' = 'monthly'): Promise<InitiateSubscriptionResponse> {
     const response = await fetch(`${config.api.baseUrl}/api/v1/payment/initiate-subscription`, {
       method: 'POST',
       headers: this.getAuthHeaders(),
       body: JSON.stringify({
-        plan_id: planId,
+        package_id: planId,
+        billing_cycle: billingCycle,
       }),
     });
 
