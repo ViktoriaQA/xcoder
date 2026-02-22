@@ -96,6 +96,70 @@ router.get('/payments', authMiddleware, async (req: AuthRequest, res, next) => {
   }
 });
 
+// Get user's subscription history
+router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
+  try {
+    const userId = req.user!.id;
+
+    // Get payment history with plan details
+    const { data: payments, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        subscription_plans(name, price_monthly, price_yearly, features)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw createError('Failed to fetch subscription history', 500);
+    }
+
+    // Transform payment data into subscription history format
+    const subscriptionHistory = payments.map(payment => {
+      const plan = payment.subscription_plans;
+      const price = payment.billing_cycle === 'yearly' ? plan?.price_yearly : plan?.price_monthly;
+      const duration = payment.billing_cycle === 'yearly' ? 'рік' : 'місяць';
+      
+      // Determine subscription status based on payment status and dates
+      let status: 'active' | 'cancelled' | 'expired' | 'pending';
+      if (payment.status === 'pending') {
+        status = 'pending';
+      } else if (payment.status === 'failed') {
+        status = 'cancelled';
+      } else {
+        // Check if subscription is still active
+        const endDate = new Date(payment.created_at);
+        endDate.setMonth(endDate.getMonth() + (payment.billing_cycle === 'yearly' ? 12 : 1));
+        
+        if (endDate > new Date()) {
+          status = 'active';
+        } else {
+          status = 'expired';
+        }
+      }
+
+      return {
+        id: payment.id,
+        plan_name: plan?.name || 'Невідомий план',
+        status,
+        start_date: payment.created_at,
+        end_date: status === 'active' ? null : new Date(new Date(payment.created_at).setMonth(
+          new Date(payment.created_at).getMonth() + (payment.billing_cycle === 'yearly' ? 12 : 1)
+        )).toISOString(),
+        price: price || 0,
+        duration,
+        payment_method: 'LiqPay',
+        auto_renewal: payment.rec_token ? true : false
+      };
+    });
+
+    res.json({ subscriptionHistory });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Create payment record (called after successful LiqPay payment)
 router.post('/payments', authMiddleware, async (req: AuthRequest, res, next) => {
   try {

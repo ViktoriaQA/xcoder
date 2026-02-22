@@ -18,6 +18,22 @@ export interface SubscriptionResponse {
   data: SubscriptionPlan[];
 }
 
+export interface SubscriptionHistory {
+  id: string;
+  plan_name: string;
+  status: 'active' | 'cancelled' | 'expired' | 'pending';
+  start_date: string;
+  end_date?: string;
+  price: number;
+  duration: string;
+  payment_method?: string;
+  auto_renewal: boolean;
+}
+
+export interface SubscriptionHistoryResponse {
+  data: SubscriptionHistory[];
+}
+
 export interface InitiateSubscriptionResponse {
   checkout_url: string;
   order_id: string;
@@ -117,6 +133,21 @@ class SubscriptionService {
     }
 
     return response.json();
+  }
+
+  async getSubscriptionHistory(): Promise<SubscriptionHistoryResponse> {
+    const response = await fetch(`${config.api.baseUrl}/api/subscriptions/history`, {
+      headers: this.getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch subscription history');
+    }
+
+    const result = await response.json();
+    return {
+      data: result.subscriptionHistory || []
+    };
   }
 
   async cancelSubscription(subscriptionId: string): Promise<void> {
