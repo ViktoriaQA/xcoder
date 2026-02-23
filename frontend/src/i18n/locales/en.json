@@ -130,5 +130,27 @@
   "language": {
     "english": "English",
     "ukrainian": "Ukrainian"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "role": "Role",
+    "status": "Status",
+    "inactive": "inactive",
+    "tournaments": "Tournaments",
+    "myProgress": "My Progress",
+    "subscription": "Subscription",
+    "taskLibrary": "Task Library",
+    "students": "Students",
+    "adminPanel": "Admin Panel",
+    "browseJoinTournaments": "Browse & join active tournaments",
+    "viewScoresHistory": "View scores and attempt history",
+    "planActive": "Plan active",
+    "upgradeToCompete": "Upgrade to compete",
+    "createManageTournaments": "Create & manage tournaments",
+    "createBrowseTasks": "Create and browse tasks",
+    "viewStudentPerformance": "View student performance",
+    "upgradeToCreate": "Upgrade to create",
+    "manageUsersPlatform": "Manage users and platform",
+    "loading": "Loading..."
   }
 }

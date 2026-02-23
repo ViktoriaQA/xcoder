@@ -130,5 +130,27 @@
   "language": {
     "english": "English",
     "ukrainian": "Українська"
+  },
+  "dashboard": {
+    "welcome": "Ласкаво просимо",
+    "role": "Роль",
+    "status": "Статус",
+    "inactive": "неактивний",
+    "tournaments": "Турніри",
+    "myProgress": "Мій прогрес",
+    "subscription": "Підписка",
+    "taskLibrary": "Бібліотека завдань",
+    "students": "Студенти",
+    "adminPanel": "Панель адміністратора",
+    "browseJoinTournaments": "Переглядайте та приєднуйтесь до активних турнірів",
+    "viewScoresHistory": "Переглядайте результати та історію спроб",
+    "planActive": "План активний",
+    "upgradeToCompete": "Оновіть для участі",
+    "createManageTournaments": "Створюйте та керуйте турнірами",
+    "createBrowseTasks": "Створюйте та переглядайте завдання",
+    "viewStudentPerformance": "Переглядайте продуктивність студентів",
+    "upgradeToCreate": "Оновіть для створення",
+    "manageUsersPlatform": "Керуйте користувачами та платформою",
+    "loading": "Завантаження..."
   }
 }
