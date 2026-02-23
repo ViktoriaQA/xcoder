@@ -68,6 +68,12 @@ const SubscriptionSuccess = () => {
       });
     }
     
+    // Additional fallback: check if we have any identifier in the URL that could work
+    if (!paymentIdentifier && searchParams.has('order_id')) {
+      paymentIdentifier = searchParams.get('order_id');
+      console.log('🔍 [SUCCESS] Using order_id from URL as fallback:', paymentIdentifier);
+    }
+    
     console.log('🆔 [SUCCESS] Final payment identifier:', paymentIdentifier);
     
     if (!paymentIdentifier) {

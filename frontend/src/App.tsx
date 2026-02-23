@@ -12,6 +12,7 @@ import Home from "@/pages/Home";
 import Tournaments from "@/pages/Tournaments";
 import Subscription from "@/pages/Subscription";
 import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
+import Progress from "@/pages/Progress";
 import AdminSubscriptions from "@/pages/AdminSubscriptions";
 import NotFound from "@/pages/NotFound";
 import '@/i18n';
@@ -43,6 +44,14 @@ const App = () => (
               element={
                 <AppLayout>
                   <SubscriptionSuccess />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/progress"
+              element={
+                <AppLayout>
+                  <Progress />
                 </AppLayout>
               }
             />

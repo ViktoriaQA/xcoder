@@ -56,7 +56,7 @@ export class LiqPayService {
       currency: request.currency || 'UAH',
       description: request.description,
       order_id: request.order_id,
-      result_url: request.result_url || this.resultUrl,
+      result_url: `${this.resultUrl}?order_id=${request.order_id}&payment_id=${request.order_id}`,
       server_url: request.server_url || this.callbackUrl,
       language: request.language || 'uk',
       sandbox: this.sandbox,
