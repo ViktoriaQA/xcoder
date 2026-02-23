@@ -176,7 +176,7 @@ const SubscriptionSuccess = () => {
   }, [searchParams, isAuthenticated, navigate]);
 
   const handleGoHome = () => {
-    navigate('/');
+    navigate('/dashboard');
   };
 
   const handleViewSubscription = () => {
