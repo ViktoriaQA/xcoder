@@ -38,6 +38,7 @@ export class AuthService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${config.api.baseUrl}${endpoint}`;
+    console.log('API Call:', { url, endpoint, method: options.method });
     
     const response = await fetch(url, {
       headers: {
@@ -47,8 +48,15 @@ export class AuthService {
       ...options,
     });
 
+    console.log('API Response:', { 
+      status: response.status, 
+      ok: response.ok,
+      url: response.url 
+    });
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
+      console.error('API Error:', error);
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 
