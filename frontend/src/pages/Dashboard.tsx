@@ -22,13 +22,13 @@ const Dashboard = () => {
   }
 
   const studentCards = [
-    { icon: Trophy, title: t('dashboard.tournaments'), desc: t('dashboard.browseJoinTournaments'), color: "text-primary", path: "/tournaments" },
+    { icon: Trophy, title: t('dashboard.tournaments'), desc: t('dashboard.browseJoinTournaments'), color: "text-primary", path: "/my-tournaments" },
     { icon: BookOpen, title: t('dashboard.myProgress'), desc: t('dashboard.viewScoresHistory'), color: "text-accent", path: "/progress" },
     { icon: CreditCard, title: t('dashboard.subscription'), desc: profile?.subscription_status === "active" ? t('dashboard.planActive') : t('dashboard.upgradeToCompete'), color: "text-neon-cyan", path: "/subscription" },
   ];
 
   const trainerCards = [
-    { icon: Trophy, title: t('dashboard.tournaments'), desc: t('dashboard.createManageTournaments'), color: "text-primary", path: "/tournaments" },
+    { icon: Trophy, title: t('dashboard.tournaments'), desc: t('dashboard.createManageTournaments'), color: "text-primary", path: "/my-tournaments" },
     { icon: BookOpen, title: t('dashboard.taskLibrary'), desc: t('dashboard.createBrowseTasks'), color: "text-accent", path: "/tasks" },
     { icon: Users, title: t('dashboard.students'), desc: t('dashboard.viewStudentPerformance'), color: "text-neon-cyan", path: "/students" },
     { icon: CreditCard, title: t('dashboard.subscription'), desc: profile?.subscription_status === "active" ? t('dashboard.planActive') : t('dashboard.upgradeToCreate'), color: "text-neon-green", path: "/subscription" },

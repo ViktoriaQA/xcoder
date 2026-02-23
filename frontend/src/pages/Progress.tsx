@@ -22,8 +22,8 @@ const Progress = () => {
   const tournamentWinRate = (stats.tournamentsWon / stats.tournamentsParticipated) * 100;
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="p-6 space-y-8">
+      <div className="max-w-6xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
             Мій прогрес
@@ -34,164 +34,152 @@ const Progress = () => {
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <Target className="w-8 h-8 text-blue-500" />
-                <span className="text-2xl font-bold text-white">
-                  {completionPercentage.toFixed(0)}%
-                </span>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Завершені завдання</p>
-              <ProgressBar value={completionPercentage} className="h-2" />
-              <p className="text-xs text-gray-500 mt-2">
-                {stats.completedTasks} з {stats.totalTasks}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="rounded-lg border border-border bg-card p-6 space-y-3 hover:neon-border transition-all duration-300 group">
+            <div className="flex items-center justify-between">
+              <Target className="w-8 h-8 text-primary group-hover:animate-pulse-glow" />
+              <span className="text-2xl font-bold font-mono text-card-foreground">
+                {completionPercentage.toFixed(0)}%
+              </span>
+            </div>
+            <h3 className="font-mono font-semibold text-card-foreground">Завершені завдання</h3>
+            <ProgressBar value={completionPercentage} className="h-2" />
+            <p className="text-xs text-muted-foreground font-mono">
+              {stats.completedTasks} з {stats.totalTasks}
+            </p>
+          </div>
 
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <Trophy className="w-8 h-8 text-yellow-500" />
-                <span className="text-2xl font-bold text-white">
-                  {stats.tournamentsWon}
-                </span>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Перемоги в турнірах</p>
-              <ProgressBar value={tournamentWinRate} className="h-2" />
-              <p className="text-xs text-gray-500 mt-2">
-                {tournamentWinRate.toFixed(0)}% перемог
-              </p>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-border bg-card p-6 space-y-3 hover:neon-border transition-all duration-300 group">
+            <div className="flex items-center justify-between">
+              <Trophy className="w-8 h-8 text-accent group-hover:animate-pulse-glow" />
+              <span className="text-2xl font-bold font-mono text-card-foreground">
+                {stats.tournamentsWon}
+              </span>
+            </div>
+            <h3 className="font-mono font-semibold text-card-foreground">Перемоги в турнірах</h3>
+            <ProgressBar value={tournamentWinRate} className="h-2" />
+            <p className="text-xs text-muted-foreground font-mono">
+              {tournamentWinRate.toFixed(0)}% перемог
+            </p>
+          </div>
 
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-8 h-8 text-green-500" />
-                <span className="text-2xl font-bold text-white">
-                  {stats.currentStreak}
-                </span>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Поточна серія</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">
-                  Найкраща: {stats.longestStreak}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-border bg-card p-6 space-y-3 hover:neon-border transition-all duration-300 group">
+            <div className="flex items-center justify-between">
+              <TrendingUp className="w-8 h-8 text-neon-green group-hover:animate-pulse-glow" />
+              <span className="text-2xl font-bold font-mono text-card-foreground">
+                {stats.currentStreak}
+              </span>
+            </div>
+            <h3 className="font-mono font-semibold text-card-foreground">Поточна серія</h3>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs font-mono">
+                Найкраща: {stats.longestStreak}
+              </Badge>
+            </div>
+          </div>
 
-          <Card className="bg-gray-800 border-gray-700">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <Calendar className="w-8 h-8 text-purple-500" />
-                <span className="text-2xl font-bold text-white">
-                  {stats.averageScore}
-                </span>
-              </div>
-              <p className="text-sm text-gray-400 mb-3">Середній бал</p>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  {stats.totalPoints} очок
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-border bg-card p-6 space-y-3 hover:neon-border transition-all duration-300 group">
+            <div className="flex items-center justify-between">
+              <Calendar className="w-8 h-8 text-neon-cyan group-hover:animate-pulse-glow" />
+              <span className="text-2xl font-bold font-mono text-card-foreground">
+                {stats.averageScore}
+              </span>
+            </div>
+            <h3 className="font-mono font-semibold text-card-foreground">Середній бал</h3>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs font-mono">
+                {stats.totalPoints} очок
+              </Badge>
+            </div>
+          </div>
         </div>
 
         {/* Recent Activity */}
-        <Card className="bg-gray-800 border-gray-700 mb-8">
-          <CardHeader>
-            <CardTitle className="text-white">Остання активність</CardTitle>
-            <CardDescription className="text-gray-400">
+        <div className="rounded-lg border border-border bg-card p-6 space-y-3 mb-8">
+          <div className="space-y-2">
+            <h3 className="font-mono font-semibold text-card-foreground text-lg">Остання активність</h3>
+            <p className="text-sm text-muted-foreground font-mono">
               Ваші нещодавні досягнення та прогрес
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
                   <div>
-                    <p className="text-white font-medium">Завершено завдання "Рекурсія"</p>
-                    <p className="text-sm text-gray-400">2 години тому</p>
+                    <p className="text-card-foreground font-medium font-mono">Завершено завдання "Рекурсія"</p>
+                    <p className="text-sm text-muted-foreground font-mono">2 години тому</p>
                   </div>
                 </div>
-                <Badge className="bg-green-600">+50 очок</Badge>
+                <Badge className="bg-primary text-primary-foreground font-mono">+50 очок</Badge>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-accent rounded-full"></div>
                   <div>
-                    <p className="text-white font-medium">Участь у турнірі "Spring Coding 2024"</p>
-                    <p className="text-sm text-gray-400">1 день тому</p>
+                    <p className="text-card-foreground font-medium font-mono">Участь у турнірі "Spring Coding 2024"</p>
+                    <p className="text-sm text-muted-foreground font-mono">1 день тому</p>
                   </div>
                 </div>
-                <Badge className="bg-yellow-600">3 місце</Badge>
+                <Badge className="bg-accent text-accent-foreground font-mono">3 місце</Badge>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-neon-cyan rounded-full"></div>
                   <div>
-                    <p className="text-white font-medium">Досягнуто серії 5 днів</p>
-                    <p className="text-sm text-gray-400">3 дні тому</p>
+                    <p className="text-card-foreground font-medium font-mono">Досягнуто серії 5 днів</p>
+                    <p className="text-sm text-muted-foreground font-mono">3 дні тому</p>
                   </div>
                 </div>
-                <Badge className="bg-blue-600">+100 очок</Badge>
+                <Badge className="bg-neon-cyan text-background font-mono">+100 очок</Badge>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Skills Progress */}
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Прогрес за навичками</CardTitle>
-            <CardDescription className="text-gray-400">
+        <div className="rounded-lg border border-border bg-card p-6 space-y-3">
+          <div className="space-y-2">
+            <h3 className="font-mono font-semibold text-card-foreground text-lg">Прогрес за навичками</h3>
+            <p className="text-sm text-muted-foreground font-mono">
               Ваш рівень володіння різними технологіями
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
             <div className="space-y-6">
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-white font-medium">JavaScript</span>
-                  <span className="text-gray-400">85%</span>
+                  <span className="text-card-foreground font-medium font-mono">JavaScript</span>
+                  <span className="text-muted-foreground font-mono">85%</span>
                 </div>
                 <ProgressBar value={85} className="h-2" />
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-white font-medium">Python</span>
-                  <span className="text-gray-400">72%</span>
+                  <span className="text-card-foreground font-medium font-mono">Python</span>
+                  <span className="text-muted-foreground font-mono">72%</span>
                 </div>
                 <ProgressBar value={72} className="h-2" />
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-white font-medium">Алгоритми</span>
-                  <span className="text-gray-400">68%</span>
+                  <span className="text-card-foreground font-medium font-mono">Алгоритми</span>
+                  <span className="text-muted-foreground font-mono">68%</span>
                 </div>
                 <ProgressBar value={68} className="h-2" />
               </div>
 
               <div>
                 <div className="flex justify-between mb-2">
-                  <span className="text-white font-medium">Структури даних</span>
-                  <span className="text-gray-400">90%</span>
+                  <span className="text-card-foreground font-medium font-mono">Структури даних</span>
+                  <span className="text-muted-foreground font-mono">90%</span>
                 </div>
                 <ProgressBar value={90} className="h-2" />
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );

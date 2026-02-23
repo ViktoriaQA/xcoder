@@ -168,31 +168,28 @@ const Subscription = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900">
-        <div className="max-w-7xl mx-auto py-12 px-4">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-white mb-4">Підписки</h1>
-            <p className="text-xl text-gray-300">Завантаження...</p>
-          </div>
+      <div className="p-6 space-y-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold font-mono text-primary neon-text mb-4">Підписки</h1>
+          <p className="text-muted-foreground font-mono">Завантаження...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="max-w-7xl mx-auto py-12 px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">
-            Підписки
-          </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            {user 
-              ? `Вітаємо, ${user.nickname || user.first_name}! Оберіть оптимальний план для вашої ${user.role === 'student' ? 'навчальної роботи' : 'тренерської роботи'}`
-              : "Оберіть план, який найкраще відповідає вашим потребам"
-            }
-          </p>
-        </div>
+    <div className="p-6 space-y-8">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold font-mono text-primary neon-text mb-4">
+          Підписки
+        </h1>
+        <p className="text-muted-foreground font-mono max-w-3xl mx-auto">
+          {user 
+            ? `Вітаємо, ${user.nickname || user.first_name}! Оберіть оптимальний план для вашої ${user.role === 'student' ? 'навчальної роботи' : 'тренерської роботи'}`
+            : "Оберіть план, який найкраще відповідає вашим потребам"
+          }
+        </p>
+      </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
@@ -220,69 +217,69 @@ const Subscription = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredPlans.map((plan) => (
-                <Card 
+                <div 
                   key={plan.id} 
-                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${
+                  className={`relative overflow-hidden rounded-lg border border-border bg-card p-6 space-y-4 hover:neon-border transition-all duration-300 group ${
                     plan.is_popular 
-                      ? 'ring-2 ring-blue-500 shadow-lg scale-105' 
-                      : 'shadow-md'
+                      ? 'ring-2 ring-primary shadow-lg scale-105' 
+                      : ''
                   }`}
                 >
                   {plan.is_popular && (
-                    <div className="absolute top-0 right-0 bg-blue-500 text-white px-3 py-1 rounded-bl-lg">
-                      <Badge className="bg-blue-500 hover:bg-blue-600">
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 rounded-bl-lg">
+                      <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground font-mono">
                         <Crown className="w-3 h-3 mr-1" />
                         Популярний
                       </Badge>
                     </div>
                   )}
 
-                  <CardHeader className="text-center pb-4">
+                  <div className="text-center pb-4">
                     <div className="flex justify-center mb-2">
                       {plan.target_audience === 'student' && (
-                        <Users className="w-8 h-8 text-blue-500" />
+                        <Users className="w-8 h-8 text-primary group-hover:animate-pulse-glow" />
                       )}
                       {plan.target_audience === 'trainer' && (
-                        <Star className="w-8 h-8 text-green-500" />
+                        <Star className="w-8 h-8 text-accent group-hover:animate-pulse-glow" />
                       )}
                       {plan.target_audience === 'all' && (
-                        <Crown className="w-8 h-8 text-purple-500" />
+                        <Crown className="w-8 h-8 text-neon-cyan group-hover:animate-pulse-glow" />
                       )}
                     </div>
-                    <CardTitle className="text-2xl font-bold text-green-400">{plan.name}</CardTitle>
-                    <CardDescription className="text-gray-300">
+                    <h3 className="text-xl font-bold font-mono text-card-foreground mb-2">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground font-mono mb-4">
                       {plan.description}
-                    </CardDescription>
-                    <div className="mt-4">
-                      <span className="text-4xl font-bold text-green-400">
+                    </p>
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold font-mono text-primary">
                         ₴{plan.price}
                       </span>
-                      <span className="text-gray-300 ml-2">/{plan.duration}</span>
+                      <span className="text-muted-foreground font-mono ml-2">/{plan.duration}</span>
                     </div>
-                  </CardHeader>
+                  </div>
 
-                  <CardContent className="pb-6">
+                  <div className="pb-6">
                     <ul className="space-y-3">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-2">
-                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-gray-200">{feature}</span>
+                          <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                          <span className="text-card-foreground font-mono text-sm">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                  </CardContent>
+                  </div>
 
-                  <CardFooter>
+                  <div>
                     <Button
                       onClick={() => handleSubscribe(plan.id)}
                       disabled={processing === plan.id}
-                      className={`w-full ${
+                      className={`w-full font-mono ${
                         plan.is_popular 
-                          ? 'bg-blue-500 hover:bg-blue-600' 
-                          : 'bg-gray-900 hover:bg-gray-800'
-                      } text-white`}
+                          ? 'bg-primary hover:bg-primary/90 text-primary-foreground' 
+                          : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                      }`}
                     >
                       {processing === plan.id ? (
                         <span>Обробка...</span>
@@ -290,14 +287,14 @@ const Subscription = () => {
                         <span>Оформити підписку</span>
                       )}
                     </Button>
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
 
             {filteredPlans.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-xl text-gray-300">
+                <p className="text-muted-foreground font-mono">
                   {user 
                     ? "Наразі немає доступних планів підписки для вашої ролі"
                     : "Наразі немає доступних планів підписки"
@@ -310,7 +307,7 @@ const Subscription = () => {
           <TabsContent value="history" className="space-y-6">
             {!isAuthenticated ? (
               <div className="text-center py-12">
-                <p className="text-xl text-gray-300 mb-4">
+                <p className="text-muted-foreground font-mono mb-4">
                   Для перегляду історії підписок необхідно увійти в акаунт
                 </p>
                 <Button onClick={() => navigate('/auth')}>
@@ -319,75 +316,70 @@ const Subscription = () => {
               </div>
             ) : historyLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-xl text-gray-300">Завантаження історії...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground font-mono">Завантаження історії...</p>
               </div>
             ) : subscriptionHistory.length === 0 ? (
               <div className="text-center py-12">
-                <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-xl text-gray-300">
+                <History className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground font-mono">
                   У вас ще немає історії підписок
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-white mb-6">Історія ваших підписок</h2>
+                <h2 className="text-xl font-bold font-mono text-card-foreground mb-6">Історія ваших підписок</h2>
                 {subscriptionHistory.map((subscription) => (
-                  <Card key={subscription.id} className="bg-gray-800 border-gray-700">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
+                  <div key={subscription.id} className="rounded-lg border border-border bg-card p-6 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-lg font-bold font-mono text-card-foreground">{subscription.plan_name}</h3>
+                        <p className="text-sm text-muted-foreground font-mono mt-1">
+                          Підписка #{subscription.id}
+                        </p>
+                      </div>
+                      <Badge className={`${getStatusColor(subscription.status)} font-mono text-xs`}>
+                        {getStatusText(subscription.status)}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <CardTitle className="text-xl text-white">{subscription.plan_name}</CardTitle>
-                          <CardDescription className="text-gray-400 mt-1">
-                            Підписка #{subscription.id}
-                          </CardDescription>
-                        </div>
-                        <Badge className={getStatusColor(subscription.status)}>
-                          {getStatusText(subscription.status)}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm text-gray-400">Початок</p>
-                            <p className="text-white">{new Date(subscription.start_date).toLocaleDateString('uk-UA')}</p>
-                          </div>
-                        </div>
-                        {subscription.end_date && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm text-gray-400">Кінець</p>
-                              <p className="text-white">{new Date(subscription.end_date).toLocaleDateString('uk-UA')}</p>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm text-gray-400">Вартість</p>
-                            <p className="text-white">₴{subscription.price}/{subscription.duration}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm text-gray-400">Автопоновлення</p>
-                            <p className="text-white">{subscription.auto_renewal ? 'Так' : 'Ні'}</p>
-                          </div>
+                          <p className="text-sm text-muted-foreground font-mono">Початок</p>
+                          <p className="text-card-foreground font-mono">{new Date(subscription.start_date).toLocaleDateString('uk-UA')}</p>
                         </div>
                       </div>
-                                          </CardContent>
-                  </Card>
+                      {subscription.end_date && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground font-mono">Кінець</p>
+                            <p className="text-card-foreground font-mono">{new Date(subscription.end_date).toLocaleDateString('uk-UA')}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground font-mono">Вартість</p>
+                          <p className="text-card-foreground font-mono">₴{subscription.price}/{subscription.duration}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-sm text-muted-foreground font-mono">Автопоновлення</p>
+                          <p className="text-card-foreground font-mono">{subscription.auto_renewal ? 'Так' : 'Ні'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 };

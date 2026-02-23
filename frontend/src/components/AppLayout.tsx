@@ -69,7 +69,7 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
             </div>
           </main>
         </div>
-        <Footer />
+        {!isAuthenticated && <Footer />}
       </div>
       
       {/* Mobile Sidebar - only for authenticated users */}
