@@ -1,0 +1,236 @@
+-- Створення основних таблиць платіжної системи
+-- Ця міграція створює відсутні таблиці для повного циклу оплати
+
+-- 1. Таблиця payment_attempts для відстеження спроб оплати
+CREATE TABLE IF NOT EXISTS payment_attempts (
+    order_id TEXT PRIMARY KEY, -- Унікальний ID замовлення
+    user_id UUID NOT NULL REFERENCES custom_users(id) ON DELETE CASCADE,
+    package_id UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'UAH',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'cancelled')),
+    payment_method TEXT NOT NULL DEFAULT 'liqpay',
+    liqpay_checkout_url TEXT,
+    liqpay_payment_id TEXT,
+    billing_period TEXT NOT NULL DEFAULT 'month' CHECK (billing_period IN ('month', 'year')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 2. Таблиця user_subscriptions для присвоєння пакетів користувачам
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES custom_users(id) ON DELETE CASCADE,
+    package_id UUID NOT NULL REFERENCES subscription_plans(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'expired', 'cancelled')),
+    billing_period TEXT NOT NULL DEFAULT 'month' CHECK (billing_period IN ('month', 'year')),
+    starts_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    cancelled_at TIMESTAMP WITH TIME ZONE,
+    -- Унікальність: один активний пакет на користувача
+    UNIQUE(user_id, package_id, status) WHERE status = 'active'
+);
+
+-- 3. Таблиця receipts для квитанцій про платежі
+CREATE TABLE IF NOT EXISTS receipts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id TEXT NOT NULL REFERENCES payment_attempts(order_id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES custom_users(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'UAH',
+    payment_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    payment_method TEXT NOT NULL DEFAULT 'liqpay',
+    liqpay_transaction_id TEXT,
+    status TEXT NOT NULL DEFAULT 'success' CHECK (status IN ('success', 'failed', 'refunded')),
+    receipt_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Створення індексів для payment_attempts
+CREATE INDEX IF NOT EXISTS idx_payment_attempts_user_id ON payment_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_payment_attempts_package_id ON payment_attempts(package_id);
+CREATE INDEX IF NOT EXISTS idx_payment_attempts_status ON payment_attempts(status);
+CREATE INDEX IF NOT EXISTS idx_payment_attempts_created_at ON payment_attempts(created_at);
+CREATE INDEX IF NOT EXISTS idx_payment_attempts_liqpay_payment_id ON payment_attempts(liqpay_payment_id);
+
+-- Створення індексів для user_subscriptions
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON user_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_package_id ON user_subscriptions(package_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_status ON user_subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_expires_at ON user_subscriptions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_is_active ON user_subscriptions(is_active);
+
+-- Створення індексів для receipts
+CREATE INDEX IF NOT EXISTS idx_receipts_order_id ON receipts(order_id);
+CREATE INDEX IF NOT EXISTS idx_receipts_user_id ON receipts(user_id);
+CREATE INDEX IF NOT EXISTS idx_receipts_payment_date ON receipts(payment_date);
+CREATE INDEX IF NOT EXISTS idx_receipts_status ON receipts(status);
+
+-- Увімкнення RLS
+ALTER TABLE payment_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
+
+-- RLS політики для payment_attempts
+CREATE POLICY "Users can view own payment attempts" ON payment_attempts
+    FOR SELECT USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Service role can manage payment attempts" ON payment_attempts
+    FOR ALL USING (auth.role() IN ('authenticated', 'service_role'));
+
+-- RLS політики для user_subscriptions
+CREATE POLICY "Users can view own subscriptions" ON user_subscriptions
+    FOR SELECT USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Service role can manage user subscriptions" ON user_subscriptions
+    FOR ALL USING (auth.role() IN ('authenticated', 'service_role'));
+
+-- RLS політики для receipts
+CREATE POLICY "Users can view own receipts" ON receipts
+    FOR SELECT USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Service role can insert receipts" ON receipts
+    FOR INSERT WITH CHECK (auth.role() IN ('authenticated', 'service_role'));
+
+-- Надання дозволів
+GRANT ALL ON payment_attempts TO authenticated;
+GRANT ALL ON payment_attempts TO service_role;
+GRANT ALL ON user_subscriptions TO authenticated;
+GRANT ALL ON user_subscriptions TO service_role;
+GRANT SELECT ON receipts TO authenticated;
+GRANT ALL ON receipts TO service_role;
+
+-- Тригер для оновлення updated_at в payment_attempts
+CREATE OR REPLACE FUNCTION update_payment_attempts_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER payment_attempts_updated_at
+    BEFORE UPDATE ON payment_attempts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_payment_attempts_updated_at();
+
+-- Тригер для оновлення updated_at в user_subscriptions
+CREATE OR REPLACE FUNCTION update_user_subscriptions_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER user_subscriptions_updated_at
+    BEFORE UPDATE ON user_subscriptions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_user_subscriptions_updated_at();
+
+-- Функція для автоматичного розширення підписки
+CREATE OR REPLACE FUNCTION extend_subscription(
+    p_user_id UUID,
+    p_package_id UUID,
+    p_billing_period TEXT,
+    p_months INTEGER DEFAULT 1
+) RETURNS UUID AS $$
+DECLARE
+    v_subscription_id UUID;
+    v_new_expiry_date TIMESTAMP WITH TIME ZONE;
+BEGIN
+    -- Перевірка чи існує активна підписка
+    SELECT id INTO v_subscription_id
+    FROM user_subscriptions
+    WHERE user_id = p_user_id 
+    AND package_id = p_package_id 
+    AND status = 'active'
+    AND is_active = true;
+    
+    IF v_subscription_id IS NOT NULL THEN
+        -- Розширення існуючої підписки
+        UPDATE user_subscriptions
+        SET 
+            expires_at = CASE 
+                WHEN expires_at > NOW() THEN expires_at + (p_months || ' months')::INTERVAL
+                ELSE NOW() + (p_months || ' months')::INTERVAL
+            END,
+            updated_at = NOW()
+        WHERE id = v_subscription_id;
+        
+        RETURN v_subscription_id;
+    ELSE
+        -- Створення нової підписки
+        INSERT INTO user_subscriptions (user_id, package_id, billing_period, expires_at)
+        VALUES (
+            p_user_id, 
+            p_package_id, 
+            p_billing_period, 
+            NOW() + (p_months || ' months')::INTERVAL
+        )
+        RETURNING id INTO v_subscription_id;
+        
+        RETURN v_subscription_id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Функція для створення квитанції після успішної оплати
+CREATE OR REPLACE FUNCTION create_payment_receipt(
+    p_order_id TEXT,
+    p_liqpay_transaction_id TEXT DEFAULT NULL
+) RETURNS UUID AS $$
+DECLARE
+    v_receipt_id UUID;
+    v_payment_attempt RECORD;
+BEGIN
+    -- Отримання інформації про платіж
+    SELECT * INTO v_payment_attempt
+    FROM payment_attempts
+    WHERE order_id = p_order_id;
+    
+    IF v_payment_attempt IS NULL THEN
+        RAISE EXCEPTION 'Payment attempt not found: %', p_order_id;
+    END IF;
+    
+    -- Створення квитанції
+    INSERT INTO receipts (
+        order_id, 
+        user_id, 
+        amount, 
+        currency, 
+        liqpay_transaction_id
+    )
+    VALUES (
+        p_order_id,
+        v_payment_attempt.user_id,
+        v_payment_attempt.amount,
+        v_payment_attempt.currency,
+        p_liqpay_transaction_id
+    )
+    RETURNING id INTO v_receipt_id;
+    
+    RETURN v_receipt_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Додавання коментарів
+COMMENT ON TABLE payment_attempts IS 'Payment attempts with LiqPay integration';
+COMMENT ON TABLE user_subscriptions IS 'User subscription packages and terms';
+COMMENT ON TABLE receipts IS 'Payment receipts and transaction records';
+
+COMMENT ON COLUMN payment_attempts.order_id IS 'Unique order identifier';
+COMMENT ON COLUMN payment_attempts.liqpay_checkout_url IS 'LiqPay checkout URL for payment';
+COMMENT ON COLUMN payment_attempts.liqpay_payment_id IS 'LiqPay payment transaction ID';
+COMMENT ON COLUMN payment_attempts.billing_period IS 'Billing period: month or year';
+
+COMMENT ON COLUMN user_subscriptions.expires_at IS 'Subscription expiry date';
+COMMENT ON COLUMN user_subscriptions.billing_period IS 'Billing period: month or year';
+COMMENT ON COLUMN user_subscriptions.is_active IS 'Whether subscription is currently active';
+
+COMMENT ON COLUMN receipts.liqpay_transaction_id IS 'LiqPay transaction ID';
+COMMENT ON COLUMN receipts.receipt_url IS 'URL to download receipt PDF';

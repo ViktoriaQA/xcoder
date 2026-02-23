@@ -29,8 +29,9 @@ const SubscriptionSuccess = () => {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const subscriptionId = searchParams.get('subscription_id');
+    const orderId = searchParams.get('order_id');
     
-    if (!sessionId && !subscriptionId) {
+    if (!sessionId && !subscriptionId && !orderId) {
       toast({
         title: "Помилка",
         description: "Відсутня інформація про платіж",
@@ -45,7 +46,7 @@ const SubscriptionSuccess = () => {
         setLoading(true);
         
         // Verify the subscription and get details
-        const response = await subscriptionService.verifySubscription(sessionId || subscriptionId!);
+        const response = await subscriptionService.verifySubscription(sessionId || subscriptionId || orderId!);
         
         if (response.success) {
           setSubscriptionDetails(response.data);
