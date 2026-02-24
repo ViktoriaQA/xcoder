@@ -38,7 +38,7 @@ export class AuthService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${config.api.baseUrl}${endpoint}`;
-    console.log('API Call:', { url, endpoint, method: options.method });
+    //console.log('API Call:', { url, endpoint, method: options.method });
     
     const response = await fetch(url, {
       headers: {

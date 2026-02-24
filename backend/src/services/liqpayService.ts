@@ -167,12 +167,12 @@ export class LiqPayService {
     // Use correct LiqPay API endpoints
     const apiUrl = 'https://www.liqpay.ua/api/request';
     
-    console.log('LiqPay API call:', {
-      apiUrl,
-      publicKey: this.publicKey,
-      sandbox: this.sandbox,
-      requestDataPreview: this.base64Decode(requestData)
-    });
+    // console.log('LiqPay API call:', {
+    //   apiUrl,
+    //   publicKey: this.publicKey,
+    //   sandbox: this.sandbox,
+    //   requestDataPreview: this.base64Decode(requestData)
+    // });
 
     const response = await fetch(apiUrl, {
       method: 'POST',
