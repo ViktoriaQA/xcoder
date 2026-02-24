@@ -17,6 +17,10 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
   const { openMobile, setOpenMobile } = useSidebar();
 
   useEffect(() => {
+    console.log('Sheet state changed:', openMobile);
+  }, [openMobile]);
+
+  useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
         // Only redirect to /auth if user is not on the home page
@@ -39,10 +43,10 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
   }
 
   return (
-    <SidebarProvider>
+    <>
       <div className="min-h-screen flex flex-col w-full bg-background matrix-bg">
         <div className="flex flex-1">
-          {isAuthenticated && <AppSidebar />}
+          {isAuthenticated && !isMobile && <AppSidebar />}
           <main className={`flex-1 flex flex-col min-w-0 ${!isAuthenticated ? 'w-full' : ''}`}>
             <header className="h-12 flex-shrink-0 flex items-center border-b border-border px-4 bg-card/50 backdrop-blur-sm">
               {isMobile && isAuthenticated && (
@@ -80,7 +84,7 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
           </SheetContent>
         </Sheet>
       )}
-    </SidebarProvider>
+    </>
   );
 }
 

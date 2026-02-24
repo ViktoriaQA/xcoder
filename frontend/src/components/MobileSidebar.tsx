@@ -22,7 +22,7 @@ export function MobileSidebar() {
 
   const commonItems: MenuItem[] = [
     { title: t('navigation.dashboard'), url: "/dashboard", icon: LayoutDashboard },
-    { title: t('navigation.tournaments'), url: "/tournaments", icon: Trophy },
+    { title: t('navigation.tournaments'), url: "/my-tournaments", icon: Trophy },
   ];
 
   const studentItems: MenuItem[] = [
@@ -94,7 +94,10 @@ export function MobileSidebar() {
                       end
                       className="flex items-center gap-3 rounded-md p-2 text-sm font-mono text-sidebar-foreground hover:text-primary hover:bg-sidebar-accent transition-colors"
                       activeClassName="text-primary bg-sidebar-accent neon-text"
-                      onClick={() => setOpenMobile(false)}
+                      onClick={() => {
+                        console.log('Navigation item clicked, closing sidebar');
+                        setOpenMobile(false);
+                      }}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
                       <span>{item.title}</span>
