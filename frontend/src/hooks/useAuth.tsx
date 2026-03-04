@@ -144,7 +144,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       title: "Logged out",
       description: "You have been logged out successfully.",
     });
-    navigate('/');
+    // Use setTimeout to ensure the redirect happens after state updates
+    setTimeout(() => {
+      navigate('/');
+    }, 0);
   };
 
   const refreshProfile = async () => {
