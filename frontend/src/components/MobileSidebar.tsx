@@ -22,7 +22,7 @@ export function MobileSidebar() {
 
   const commonItems: MenuItem[] = [
     { title: t('navigation.dashboard'), url: "/dashboard", icon: LayoutDashboard },
-    { title: t('navigation.tournaments'), url: "/my-tournaments", icon: Trophy },
+    { title: t('navigation.myTournamentsMenu'), url: "/my-tournaments", icon: Trophy },
   ];
 
   const studentItems: MenuItem[] = [

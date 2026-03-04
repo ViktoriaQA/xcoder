@@ -24,6 +24,7 @@ import TaskSolve from "@/pages/TaskSolve";
 import Students from "@/pages/Students";
 import NotFound from "@/pages/NotFound";
 import Profile from "@/pages/Profile";
+import Ratings from "@/pages/Ratings";
 import '@/i18n';
 
 const queryClient = new QueryClient();
@@ -152,6 +153,14 @@ const App = () => (
               element={
                 <AppLayout>
                   <Profile />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/rating"
+              element={
+                <AppLayout>
+                  <Ratings />
                 </AppLayout>
               }
             />

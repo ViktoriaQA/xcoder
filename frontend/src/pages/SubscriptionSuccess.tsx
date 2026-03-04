@@ -273,8 +273,8 @@ const SubscriptionSuccess = () => {
                   <CreditCard className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-400">Вартість</p>
-                    <p className="text-white font-medium">
-                      ₴{subscriptionDetails.price}/{subscriptionDetails.duration}
+                    <p className="text-green-600 font-medium">
+                      {subscriptionDetails.price}/{subscriptionDetails.duration} грн. 
                     </p>
                   </div>
                 </div>

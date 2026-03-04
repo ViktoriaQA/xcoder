@@ -254,9 +254,9 @@ const Subscription = () => {
                     </p>
                     <div className="mb-4">
                       <span className="text-3xl font-bold font-mono text-primary">
-                        ₴{plan.price}
+                        {plan.price}
                       </span>
-                      <span className="text-muted-foreground font-mono ml-2">/{plan.duration}</span>
+                      <span className="text-muted-foreground font-mono ml-2">грн./{plan.duration}</span>
                     </div>
                   </div>
 
@@ -284,7 +284,7 @@ const Subscription = () => {
                       {processing === plan.id ? (
                         <span>Обробка...</span>
                       ) : (
-                        <span>Оформити підписку</span>
+                        <span className="text-green-600">Оформити підписку</span>
                       )}
                     </Button>
                   </div>
@@ -363,7 +363,7 @@ const Subscription = () => {
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground font-mono">Вартість</p>
-                          <p className="text-card-foreground font-mono">₴{subscription.price}/{subscription.duration}</p>
+                          <p className="text-card-foreground font-mono">грн. {subscription.price}/{subscription.duration}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

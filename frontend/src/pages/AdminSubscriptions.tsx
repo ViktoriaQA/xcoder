@@ -231,7 +231,7 @@ const AdminSubscriptions = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="price">Ціна (₴)</Label>
+                    <Label htmlFor="price">Ціна (грн)</Label>
                     <Input
                       id="price"
                       type="number"
@@ -372,8 +372,8 @@ const AdminSubscriptions = () => {
                     {plan.description}
                   </CardDescription>
                   <div className="text-2xl font-bold">
-                    ₴{plan.price}
-                    <span className="text-sm font-normal text-gray-600 ml-1">/{plan.duration}</span>
+                    {plan.price}
+                    <span className="text-sm font-normal text-gray-600 ml-1">грн./{plan.duration}</span>
                   </div>
                 </CardHeader>
 
@@ -473,7 +473,7 @@ const AdminSubscriptions = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-price">Ціна (₴)</Label>
+                <Label htmlFor="edit-price">Ціна (грн)</Label>
                 <Input
                   id="edit-price"
                   type="number"
