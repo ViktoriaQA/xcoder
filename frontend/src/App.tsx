@@ -23,6 +23,7 @@ import TournamentTasks from "@/pages/TournamentTasks";
 import TaskSolve from "@/pages/TaskSolve";
 import Students from "@/pages/Students";
 import NotFound from "@/pages/NotFound";
+import Profile from "@/pages/Profile";
 import '@/i18n';
 
 const queryClient = new QueryClient();
@@ -143,6 +144,14 @@ const App = () => (
               element={
                 <AppLayout>
                   <Students />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AppLayout>
+                  <Profile />
                 </AppLayout>
               }
             />

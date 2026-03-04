@@ -112,14 +112,16 @@ export function MobileSidebar() {
 
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 border border-border">
-            <AvatarFallback className="bg-muted text-muted-foreground font-mono text-xs">
+          <Avatar className="w-10 h-10 border-2 border-primary/30 hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => navigate("/profile")}
+          >
+            <AvatarFallback className="bg-primary/10 text-primary font-mono text-sm font-bold">
               {user?.nickname?.slice(0, 2).toUpperCase() ?? user?.first_name?.slice(0, 2).toUpperCase() ?? user?.email?.slice(0, 2).toUpperCase() ?? "?"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono text-sidebar-foreground truncate">{user?.nickname || user?.first_name || user?.email || "User"}</p>
-            <p className="text-xs font-mono text-muted-foreground">{user?.subscription_plan || user?.role || "student"}</p>
+            <p className="text-sm font-mono text-sidebar-foreground truncate font-medium">{user?.nickname || user?.first_name || user?.email || "User"}</p>
+            <p className="text-xs font-mono text-muted-foreground capitalize">{user?.role || "student"}</p>
           </div>
           <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive transition-colors">
             <LogOut className="w-4 h-4" />

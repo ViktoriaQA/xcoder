@@ -122,4 +122,22 @@ export class AuthController {
       res.status(500).json({ error: message });
     }
   }
+
+  static async updateProfile(req: Request, res: Response) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'No token provided' });
+      }
+
+      const token = authHeader.substring(7);
+      const decoded = JWTService.verifyJWT(token);
+      
+      const user = await AuthService.updateUserProfile(decoded.sub, req.body);
+      res.status(200).json({ user });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update profile';
+      res.status(400).json({ error: message });
+    }
+  }
 }

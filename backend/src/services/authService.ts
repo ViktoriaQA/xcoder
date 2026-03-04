@@ -298,4 +298,58 @@ export class AuthService {
 
     return true;
   }
+
+  static async updateUserProfile(userId: string, updateData: {
+    first_name?: string;
+    last_name?: string;
+    nickname?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<Omit<User, 'password_hash' | 'email_verification_token'>> {
+    // Filter out empty values (undefined, null, or empty strings)
+    const filteredData = Object.entries(updateData).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        acc[key as keyof typeof updateData] = value;
+      }
+      return acc;
+    }, {} as Partial<typeof updateData>);
+
+    if (Object.keys(filteredData).length === 0) {
+      throw new Error('At least one field must be provided for update');
+    }
+
+    // Validate input
+    const validatedData = ValidationService.validateProfileUpdate(filteredData);
+    
+    // Normalize phone if provided
+    if (validatedData.phone) {
+      validatedData.phone = ValidationService.normalizePhone(validatedData.phone);
+    }
+
+    // Check if email or phone is already taken by another user
+    if (validatedData.email || validatedData.phone) {
+      const existingUser = await this.findUserByEmailOrPhone(validatedData.email, validatedData.phone);
+      if (existingUser && existingUser.id !== userId) {
+        throw new Error('Email or phone is already taken by another user');
+      }
+    }
+
+    // Update user in database
+    const { data: user, error } = await supabase
+      .from('custom_users')
+      .update({
+        ...validatedData,
+        updated_at: new Date()
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error || !user) {
+      throw new Error('Failed to update profile');
+    }
+
+    const { password_hash: _, email_verification_token: __, ...userResponse } = user;
+    return userResponse;
+  }
 }

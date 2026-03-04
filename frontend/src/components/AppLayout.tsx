@@ -6,15 +6,19 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, LogOut, Terminal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 function AppLayoutContent({ children }: { children: ReactNode }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { openMobile, setOpenMobile } = useSidebar();
+
+  const handleSignOut = () => {
+    logout();
+  };
 
   useEffect(() => {
     console.log('Sheet state changed:', openMobile);
@@ -36,8 +40,11 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background matrix-bg">
-        <div className="animate-pulse-glow text-primary font-mono text-lg">Loading...</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background matrix-bg z-50">
+        <div className="flex items-center gap-3">
+          <Terminal className="w-8 h-8 text-primary animate-pulse-glow" />
+          <div className="animate-pulse-glow text-primary font-mono text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -62,9 +69,20 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
               )}
               <div className="ml-auto flex items-center gap-3">
                 {isAuthenticated && (
-                  <span className="text-xs font-mono px-2 py-1 rounded border border-primary/30 text-primary bg-primary/5">
-                    {user?.subscription_plan || 'USER'}
-                  </span>
+                  <>
+                    <span className="text-xs font-mono px-2 py-1 rounded border border-primary/30 text-primary bg-primary/5">
+                      {user?.subscription_plan || 'USER'}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                      onClick={handleSignOut}
+                      title="Вийти"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
               </div>
             </header>

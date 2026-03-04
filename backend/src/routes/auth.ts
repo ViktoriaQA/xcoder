@@ -12,6 +12,9 @@ router.post('/login', AuthController.login);
 // Get current user
 router.get('/me', AuthController.getCurrentUser);
 
+// Update user profile
+router.put('/profile', AuthController.updateProfile);
+
 // Verify phone
 router.post('/verify-phone', AuthController.verifyPhone);
 

@@ -109,8 +109,25 @@ export class AuthService {
     return this.apiCall<{ auth_url: string }>('/auth/google/login');
   }
 
-  static handleGoogleCallback(): Promise<AuthResponse> {
+  static async handleGoogleCallback(): Promise<AuthResponse> {
     // This would be handled by the callback route
     throw new Error('Google OAuth callback should be handled by the callback route');
+  }
+
+  static async updateProfile(token: string, data: {
+    first_name?: string;
+    last_name?: string;
+    nickname?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<{ user: AuthResponse['user'] }> {
+    return this.apiCall<{ user: AuthResponse['user'] }>('/auth/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
   }
 }

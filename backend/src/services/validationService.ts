@@ -3,6 +3,15 @@ import Joi from 'joi';
 const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export const profileUpdateSchema = Joi.object({
+  first_name: Joi.string().min(2).max(50).optional(),
+  last_name: Joi.string().min(2).max(50).optional(),
+  nickname: Joi.string().min(2).max(50).optional(),
+  email: Joi.string().email().optional(),
+  phone: Joi.string().pattern(phoneRegex).optional(),
+  country_code: Joi.string().pattern(/^\+\d{1,3}$/).optional()
+}).min(1); // At least one field must be provided
+
 export const registerSchema = Joi.object({
   email: Joi.string().email().optional(),
   phone: Joi.string().pattern(phoneRegex).optional(),
@@ -40,6 +49,14 @@ export class ValidationService {
 
   static validateLogin(data: any) {
     const { error, value } = loginSchema.validate(data);
+    if (error) {
+      throw new Error(error.details[0].message);
+    }
+    return value;
+  }
+
+  static validateProfileUpdate(data: any) {
+    const { error, value } = profileUpdateSchema.validate(data);
     if (error) {
       throw new Error(error.details[0].message);
     }
