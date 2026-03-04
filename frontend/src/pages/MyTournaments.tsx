@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, UserCheck } from "lucide-react";
+import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, UserCheck, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
+import CreateTournamentModal from "@/components/CreateTournamentModal";
 
 interface Tournament {
   id: string;
@@ -16,11 +17,17 @@ interface Tournament {
   status: "upcoming" | "active" | "completed";
   participants: number;
   maxParticipants: number;
-  startDate: string;
-  endDate: string;
-  difficulty: "easy" | "medium" | "hard";
+  startDate?: string;
+  endDate?: string;
+  difficulty?: "easy" | "medium" | "hard";
   prize?: string;
   isJoined?: boolean;
+  creator?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 const MyTournaments = () => {
@@ -31,84 +38,86 @@ const MyTournaments = () => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key to trigger refetch
 
   useEffect(() => {
-    // Mock data for tournaments
-    const mockTournaments: Tournament[] = [
-      {
-        id: "1",
-        name: "Spring Coding Challenge 2024",
-        description: "Test your skills in this comprehensive coding competition featuring algorithmic challenges and problem-solving tasks.",
-        status: "active",
-        participants: 45,
-        maxParticipants: 100,
-        startDate: "2024-03-15",
-        endDate: "2027-03-20",
-        difficulty: "medium",
-        prize: "Premium subscription + Certificate"
-      },
-      {
-        id: "2",
-        name: "Algorithm Masters",
-        description: "Advanced algorithmic tournament for experienced programmers. Focus on data structures and optimization.",
-        status: "upcoming",
-        participants: 12,
-        maxParticipants: 50,
-        startDate: "2024-03-25",
-        endDate: "2027-03-30",
-        difficulty: "hard",
-        prize: "Mentorship session"
-      },
-      {
-        id: "3",
-        name: "Beginner Friendly Contest",
-        description: "Perfect for newcomers! Learn the basics of competitive programming in a supportive environment.",
-        status: "completed",
-        participants: 78,
-        maxParticipants: 80,
-        startDate: "2025-03-01",
-        endDate: "2025-03-05",
-        difficulty: "easy",
-        prize: "Certificate + Badge"
-      },
-      {
-        id: "4",
-        name: "Speed Coding Sprint",
-        description: "Race against the clock! Solve as many problems as possible in the shortest time.",
-        status: "active",
-        participants: 23,
-        maxParticipants: 60,
-        startDate: "2024-03-18",
-        endDate: "2024-03-19",
-        difficulty: "medium",
-        prize: "Merchandise + Premium features"
-      },
-      {
-        id: "5",
-        name: "Data Structures Marathon",
-        description: "Comprehensive tournament covering all major data structures and their applications.",
-        status: "upcoming",
-        participants: 8,
-        maxParticipants: 40,
-        startDate: "2024-04-01",
-        endDate: "2024-04-05",
-        difficulty: "hard",
-        prize: "Advanced course access"
+    const fetchTournaments = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        // Fetch all tournaments
+        const allResponse = await fetch('/api/tournaments', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!allResponse.ok) {
+          throw new Error('Failed to fetch tournaments');
+        }
+
+        const allData = await allResponse.json();
+        
+        // Fetch user's tournament participations
+        const myResponse = await fetch('/api/tournaments/my/participations', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        let myTournamentsData: any[] = [];
+        if (myResponse.ok) {
+          const myData = await myResponse.json();
+          myTournamentsData = myData.tournaments || [];
+        }
+        
+        // Transform API data to frontend format
+        const transformedTournaments: Tournament[] = allData.tournaments.map((tournament: any) => ({
+          id: tournament.id,
+          name: tournament.name,
+          description: tournament.description,
+          status: tournament.status,
+          participants: tournament._count?.tournament_participants || 0,
+          maxParticipants: tournament.max_participants || 50,
+          startDate: tournament.start_time,
+          endDate: tournament.end_time,
+          difficulty: tournament.difficulty || 'medium',
+          prize: tournament.prize,
+          creator: tournament.creator,
+          isJoined: myTournamentsData.some(my => my.id === tournament.id)
+        }));
+
+        setTournaments(transformedTournaments);
+        setMyTournaments(transformedTournaments.filter(t => t.isJoined));
+        
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+        // Fallback to mock data if API fails
+        const mockTournaments: Tournament[] = [
+          {
+            id: "1",
+            name: "Spring Coding Challenge 2024",
+            description: "Test your skills in this comprehensive coding competition featuring algorithmic challenges and problem-solving tasks.",
+            status: "active",
+            participants: 45,
+            maxParticipants: 100,
+            startDate: "2024-03-15",
+            endDate: "2027-03-20",
+            difficulty: "medium",
+            prize: "Premium subscription + Certificate"
+          }
+        ];
+        setTournaments(mockTournaments);
+        setMyTournaments([]);
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    // Simulate user joining some tournaments
-    const tournamentsWithJoinStatus = mockTournaments.map(tournament => ({
-      ...tournament,
-      isJoined: ["1", "4"].includes(tournament.id) // User joined tournaments with IDs 1 and 4
-    }));
-
-    setTimeout(() => {
-      setTournaments(tournamentsWithJoinStatus);
-      setMyTournaments(tournamentsWithJoinStatus.filter(t => t.isJoined));
-      setLoading(false);
-    }, 1000);
-  }, []);
+    fetchTournaments();
+  }, [refreshKey, profile?.id]); // Add profile.id as dependency
 
   const getStatusColor = (status: Tournament["status"]) => {
     switch (status) {
@@ -144,40 +153,104 @@ const MyTournaments = () => {
     return t(`tournaments.difficultyLevel.${difficulty}`);
   };
 
-  const handleJoinTournament = (tournamentId: string) => {
-    const tournament = tournaments.find(t => t.id === tournamentId);
-    if (!tournament) return;
+  const handleJoinTournament = async (tournamentId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.loginRequired'),
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Update tournament join status
-    const updatedTournaments = tournaments.map(t => 
-      t.id === tournamentId ? { ...t, isJoined: true, participants: t.participants + 1 } : t
-    );
-    
-    setTournaments(updatedTournaments);
-    setMyTournaments(updatedTournaments.filter(t => t.isJoined));
+      const response = await fetch(`/api/tournaments/${tournamentId}/join`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-    toast({
-      title: t('common.success'),
-      description: t('tournaments.successfullyJoined'),
-    });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to join tournament');
+      }
+
+      // Update local state to reflect the join
+      const updatedTournaments = tournaments.map(t => 
+        t.id === tournamentId ? { 
+          ...t, 
+          isJoined: true, 
+          participants: t.participants + 1 
+        } : t
+      );
+      
+      setTournaments(updatedTournaments);
+      setMyTournaments([...myTournaments, ...updatedTournaments.filter(t => t.id === tournamentId)]);
+
+      toast({
+        title: t('common.success'),
+        description: t('tournaments.successfullyJoined'),
+      });
+    } catch (error) {
+      console.error('Error joining tournament:', error);
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('tournaments.failedToJoinTournament'),
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleLeaveTournament = (tournamentId: string) => {
-    const tournament = tournaments.find(t => t.id === tournamentId);
-    if (!tournament) return;
+  const handleLeaveTournament = async (tournamentId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.loginRequired'),
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Update tournament join status
-    const updatedTournaments = tournaments.map(t => 
-      t.id === tournamentId ? { ...t, isJoined: false, participants: t.participants - 1 } : t
-    );
-    
-    setTournaments(updatedTournaments);
-    setMyTournaments(updatedTournaments.filter(t => t.isJoined));
+      const response = await fetch(`/api/tournaments/${tournamentId}/leave`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-    toast({
-      title: t('common.success'),
-      description: t('tournaments.successfullyLeft'),
-    });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to leave tournament');
+      }
+      
+      // Update local state to reflect the leave
+      const updatedTournaments = tournaments.map(t => 
+        t.id === tournamentId ? { 
+          ...t, 
+          isJoined: false, 
+          participants: Math.max(0, t.participants - 1) 
+        } : t
+      );
+      
+      setTournaments(updatedTournaments);
+      setMyTournaments(updatedTournaments.filter(t => t.isJoined));
+
+      toast({
+        title: t('common.success'),
+        description: t('tournaments.successfullyLeft'),
+      });
+    } catch (error) {
+      console.error('Error leaving tournament:', error);
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('tournaments.failedToLeaveTournament'),
+        variant: "destructive",
+      });
+    }
   };
 
   const handleTournamentClick = (tournamentId: string) => {
@@ -211,12 +284,14 @@ const MyTournaments = () => {
               {t('tournaments.participantsCount', { current: tournament.participants, max: tournament.maxParticipants })}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="font-mono text-muted-foreground">
-              {new Date(tournament.startDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')} - {new Date(tournament.endDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')}
-            </span>
-          </div>
+          {tournament.startDate && tournament.endDate && (
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-muted-foreground">
+                {new Date(tournament.startDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')} - {new Date(tournament.endDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')}
+              </span>
+            </div>
+          )}
           {tournament.prize && (
             <div className="flex items-center gap-2 text-sm">
               <Trophy className="h-4 w-4 text-primary" />
@@ -277,11 +352,22 @@ const MyTournaments = () => {
     <div className="p-6 space-y-6">
       {/* Page Title */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Trophy className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-bold font-mono text-primary neon-text">
-            {t('tournaments.title')}
-          </h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Trophy className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl font-bold font-mono text-primary neon-text">
+              {t('tournaments.title')}
+            </h1>
+          </div>
+          {role === 'trainer' || role === 'admin' ? (
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="font-mono text-sm bg-primary hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t('tournaments.createTournament')}
+            </Button>
+          ) : null}
         </div>
         <p className="text-sm text-muted-foreground font-mono">
           {t('tournaments.pageSubtitle')}
@@ -366,6 +452,20 @@ const MyTournaments = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Create Tournament Modal */}
+      <CreateTournamentModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onSuccess={() => {
+          // Refresh tournaments list after successful creation
+          setRefreshKey(prev => prev + 1);
+          toast({
+            title: t('common.success'),
+            description: t('tournaments.tournamentCreated'),
+          });
+        }}
+      />
     </div>
   );
 };

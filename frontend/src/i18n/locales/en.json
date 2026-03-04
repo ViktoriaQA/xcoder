@@ -36,6 +36,7 @@
     "taskLibrary": "Task Library",
     "students": "Students",
     "admin": "Admin",
+    "analytics": "Analytics",
     "navigationLabel": "Navigation"
   },
   "auth": {
@@ -99,7 +100,6 @@
   },
   "tournaments": {
     "title": "Tournaments",
-    "pageSubtitle": "Browse and join competitive coding tournaments",
     "publicPageSubtitle": "Discover exciting coding competitions and challenge yourself",
     "signInToJoin": "Sign in to join",
     "signIn": "Sign in",
