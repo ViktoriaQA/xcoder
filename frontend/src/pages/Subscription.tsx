@@ -319,17 +319,21 @@ const Subscription = () => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground font-mono">Завантаження історії...</p>
               </div>
-            ) : subscriptionHistory.length === 0 ? (
+            ) : subscriptionHistory.length === 0 || !subscriptionHistory.some(s => s.status === 'active') ? (
               <div className="text-center py-12">
                 <History className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground font-mono">
-                  У вас ще немає історії підписок
+                  У вас немає активних підписок
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-xl font-bold font-mono text-card-foreground mb-6">Історія ваших підписок</h2>
-                {subscriptionHistory.map((subscription) => (
+                <h2 className="text-xl font-bold font-mono text-card-foreground mb-6">Ваша активна підписка</h2>
+                {subscriptionHistory
+                  .filter(subscription => subscription.status === 'active')
+                  .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+                  .slice(0, 1)
+                  .map((subscription) => (
                   <div key={subscription.id} className="rounded-lg border border-border bg-card p-6 space-y-4">
                     <div className="flex justify-between items-start">
                       <div>
@@ -363,7 +367,7 @@ const Subscription = () => {
                         <CreditCard className="w-4 h-4 text-muted-foreground" />
                         <div>
                           <p className="text-sm text-muted-foreground font-mono">Вартість</p>
-                          <p className="text-card-foreground font-mono">грн. {subscription.price}/{subscription.duration}</p>
+                          <p className="text-card-foreground font-mono">{subscription.price} грн. /{subscription.duration}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
