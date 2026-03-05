@@ -31,6 +31,7 @@ export function MobileSidebar() {
     { title: t('navigation.rating'), url: "/rating", icon: Star, requiresPro: true },
     { title: t('navigation.certificates'), url: "/certificates", icon: Award, requiresPro: true },
     { title: t('navigation.subscription'), url: "/subscription", icon: CreditCard },
+    { title: t('navigation.codeExecution'), url: "/code-execution", icon: Code },
   ];
 
   const trainerItems: MenuItem[] = [
