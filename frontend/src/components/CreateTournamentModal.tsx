@@ -23,9 +23,11 @@ interface TournamentFormData {
   description: string;
   status: "upcoming" | "active" | "completed";
   difficulty: "easy" | "medium" | "hard";
+  min_participants: number;
   max_participants: number;
   prize?: string;
   is_active: boolean;
+  show_on_public_page: boolean;
 }
 
 const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTournamentModalProps) => {
@@ -39,9 +41,11 @@ const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTourname
     description: "",
     status: "upcoming",
     difficulty: "medium",
+    min_participants: 1,
     max_participants: 50,
     prize: "",
-    is_active: true
+    is_active: true,
+    show_on_public_page: false
   });
 
   const handleInputChange = (field: keyof TournamentFormData, value: string | number | boolean) => {
@@ -123,9 +127,11 @@ const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTourname
         description: "",
         status: "upcoming",
         difficulty: "medium",
+        min_participants: 1,
         max_participants: 50,
         prize: "",
-        is_active: true
+        is_active: true,
+        show_on_public_page: false
       });
 
       onOpenChange(false);
@@ -239,6 +245,21 @@ const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTourname
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="min_participants" className="font-mono text-sm">
+                  {t('tournaments.minParticipants')}
+                </Label>
+                <Input
+                  id="min_participants"
+                  type="number"
+                  min="1"
+                  max="1000"
+                  value={formData.min_participants}
+                  onChange={(e) => handleInputChange('min_participants', parseInt(e.target.value) || 1)}
+                  className="font-mono text-sm bg-background/50 border-border/50"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="max_participants" className="font-mono text-sm">
                   {t('tournaments.maxParticipants')}
                 </Label>
@@ -252,7 +273,9 @@ const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTourname
                   className="font-mono text-sm bg-background/50 border-border/50"
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="prize" className="font-mono text-sm">
                   {t('tournaments.prize')} ({t('common.optional')})
@@ -286,6 +309,25 @@ const CreateTournamentModal = ({ open, onOpenChange, onSuccess }: CreateTourname
                 : t('tournaments.inactiveTournamentDescription')
               }
             </p>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="show_on_public_page"
+                  checked={formData.show_on_public_page}
+                  onCheckedChange={(checked) => handleInputChange('show_on_public_page', checked)}
+                />
+                <Label htmlFor="show_on_public_page" className="font-mono text-sm">
+                  {t('tournaments.showOnPublicPage')}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                {formData.show_on_public_page 
+                  ? t('tournaments.showOnPublicPageDescription')
+                  : t('tournaments.hideFromPublicPageDescription')
+                }
+              </p>
+            </div>
           </div>
 
           <DialogFooter>

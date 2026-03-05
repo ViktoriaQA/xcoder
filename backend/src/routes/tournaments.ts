@@ -5,10 +5,56 @@ import { createError } from '../middleware/errorHandler';
 
 const router = Router();
 
-// Get all tournaments
-router.get('/', async (req: AuthRequest, res, next) => {
+// Helper function to get current participant count
+const getCurrentParticipantCount = async (tournamentId: string) => {
+  const { count } = await supabase
+    .from('tournament_participants')
+    .select('*', { count: 'exact', head: true })
+    .eq('tournament_id', tournamentId);
+  return count || 0;
+};
+
+// Helper function to update participant count
+const updateParticipantCount = async (tournamentId: string, currentCount: number, targetCount: number) => {
+  if (targetCount > currentCount) {
+    // Add dummy participants to reach target count
+    const participantsToAdd = targetCount - currentCount;
+    const dummyParticipants = [];
+    
+    for (let i = 0; i < participantsToAdd; i++) {
+      dummyParticipants.push({
+        tournament_id: tournamentId,
+        user_id: `00000000-0000-0000-0000-00000000000${i}`, // Dummy user ID
+        status: 'registered'
+      });
+    }
+    
+    await supabase
+      .from('tournament_participants')
+      .insert(dummyParticipants);
+  } else if (targetCount < currentCount) {
+    // Remove excess participants
+    const { data: participants } = await supabase
+      .from('tournament_participants')
+      .select('id')
+      .eq('tournament_id', tournamentId)
+      .limit(currentCount - targetCount);
+    
+    if (participants && participants.length > 0) {
+      const participantIds = participants.map(p => p.id);
+      await supabase
+        .from('tournament_participants')
+        .delete()
+        .in('id', participantIds);
+    }
+  }
+};
+
+// Get all tournaments (both authenticated and public)
+router.get('/', async (req: AuthRequest | any, res, next) => {
   try {
     const { status, page = 1, limit = 20, is_active } = req.query;
+    const isPublicRoute = req.originalUrl?.includes('/api/public/tournaments');
     
     let query = supabase
       .from('tournaments')
@@ -23,15 +69,20 @@ router.get('/', async (req: AuthRequest, res, next) => {
         Number(page) * Number(limit) - 1
       );
 
+    // For public route, only return tournaments marked for public display
+    if (isPublicRoute) {
+      query = query.eq('show_on_public_page', true);
+    }
+
     // Filter by status
     if (status) {
       query = query.eq('status', status);
     }
 
-    // For students, get both public tournaments and their participating tournaments
-    if (req.user!.role === 'student') {
-      // First get public tournaments
-      const { data: publicTournaments, error: publicError } = await query.eq('is_public', true);
+    // For authenticated students, get both public tournaments and their trainer's tournaments
+    if (!isPublicRoute && req.user && req.user.role === 'student') {
+      // First get public tournaments that are also marked for public page display
+      const { data: publicTournaments, error: publicError } = await query.eq('is_public', true).eq('show_on_public_page', true);
       
       if (publicError) {
         throw createError('Failed to fetch public tournaments', 500);
@@ -47,14 +98,39 @@ router.get('/', async (req: AuthRequest, res, next) => {
             _count:tournament_participants(count)
           )
         `)
-        .eq('user_id', req.user!.id);
+        .eq('user_id', req.user.id);
 
       if (participatingError) {
         throw createError('Failed to fetch participating tournaments', 500);
       }
 
+      // Get student's trainer (if any)
+      const { data: studentProfile } = await supabase
+        .from('custom_users')
+        .select('trainer_id')
+        .eq('id', req.user.id)
+        .single();
+
+      let trainerTournaments: any[] = [];
+      if (studentProfile?.trainer_id) {
+        // Get tournaments created by student's trainer that are visible to trainer's students
+        const { data: trainerVisibleTournaments, error: trainerError } = await supabase
+          .from('tournaments')
+          .select(`
+            *,
+            creator:created_by(id, first_name, last_name, email),
+            _count:tournament_participants(count)
+          `)
+          .eq('created_by', studentProfile.trainer_id)
+          .eq('is_public', true); // Visible to trainer's students
+
+        if (!trainerError && trainerVisibleTournaments) {
+          trainerTournaments = trainerVisibleTournaments;
+        }
+      }
+
       // Combine and deduplicate
-      const allTournaments = [...(publicTournaments || []), ...(participatingTournaments?.map(p => p.tournament) || [])];
+      const allTournaments = [...(publicTournaments || []), ...(participatingTournaments?.map(p => p.tournament) || []), ...trainerTournaments];
       const uniqueTournaments = allTournaments.reduce((acc: any[], current) => {
         if (!acc.find(t => t.id === current.id)) {
           acc.push(current);
@@ -83,7 +159,7 @@ router.get('/', async (req: AuthRequest, res, next) => {
         }
       });
       return;
-    } else if (is_active !== undefined) {
+    } else if (!isPublicRoute && is_active !== undefined) {
       query = query.eq('is_public', is_active === 'true');
     }
 
@@ -196,6 +272,7 @@ router.post('/', requireRole(['trainer', 'admin']), async (req: AuthRequest, res
       status: tournamentData.status,
       max_participants: tournamentData.max_participants,
       is_public: tournamentData.is_active, // frontend 'is_active' -> database 'is_public'
+      show_on_public_page: tournamentData.show_on_public_page || false,
       entry_fee: 0,
       prize_pool: tournamentData.prize ? 0 : null, // Convert prize to prize_pool if needed
       rules: tournamentData.prize || null, // Store prize in rules field for now
@@ -224,14 +301,14 @@ router.post('/', requireRole(['trainer', 'admin']), async (req: AuthRequest, res
   }
 });
 
-// Trainer/Admin: Update tournament
+// Trainer/Admin: Update tournament (Basic or Premium subscription required)
 router.put('/:id', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
     const updates = req.body;
     const userId = req.user!.id;
 
-    // Check if user is the creator or admin
+    // Check if tournament exists
     const { data: existing, error: checkError } = await supabase
       .from('tournaments')
       .select('created_by')
@@ -242,24 +319,93 @@ router.put('/:id', requireRole(['trainer', 'admin']), async (req: AuthRequest, r
       throw createError('Tournament not found', 404);
     }
 
+    // Check if user is the creator or admin
     if (existing.created_by !== userId && req.user!.role !== 'admin') {
       throw createError('Not authorized to update this tournament', 403);
     }
 
+    // Check if user has Basic or Premium subscription (except for admins)
+    if (req.user!.role !== 'admin') {
+      const { data: userProfile } = await supabase
+        .from('custom_users')
+        .select('subscription_plan')
+        .eq('id', userId)
+        .single();
+
+      if (!userProfile?.subscription_plan || (userProfile.subscription_plan !== 'Basic' && userProfile.subscription_plan !== 'Pro')) {
+        throw createError('Basic or Premium subscription required to edit tournaments', 403);
+      }
+    }
+
+    // Map frontend fields to database fields
+    const dbUpdates = {
+      title: updates.name, // frontend 'name' -> database 'title'
+      description: updates.description,
+      status: updates.status,
+      max_participants: updates.max_participants,
+      is_public: updates.is_active, // frontend 'is_active' -> database 'is_public'
+      show_on_public_page: updates.show_on_public_page || false,
+      rules: updates.prize || null, // Store prize in rules field for now
+      prize_pool: updates.min_participants || null, // Temporarily store min_participants in prize_pool
+      updated_at: new Date().toISOString()
+    };
+
+    // Handle current_participants update if provided
+    if (updates.current_participants !== undefined) {
+      // Update tournament participants count by adding/removing participants as needed
+      const currentCount = await getCurrentParticipantCount(id);
+      const targetCount = updates.current_participants;
+      
+      if (targetCount !== currentCount) {
+        await updateParticipantCount(id, currentCount, targetCount);
+      }
+    }
+
+    // Remove undefined fields
+    Object.keys(dbUpdates).forEach((key: string) => {
+      if (dbUpdates[key as keyof typeof dbUpdates] === undefined) {
+        delete dbUpdates[key as keyof typeof dbUpdates];
+      }
+    });
+
     const { data: tournament, error } = await supabase
       .from('tournaments')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
-      throw createError('Failed to update tournament', 500);
+      console.error('Supabase error updating tournament:', error);
+      throw createError(`Failed to update tournament: ${error.message}`, 500);
     }
+
+    // Map database fields back to frontend format for response
+    const finalParticipantCount = updates.current_participants !== undefined 
+      ? updates.current_participants 
+      : await getCurrentParticipantCount(id);
+      
+    const mappedTournament = {
+      ...tournament,
+      name: tournament.title, // database 'title' -> frontend 'name'
+      is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
+      prize: tournament.rules, // database 'rules' -> frontend 'prize'
+      maxParticipants: tournament.max_participants || 50,
+      minParticipants: tournament.prize_pool || updates.min_participants || 0, // Get from prize_pool or form
+      participants: finalParticipantCount, // Use target count
+      startDate: tournament.start_time,
+      endDate: tournament.end_time,
+      difficulty: tournament.difficulty || 'medium',
+      // Remove database-specific fields
+      title: undefined,
+      is_public: undefined,
+      rules: undefined,
+      prize_pool: undefined // Hide internal field
+    };
 
     res.json({
       message: 'Tournament updated successfully',
-      tournament
+      tournament: mappedTournament
     });
   } catch (error) {
     next(error);
@@ -807,13 +953,82 @@ router.get('/:id/tasks/:taskId', async (req: AuthRequest, res, next) => {
   }
 });
 
-// Trainer/Admin: Delete tournament (only archived tournaments)
+// Trainer/Admin: Delete tournament (only archived tournaments or by admin with Premium subscription)
 router.delete('/:id', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
 
-    // Check if tournament exists and is archived
+    // Check if tournament exists
+    const { data: existing, error: checkError } = await supabase
+      .from('tournaments')
+      .select('created_by, status, start_time, end_time')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !existing) {
+      throw createError('Tournament not found', 404);
+    }
+
+    // Check if user is the creator or admin
+    if (existing.created_by !== userId && req.user!.role !== 'admin') {
+      throw createError('Not authorized to delete this tournament', 403);
+    }
+
+    // Check if user has Premium subscription (except for admins)
+    if (req.user!.role !== 'admin') {
+      const { data: userProfile } = await supabase
+        .from('custom_users')
+        .select('subscription_plan')
+        .eq('id', userId)
+        .single();
+
+      if (userProfile?.subscription_plan !== 'Pro') {
+        throw createError('Premium subscription required to delete tournaments', 403);
+      }
+    }
+
+    // Allow deletion if:
+    // 1. Tournament is archived, OR
+    // 2. User is admin, OR  
+    // 3. Tournament is not active yet (upcoming) and user is creator with Premium
+    const now = new Date();
+    const startTime = new Date(existing.start_time);
+    const canDelete = 
+      existing.status === 'archived' || 
+      req.user!.role === 'admin' || 
+      (existing.status === 'upcoming' && now < startTime);
+
+    if (!canDelete) {
+      throw createError('Cannot delete active or completed tournaments. Archive them first or contact admin.', 400);
+    }
+
+    // Delete tournament (cascade delete will handle related records)
+    const { error } = await supabase
+      .from('tournaments')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Supabase error deleting tournament:', error);
+      throw createError('Failed to delete tournament', 500);
+    }
+
+    res.json({
+      message: 'Tournament deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Trainer/Admin: Archive tournament (Premium subscription required)
+router.patch('/:id/archive', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.id;
+
+    // Check if tournament exists
     const { data: existing, error: checkError } = await supabase
       .from('tournaments')
       .select('created_by, status')
@@ -824,28 +1039,126 @@ router.delete('/:id', requireRole(['trainer', 'admin']), async (req: AuthRequest
       throw createError('Tournament not found', 404);
     }
 
-    // Only allow deletion of archived tournaments
-    if (existing.status !== 'archived') {
-      throw createError('Only archived tournaments can be deleted', 400);
-    }
-
     // Check if user is the creator or admin
     if (existing.created_by !== userId && req.user!.role !== 'admin') {
-      throw createError('Not authorized to delete this tournament', 403);
+      throw createError('Not authorized to archive this tournament', 403);
     }
 
-    // Delete tournament (cascade delete will handle related records)
-    const { error } = await supabase
+    // Check if user has Premium subscription (except for admins)
+    if (req.user!.role !== 'admin') {
+      const { data: userProfile } = await supabase
+        .from('custom_users')
+        .select('subscription_plan')
+        .eq('id', userId)
+        .single();
+
+      if (userProfile?.subscription_plan !== 'Pro') {
+        throw createError('Premium subscription required to archive tournaments', 403);
+      }
+    }
+
+    // Don't allow archiving already archived tournaments
+    if (existing.status === 'archived') {
+      throw createError('Tournament is already archived', 400);
+    }
+
+    // Archive tournament
+    const { data: tournament, error } = await supabase
       .from('tournaments')
-      .delete()
-      .eq('id', id);
+      .update({ 
+        status: 'archived',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) {
-      throw createError('Failed to delete tournament', 500);
+      console.error('Supabase error archiving tournament:', error);
+      throw createError('Failed to archive tournament', 500);
     }
 
+    // Map database fields back to frontend format for response
+    const mappedTournament = {
+      ...tournament,
+      name: tournament.title, // database 'title' -> frontend 'name'
+      is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
+      prize: tournament.rules, // database 'rules' -> frontend 'prize'
+      // Remove database-specific fields
+      title: undefined,
+      is_public: undefined,
+      rules: undefined
+    };
+
     res.json({
-      message: 'Tournament deleted successfully'
+      message: 'Tournament archived successfully',
+      tournament: mappedTournament
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Admin: Get all tournaments (including private and archived)
+router.get('/admin/all', requireRole(['admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { status, page = 1, limit = 50 } = req.query;
+    
+    let query = supabase
+      .from('tournaments')
+      .select(`
+        *,
+        creator:created_by(id, first_name, last_name, email),
+        _count:tournament_participants(count)
+      `)
+      .order('created_at', { ascending: false })
+      .range(
+        (Number(page) - 1) * Number(limit),
+        Number(page) * Number(limit) - 1
+      );
+
+    // Filter by status if provided
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data: tournaments, error } = await query;
+
+    if (error) {
+      throw createError('Failed to fetch tournaments', 500);
+    }
+
+    // Map database fields to frontend format
+    const mappedTournaments = await Promise.all(tournaments?.map(async (tournament) => {
+      // Get min participants from prize_pool field (temporary storage)
+      const minParticipants = tournament.prize_pool || 0;
+      
+      return {
+        ...tournament,
+        name: tournament.title, // database 'title' -> frontend 'name'
+        is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
+        prize: tournament.rules, // database 'rules' -> frontend 'prize'
+        maxParticipants: tournament.max_participants || 50,
+        minParticipants: minParticipants, // Get from prize_pool
+        participants: await getCurrentParticipantCount(tournament.id), // Get current participant count
+        startDate: tournament.start_time,
+        endDate: tournament.end_time,
+        difficulty: tournament.difficulty || 'medium',
+        // Remove database-specific fields
+        title: undefined,
+        is_public: undefined,
+        rules: undefined,
+        prize_pool: undefined // Hide internal field
+      };
+    }) || []);
+
+    res.json({
+      tournaments: mappedTournaments,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: mappedTournaments.length
+      }
     });
   } catch (error) {
     next(error);

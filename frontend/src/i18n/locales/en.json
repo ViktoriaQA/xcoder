@@ -18,7 +18,14 @@
     "alreadyHaveAccountLogin": "Already have an account? Login",
     "loginError": "Failed to login. Please try again.",
     "signingIn": "Signing in...",
-    "checkEmailForLogin": "Check your email for login instructions"
+    "checkEmailForLogin": "Check your email for login instructions",
+    "optional": "optional",
+    "creating": "Creating...",
+    "updating": "Updating...",
+    "deleting": "Deleting...",
+    "info": "Info",
+    "basicOrPro": "Basic or Pro",
+    "proOnly": "Pro only"
   },
   "navigation": {
     "home": "Home",
@@ -37,6 +44,7 @@
     "taskLibrary": "Task Library",
     "students": "Students",
     "admin": "Admin",
+    "adminTournaments": "All Tournaments",
     "analytics": "Analytics",
     "navigationLabel": "Navigation"
   },
@@ -86,7 +94,9 @@
     "student": "Student",
     "trainer": "Trainer",
     "continueWith": "or continue with",
-    "orContinueWith": "or"
+    "orContinueWith": "or",
+    "loginRequired": "Login required",
+    "sessionExpired": "Session expired. Please login again."
   },
   "home": {
     "title": "Welcome to CodeArena",
@@ -130,7 +140,8 @@
     "statusText": {
       "upcoming": "Upcoming",
       "active": "Active",
-      "completed": "Completed"
+      "completed": "Completed",
+      "archived": "Archived"
     },
     "difficultyLevel": {
       "easy": "Easy",
@@ -154,7 +165,48 @@
     "totalParticipants": "Total Participants",
     "successfullyJoined": "Successfully joined the tournament",
     "successfullyLeft": "Successfully left the tournament",
-    "leave": "Leave"
+    "leave": "Leave",
+    "createTournamentDescription": "Create a new programming tournament and invite participants to compete",
+    "tournamentNamePlaceholder": "Enter tournament name",
+    "descriptionPlaceholder": "Describe the tournament, rules, and requirements",
+    "status": "Status",
+    "maxParticipants": "Max Participants",
+    "prizePlaceholder": "e.g. $100, Premium subscription, Certificate",
+    "makeTournamentActive": "Make tournament visible to trainer's students",
+    "activeTournamentDescription": "Only your students can see and join this tournament",
+    "inactiveTournamentDescription": "Tournament is hidden from all users including your students",
+    "showOnPublicPage": "Show on public page",
+    "showOnPublicPageDescription": "Tournament will be visible to all users on the public tournaments page",
+    "hideFromPublicPageDescription": "Tournament will be hidden from public page and only accessible via direct link",
+    "fillAllRequiredFields": "Please fill in all required fields",
+    "insufficientPermissions": "You don't have permission to create tournaments",
+    "tournamentCreated": "Tournament created successfully",
+    "failedToCreateTournament": "Failed to create tournament",
+    "activeBadge": "Visible",
+    "publicBadge": "Public",
+    "editTournament": "Edit",
+    "editTournamentDescription": "Edit tournament details and settings",
+    "updateTournament": "Update Tournament",
+    "tournamentUpdated": "Tournament updated successfully",
+    "failedToUpdateTournament": "Failed to update tournament",
+    "tournamentIdRequired": "Tournament ID is required",
+    "notAuthorizedToEdit": "You are not authorized to edit this tournament",
+    "tournamentNotFound": "Tournament not found",
+    "failedToLoadTournament": "Failed to load tournament data",
+    "deleteTournament": "Delete",
+    "deleteTournamentConfirm": "Delete Tournament?",
+    "deleteTournamentWarning": "This action is irreversible. All related data (participants, tasks, results) will be deleted.",
+    "tournamentDeleted": "Tournament deleted successfully",
+    "failedToDeleteTournament": "Failed to delete tournament",
+    "archiveTournament": "Archive",
+    "tournamentArchived": "Tournament archived successfully",
+    "failedToArchiveTournament": "Failed to archive tournament",
+    "archiveFirstThenDelete": "Archive the tournament first, then delete it. Active tournaments cannot be deleted.",
+    "premiumRequiredForDeletion": "Premium subscription required to delete tournaments",
+    "premiumRequiredForArchiving": "Premium subscription required to archive tournaments",
+    "subscriptionRequiredForEdit": "Basic or Premium subscription required to edit tournaments",
+    "basicOrProTooltip": "Basic or Premium subscription required",
+    "proOnlyTooltip": "Premium subscription required"
   },
   "footer": {
     "copyright": "© {{year}} CodeArena",
@@ -278,5 +330,16 @@
     "noDataUser": "No data yet",
     "noRank": "No rank",
     "startParticipating": "Start participating in tournaments"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "totalStudents": "Total Students",
+    "activeTournaments": "Active Tournaments",
+    "completedTasks": "Completed Tasks",
+    "successRate": "Success Rate",
+    "noData": "No data available",
+    "comingSoon": "Analytics Dashboard",
+    "comingSoonDescription": "Detailed analytics and reporting features will be available soon.",
+    "underDevelopment": "Analytics features are currently under development."
   }
 }

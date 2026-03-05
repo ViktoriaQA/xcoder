@@ -5,16 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, UserCheck, Plus } from "lucide-react";
+import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, UserCheck, Plus, Edit, MoreVertical, Trash2, Archive, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
 import CreateTournamentModal from "@/components/CreateTournamentModal";
+import EditTournamentModal from "@/components/EditTournamentModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Tournament {
   id: string;
   name: string;
   description: string;
-  status: "upcoming" | "active" | "completed";
+  status: "upcoming" | "active" | "completed" | "archived";
   participants: number;
   maxParticipants: number;
   startDate?: string;
@@ -22,6 +26,8 @@ interface Tournament {
   difficulty?: "easy" | "medium" | "hard";
   prize?: string;
   isJoined?: boolean;
+  is_active?: boolean;
+  show_on_public_page?: boolean;
   creator?: {
     id: string;
     first_name: string;
@@ -39,7 +45,10 @@ const MyTournaments = () => {
   const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTournamentId, setEditingTournamentId] = useState<string | undefined>();
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key to trigger refetch
+  const [deletingTournamentId, setDeletingTournamentId] = useState<string | undefined>();
 
   useEffect(() => {
     const fetchTournaments = async () => {
@@ -74,20 +83,36 @@ const MyTournaments = () => {
         }
         
         // Transform API data to frontend format
-        const transformedTournaments: Tournament[] = allData.tournaments.map((tournament: any) => ({
-          id: tournament.id,
-          name: tournament.name,
-          description: tournament.description,
-          status: tournament.status,
-          participants: tournament._count?.tournament_participants || 0,
-          maxParticipants: tournament.max_participants || 50,
-          startDate: tournament.start_time,
-          endDate: tournament.end_time,
-          difficulty: tournament.difficulty || 'medium',
-          prize: tournament.prize,
-          creator: tournament.creator,
-          isJoined: myTournamentsData.some(my => my.id === tournament.id)
-        }));
+        const transformedTournaments: Tournament[] = allData.tournaments.map((tournament: any) => {
+          const startDate = new Date(tournament.start_time);
+          const endDate = new Date(tournament.end_time);
+          const now = new Date();
+          
+          // Auto-update status based on dates
+          let status = tournament.status;
+          if (tournament.status === 'upcoming' && now >= startDate && now <= endDate) {
+            status = 'active';
+          } else if (tournament.status === 'active' && now > endDate) {
+            status = 'completed';
+          }
+          
+          return {
+            id: tournament.id,
+            name: tournament.name,
+            description: tournament.description,
+            status: status,
+            participants: tournament._count?.tournament_participants || 0,
+            maxParticipants: tournament.max_participants || 50,
+            startDate: tournament.start_time,
+            endDate: tournament.end_time,
+            difficulty: tournament.difficulty || 'medium',
+            prize: tournament.prize,
+            creator: tournament.creator,
+            is_active: tournament.is_active,
+            show_on_public_page: tournament.show_on_public_page,
+            isJoined: myTournamentsData.some(my => my.id === tournament.id)
+          };
+        });
 
         setTournaments(transformedTournaments);
         setMyTournaments(transformedTournaments.filter(t => t.isJoined));
@@ -127,6 +152,8 @@ const MyTournaments = () => {
         return "bg-blue-500/20 text-blue-600 border-blue-500/30";
       case "completed":
         return "bg-gray-500/20 text-gray-600 border-gray-500/30";
+      case "archived":
+        return "bg-orange-500/20 text-orange-600 border-orange-500/30";
       default:
         return "bg-gray-500/20 text-gray-600 border-gray-500/30";
     }
@@ -257,16 +284,365 @@ const MyTournaments = () => {
     navigate(`/tournaments/${tournamentId}`);
   };
 
+  const handleEditTournament = (tournamentId: string) => {
+    setEditingTournamentId(tournamentId);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteTournament = async (tournamentId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.loginRequired'),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setDeletingTournamentId(tournamentId);
+
+      const response = await fetch(`/api/tournaments/${tournamentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        
+        // If tournament cannot be deleted because it's active/completed, suggest archiving first
+        if (error.message?.includes('Cannot delete active or completed tournaments')) {
+          toast({
+            title: t('common.info'),
+            description: t('tournaments.archiveFirstThenDelete'),
+            variant: "default",
+          });
+          return;
+        }
+        
+        // If user doesn't have Premium subscription
+        if (error.message?.includes('Premium subscription required')) {
+          toast({
+            title: t('common.error'),
+            description: t('tournaments.premiumRequiredForDeletion'),
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw new Error(error.message || 'Failed to delete tournament');
+      }
+
+      // Remove tournament from local state
+      setTournaments(prev => prev.filter(t => t.id !== tournamentId));
+      setMyTournaments(prev => prev.filter(t => t.id !== tournamentId));
+
+      toast({
+        title: t('common.success'),
+        description: t('tournaments.tournamentDeleted'),
+      });
+    } catch (error) {
+      console.error('Error deleting tournament:', error);
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('tournaments.failedToDeleteTournament'),
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingTournamentId(undefined);
+    }
+  };
+
+  const handleArchiveTournament = async (tournamentId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.loginRequired'),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setDeletingTournamentId(tournamentId);
+
+      const response = await fetch(`/api/tournaments/${tournamentId}/archive`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        
+        // If user doesn't have Premium subscription
+        if (error.message?.includes('Premium subscription required')) {
+          toast({
+            title: t('common.error'),
+            description: t('tournaments.premiumRequiredForArchiving'),
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        throw new Error(error.message || 'Failed to archive tournament');
+      }
+
+      // Update tournament status in local state
+      setTournaments(prev => prev.map(t => 
+        t.id === tournamentId ? { ...t, status: 'archived' as const } : t
+      ));
+      setMyTournaments(prev => prev.map(t => 
+        t.id === tournamentId ? { ...t, status: 'archived' as const } : t
+      ));
+
+      toast({
+        title: t('common.success'),
+        description: t('tournaments.tournamentArchived'),
+      });
+    } catch (error) {
+      console.error('Error archiving tournament:', error);
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('tournaments.failedToArchiveTournament'),
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingTournamentId(undefined);
+    }
+  };
+
+  const isTournamentCreator = (tournament: Tournament) => {
+    return tournament.creator && profile && tournament.creator.id === profile.id;
+  };
+
+  const hasPremiumSubscription = () => {
+    return profile?.subscription_plan === 'Pro';
+  };
+
+  const canEditTournament = (tournament: Tournament) => {
+    return isTournamentCreator(tournament) && (
+      hasPremiumSubscription() || profile?.subscription_plan === 'Basic'
+    );
+  };
+
+  const canArchiveTournament = (tournament: Tournament) => {
+    return isTournamentCreator(tournament) && hasPremiumSubscription();
+  };
+
+  const canDeleteTournament = (tournament: Tournament) => {
+    return isTournamentCreator(tournament) && hasPremiumSubscription();
+  };
+
+  const shouldShowTrainerBadges = (tournament: Tournament) => {
+    // Show trainer-only badges for trainers/admins on their own tournaments
+    return (role === 'trainer' || role === 'admin') && isTournamentCreator(tournament);
+  };
+
+  const shouldShowStatusBadge = (tournament: Tournament) => {
+    // Don't show status badge for trainers/admins
+    return role !== 'trainer' && role !== 'admin';
+  };
+
+  const shouldShowDifficultyBadge = (tournament: Tournament) => {
+    // Don't show difficulty badge for trainers/admins
+    return role !== 'trainer' && role !== 'admin';
+  };
+
   const TournamentCard = ({ tournament, showJoinButton = true, showLeaveButton = true }: { tournament: Tournament; showJoinButton?: boolean; showLeaveButton?: boolean }) => (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:neon-border transition-all duration-300 group cursor-pointer">
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between">
-          <Badge className={`${getStatusColor(tournament.status)} font-mono text-xs`}>
-            {getStatusText(tournament.status)}
-          </Badge>
-          <Badge className={`${getDifficultyColor(tournament.difficulty)} font-mono text-xs`}>
-            {getDifficultyText(tournament.difficulty)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {/* Status badge - only show for non-trainers */}
+            {shouldShowStatusBadge(tournament) && (
+              <Badge className={`${getStatusColor(tournament.status)} font-mono text-xs`}>
+                {getStatusText(tournament.status)}
+              </Badge>
+            )}
+            {/* Difficulty badge - only show for non-trainers */}
+            {shouldShowDifficultyBadge(tournament) && (
+              <Badge className={`${getDifficultyColor(tournament.difficulty)} font-mono text-xs`}>
+                {getDifficultyText(tournament.difficulty)}
+              </Badge>
+            )}
+            {/* Trainer-only badges - only show for tournament creators */}
+            {shouldShowTrainerBadges(tournament) && (
+              <>
+                {tournament.is_active && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge className="bg-green-500/20 text-green-600 border-green-500/30 font-mono text-xs cursor-help">
+                        {t('tournaments.activeBadge')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="font-mono text-xs max-w-xs">
+                        Тільки ваші студенти<br />
+                        можуть бачити та приєднуватися<br />
+                        до цього турніру
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                {tournament.show_on_public_page && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge className="bg-blue-500/20 text-blue-600 border-blue-500/30 font-mono text-xs cursor-help">
+                        {t('tournaments.publicBadge')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="font-mono text-xs max-w-xs">
+                        Турнір буде видимий<br />
+                        всім користувачам на<br />
+                        публічній сторінці турнірів
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </>
+            )}
+          </div>
+          {/* Edit/Delete/Archive button for tournament creators */}
+          {isTournamentCreator(tournament) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (canEditTournament(tournament)) {
+                      handleEditTournament(tournament.id);
+                    } else {
+                      toast({
+                        title: t('common.error'),
+                        description: t('tournaments.subscriptionRequiredForEdit'),
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={!canEditTournament(tournament)}
+                  className={!canEditTournament(tournament) ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  <span className="flex-1">{t('tournaments.editTournament')}</span>
+                  {!canEditTournament(tournament) && (
+                    <>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Lock className="h-3 w-3 ml-2 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">{t('tournaments.basicOrProTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                {/* Show Archive button for active/completed tournaments */}
+                {(tournament.status === 'active' || tournament.status === 'completed') && (
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (canArchiveTournament(tournament)) {
+                        handleArchiveTournament(tournament.id);
+                      } else {
+                        toast({
+                          title: t('common.error'),
+                          description: t('tournaments.premiumRequiredForArchiving'),
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    disabled={!canArchiveTournament(tournament)}
+                    className={!canArchiveTournament(tournament) ? "opacity-50 cursor-not-allowed" : ""}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    <span className="flex-1">{t('tournaments.archiveTournament')}</span>
+                    {!canArchiveTournament(tournament) && (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Lock className="h-3 w-3 ml-2 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">{t('tournaments.proOnlyTooltip')}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!canDeleteTournament(tournament)) {
+                          e.preventDefault();
+                          toast({
+                            title: t('common.error'),
+                            description: t('tournaments.premiumRequiredForDeletion'),
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      disabled={!canDeleteTournament(tournament)}
+                      className={`${!canDeleteTournament(tournament) ? "opacity-50 cursor-not-allowed" : ""} text-red-600 focus:text-red-600`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      <span className="flex-1">{t('tournaments.deleteTournament')}</span>
+                      {!canDeleteTournament(tournament) && (
+                        <>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Lock className="h-3 w-3 ml-2 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{t('tournaments.proOnlyTooltip')}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t('tournaments.deleteTournamentConfirm')}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t('tournaments.deleteTournamentWarning')}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => handleDeleteTournament(tournament.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                        disabled={deletingTournamentId === tournament.id}
+                      >
+                        {deletingTournamentId === tournament.id ? t('common.deleting') : t('common.delete')}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
         <CardTitle className="font-mono text-lg group-hover:text-primary transition-colors">
           {tournament.name}
@@ -349,7 +725,8 @@ const MyTournaments = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <TooltipProvider>
+      <div className="p-6 space-y-6">
       {/* Page Title */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -405,6 +782,7 @@ const MyTournaments = () => {
             <div className="text-2xl font-bold text-neon-green font-mono">
               {tournaments.reduce((sum, t) => sum + t.participants, 0)}
             </div>
+
             <div className="text-sm text-muted-foreground font-mono">{t('tournaments.totalParticipants')}</div>
           </CardContent>
         </Card>
@@ -466,7 +844,23 @@ const MyTournaments = () => {
           });
         }}
       />
-    </div>
+
+      {/* Edit Tournament Modal */}
+      <EditTournamentModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        tournamentId={editingTournamentId}
+        onSuccess={() => {
+          // Refresh tournaments list after successful edit
+          setRefreshKey(prev => prev + 1);
+          toast({
+            title: t('common.success'),
+            description: t('tournaments.tournamentUpdated'),
+          });
+        }}
+      />
+      </div>
+    </TooltipProvider>
   );
 };
 

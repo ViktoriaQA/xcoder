@@ -69,7 +69,7 @@ export function AppSidebar() {
     { title: t('navigation.taskLibrary'), url: "/tasks", icon: BookOpen },
     { title: t('navigation.students'), url: "/students", icon: Users },
     { title: t('navigation.myProgress'), url: "/progress", icon: TrendingUp, requiresPro: true },
-    { title: t('navigation.analytics'), url: "/analytics", icon: History },
+    { title: t('navigation.analytics'), url: "/analytics", icon: History, requiresPro: true },
     { title: t('navigation.subscription'), url: "/subscription", icon: CreditCard },
     { title: t('navigation.codeExecution'), url: "/code-execution", icon: Code },
   ];
@@ -79,8 +79,9 @@ export function AppSidebar() {
     { title: t('navigation.myTournamentsMenu'), url: "/my-tournaments", icon: Trophy },
     { title: t('navigation.taskLibrary'), url: "/tasks", icon: BookOpen },
     { title: t('navigation.students'), url: "/students", icon: Users },
-    { title: t('navigation.analytics'), url: "/analytics", icon: History },
+    { title: t('navigation.analytics'), url: "/analytics", icon: History, requiresPro: true },
     { title: t('navigation.admin'), url: "/admin", icon: Shield },
+    { title: t('navigation.adminTournaments'), url: "/admin/tournaments", icon: Trophy },
     { title: t('navigation.subscription'), url: "/subscription", icon: CreditCard },
     { title: t('navigation.codeExecution'), url: "/code-execution", icon: Code },
   ];
@@ -126,14 +127,16 @@ export function AppSidebar() {
                       <div className="font-mono text-sm text-muted-foreground cursor-not-allowed opacity-60 transition-colors flex items-center justify-between gap-2 px-2 py-1 rounded-md">
                         <div className="flex items-center gap-2">
                           <item.icon className="w-4 h-4 shrink-0" />
-                          <span>{item.title}</span>
+                          {!collapsed && <span>{item.title}</span>}
                         </div>
-                        <div className="relative group/lock">
-                          <Lock className="w-3 h-3 shrink-0 cursor-pointer" />
-                          <div className="absolute right-full mr-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover/lock:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                            {t('navigation.requiresPro')}
+                        {!collapsed && (
+                          <div className="relative group/lock">
+                            <Lock className="w-3 h-3 shrink-0 cursor-pointer" />
+                            <div className="absolute right-full mr-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-md opacity-0 group-hover/lock:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                              {t('navigation.requiresPro')}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     ) : (
                       <SidebarMenuButton asChild tooltip={item.title}>
@@ -144,7 +147,7 @@ export function AppSidebar() {
                           activeClassName="text-primary bg-sidebar-accent neon-text"
                         >
                           <item.icon className="w-4 h-4 shrink-0" />
-                          <span>{item.title}</span>
+                          {!collapsed && <span>{item.title}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     )}
@@ -157,7 +160,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border p-3">
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
           <Avatar className="w-10 h-10 border-2 border-primary/30 hover:border-primary/50 transition-colors cursor-pointer"
                   onClick={() => navigate("/profile")}
           >

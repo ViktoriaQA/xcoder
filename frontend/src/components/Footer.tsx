@@ -15,7 +15,7 @@ export function Footer({
   const { t } = useTranslation();
   
   return (
-    <footer className="w-full border-t border-border bg-card/95 backdrop-blur-sm py-4 px-6 mt-auto">
+    <footer className="w-full border-t border-border bg-card/95 backdrop-blur-sm py-4 px-6">
       <div className="container mx-auto">
         <div className="flex flex-col md:flex-row justify-center items-center gap-4">
           <div className="flex items-center gap-4 text-sm text-muted-foreground">

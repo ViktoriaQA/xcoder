@@ -18,6 +18,7 @@ import Subscription from "@/pages/Subscription";
 import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
 import Progress from "@/pages/Progress";
 import AdminSubscriptions from "@/pages/AdminSubscriptions";
+import AdminTournaments from "@/pages/AdminTournaments";
 import CodeExecutionPage from "@/pages/CodeExecutionPage";
 import TournamentTasks from "@/pages/TournamentTasks";
 import TaskSolve from "@/pages/TaskSolve";
@@ -26,6 +27,7 @@ import Students from "@/pages/Students";
 import NotFound from "@/pages/NotFound";
 import Profile from "@/pages/Profile";
 import Ratings from "@/pages/Ratings";
+import Analytics from "@/pages/Analytics";
 import '@/i18n';
 
 const queryClient = new QueryClient();
@@ -126,6 +128,14 @@ const App = () => (
               }
             />
             <Route
+              path="/admin/tournaments"
+              element={
+                <AppLayout>
+                  <AdminTournaments />
+                </AppLayout>
+              }
+            />
+            <Route
               path="/dashboard"
               element={
                 <AppLayout>
@@ -170,6 +180,14 @@ const App = () => (
               element={
                 <AppLayout>
                   <Certificates />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <AppLayout>
+                  <Analytics />
                 </AppLayout>
               }
             />

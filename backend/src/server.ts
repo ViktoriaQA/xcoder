@@ -70,6 +70,7 @@ app.use('/auth', authRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tournaments', authMiddleware, tournamentRoutes);
+app.use('/api/public/tournaments', tournamentRoutes); // Public route without auth
 app.use('/api/tasks', authMiddleware, taskRoutes);
 app.use('/api/students', authMiddleware, studentRoutes);
 app.use('/api/v1/payment', paymentRoutes);

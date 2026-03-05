@@ -18,7 +18,14 @@
     "alreadyHaveAccountLogin": "Вже є акаунт? Увійти",
     "loginError": "Не вдалося увійти. Спробуйте ще раз.",
     "signingIn": "Вхід...",
-    "checkEmailForLogin": "Перевірте пошту для входу"
+    "checkEmailForLogin": "Перевірте пошту для входу",
+    "optional": "необов'язково",
+    "creating": "Створення...",
+    "updating": "Оновлення...",
+    "deleting": "Видалення...",
+    "info": "Інформація",
+    "basicOrPro": "Basic або Pro",
+    "proOnly": "Тільки Pro"
   },
   "navigation": {
     "home": "Головна",
@@ -37,6 +44,7 @@
     "taskLibrary": "База задач",
     "students": "Студенти",
     "admin": "Адміністратор",
+    "adminTournaments": "Усі турніри",
     "analytics": "Аналітика",
     "codeExecution": "Редактор коду",
     "navigationLabel": "Навігація"
@@ -87,7 +95,9 @@
     "student": "Студент",
     "trainer": "Тренер",
     "continueWith": "або продовжити з",
-    "orContinueWith": "або"
+    "orContinueWith": "або",
+    "loginRequired": "Потрібен вхід",
+    "sessionExpired": "Сесія закінчилася. Будь ласка, увійдіть знову."
   },
   "home": {
     "title": "Ласкаво просимо до CodeArena",
@@ -131,7 +141,8 @@
     "statusText": {
       "upcoming": "Майбутній",
       "active": "Активний",
-      "completed": "Завершений"
+      "completed": "Завершений",
+      "archived": "Архівний"
     },
     "difficultyLevel": {
       "easy": "Легкий",
@@ -155,7 +166,48 @@
     "totalParticipants": "Загальна кількість учасників",
     "successfullyJoined": "Успішно приєдналися до турніру",
     "successfullyLeft": "Успішно покинули турнір",
-    "leave": "Покинути"
+    "leave": "Покинути",
+    "createTournamentDescription": "Створіть новий турнір з програмування та запросіть учасників змагатися",
+    "tournamentNamePlaceholder": "Введіть назву турніру",
+    "descriptionPlaceholder": "Опишіть турнір, правила та вимоги",
+    "status": "Статус",
+    "maxParticipants": "Макс. кількість учасників",
+    "prizePlaceholder": "напр. 100 грн, Преміум підписка, Сертифікат",
+    "makeTournamentActive": "Зробити турнір видимим для студентів тренера",
+    "activeTournamentDescription": "Тільки ваші студенти можуть бачити та приєднуватися до цього турніру",
+    "inactiveTournamentDescription": "Турнір прихований від всіх користувачів, включаючи ваших студентів",
+    "showOnPublicPage": "Показати на публічній сторінці",
+    "showOnPublicPageDescription": "Турнір буде видимий всім користувачам на публічній сторінці турнірів",
+    "hideFromPublicPageDescription": "Турнір буде прихований з публічної сторінки і доступний лише за прямим посиланням",
+    "fillAllRequiredFields": "Будь ласка, заповніть всі обов'язкові поля",
+    "insufficientPermissions": "У вас немає прав для створення турнірів",
+    "tournamentCreated": "Турнір успішно створено",
+    "failedToCreateTournament": "Не вдалося створити турнір",
+    "activeBadge": "Видимий",
+    "publicBadge": "Публічний",
+    "editTournament": "Редагувати",
+    "editTournamentDescription": "Редагуйте деталі турніру та налаштування",
+    "updateTournament": "Оновити турнір",
+    "tournamentUpdated": "Турнір успішно оновлено",
+    "failedToUpdateTournament": "Не вдалося оновити турнір",
+    "tournamentIdRequired": "ID турніру є обов'язковим",
+    "notAuthorizedToEdit": "Ви не маєте прав для редагування цього турніру",
+    "tournamentNotFound": "Турнір не знайдено",
+    "failedToLoadTournament": "Не вдалося завантажити дані турніру",
+    "deleteTournament": "Видалити",
+    "deleteTournamentConfirm": "Видалити турнір?",
+    "deleteTournamentWarning": "Ця дія незворотня. Всі пов'язані дані (учасники, завдання, результати) будуть видалені.",
+    "tournamentDeleted": "Турнір успішно видалено",
+    "failedToDeleteTournament": "Не вдалося видалити турнір",
+    "archiveTournament": "Архівувати",
+    "tournamentArchived": "Турнір успішно архівовано",
+    "failedToArchiveTournament": "Не вдалося архівувати турнір",
+    "archiveFirstThenDelete": "Спочатку архівуйте турнір, потім видаліть його. Активні турніри не можна видаляти.",
+    "premiumRequiredForDeletion": "Потрібна Premium підписка для видалення турнірів",
+    "premiumRequiredForArchiving": "Потрібна Premium підписка для архівації турнірів",
+    "subscriptionRequiredForEdit": "Потрібна Basic або Premium підписка для редагування турнірів",
+    "basicOrProTooltip": "Потрібна Basic або Premium підписка",
+    "proOnlyTooltip": "Потрібна Premium підписка"
   },
   "footer": {
     "copyright": "© {{year}} CodeArena",
@@ -279,5 +331,16 @@
     "noDataUser": "Поки немає даних",
     "noRank": "Немає рейтингу",
     "startParticipating": "Почніть брати участь у турнірах"
+  },
+  "analytics": {
+    "title": "Аналітика",
+    "totalStudents": "Всього студентів",
+    "activeTournaments": "Активні турніри",
+    "completedTasks": "Виконані завдання",
+    "successRate": "Рівень успішності",
+    "noData": "Дані відсутні",
+    "comingSoon": "Панель аналітики",
+    "comingSoonDescription": "Детальна аналітика та звіти будуть доступні найближчим часом.",
+    "underDevelopment": "Функції аналітики зараз знаходяться в розробці."
   }
 }

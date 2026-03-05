@@ -18,6 +18,7 @@ interface Tournament {
   description: string;
   status: "upcoming" | "active" | "completed";
   participants: number;
+  minParticipants: number;
   maxParticipants: number;
   startDate: string;
   endDate: string;
@@ -43,6 +44,7 @@ const PublicTournaments = () => {
         description: "Test your skills in this comprehensive coding competition featuring algorithmic challenges and problem-solving tasks.",
         status: "active",
         participants: 45,
+        minParticipants: 10,
         maxParticipants: 100,
         startDate: "2024-03-15",
         endDate: "2027-03-20",
@@ -55,6 +57,7 @@ const PublicTournaments = () => {
         description: "Advanced algorithmic tournament for experienced programmers. Focus on data structures and optimization.",
         status: "upcoming",
         participants: 12,
+        minParticipants: 5,
         maxParticipants: 50,
         startDate: "2024-03-25",
         endDate: "2027-03-30",
@@ -67,6 +70,7 @@ const PublicTournaments = () => {
         description: "Perfect for newcomers! Learn the basics of competitive programming in a supportive environment.",
         status: "completed",
         participants: 78,
+        minParticipants: 20,
         maxParticipants: 80,
         startDate: "2025-03-01",
         endDate: "2025-03-05",
@@ -79,6 +83,7 @@ const PublicTournaments = () => {
         description: "Race against the clock! Solve as many problems as possible in the shortest time.",
         status: "active",
         participants: 23,
+        minParticipants: 15,
         maxParticipants: 60,
         startDate: "2024-03-18",
         endDate: "2024-03-19",
@@ -91,6 +96,7 @@ const PublicTournaments = () => {
         description: "Comprehensive tournament covering all major data structures and their applications.",
         status: "upcoming",
         participants: 8,
+        minParticipants: 5,
         maxParticipants: 40,
         startDate: "2024-04-01",
         endDate: "2024-04-05",
@@ -235,7 +241,7 @@ const PublicTournaments = () => {
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="font-mono text-muted-foreground">
-                        {t('tournaments.participantsCount', { current: tournament.participants, max: tournament.maxParticipants })}
+                        {tournament.participants}/{tournament.maxParticipants} учасників
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
