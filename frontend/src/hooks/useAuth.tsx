@@ -18,6 +18,7 @@ type User = {
   nickname?: string;
   subscription_status?: string;
   subscription_plan?: string;
+  subscription_expires_at?: string;
   onboarded?: boolean;
 };
 

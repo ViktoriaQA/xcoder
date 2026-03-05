@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, LogOut, Terminal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function AppLayoutContent({ children }: { children: ReactNode }) {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -70,9 +71,29 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
               <div className="ml-auto flex items-center gap-3">
                 {isAuthenticated && (
                   <>
-                    <span className="text-xs font-mono px-2 py-1 rounded border border-primary/30 text-primary bg-primary/5">
-                      {user?.subscription_plan || 'USER'}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          onClick={() => navigate("/subscription")}
+                          className={`text-xs font-mono px-2 py-1 rounded border transition-colors cursor-pointer ${
+                            user?.subscription_plan 
+                              ? 'border-primary/30 text-primary bg-primary/5 hover:bg-primary/10' 
+                              : 'border-red-500/30 text-red-500 bg-red-500/5 hover:bg-red-500/10'
+                          }`}
+                        >
+                          {user?.subscription_plan || 'FREE'}
+                        </div>
+                      </TooltipTrigger>
+                      {!user?.subscription_plan ? (
+                        <TooltipContent className="bg-popover border-border text-popover-foreground font-mono text-xs">
+                          <p>Обмежений доступ</p>
+                        </TooltipContent>
+                      ) : (
+                        <TooltipContent className="bg-popover border-border text-popover-foreground font-mono text-xs">
+                          <p>Дійсний до {user?.subscription_expires_at ? new Date(user.subscription_expires_at).toLocaleDateString('uk-UA') : 'невідомо'}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -108,8 +129,10 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider>
-      <AppLayoutContent>{children}</AppLayoutContent>
-    </SidebarProvider>
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppLayoutContent>{children}</AppLayoutContent>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
