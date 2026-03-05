@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
 
   const saveAuthData = (userData: User, authToken: string) => {
@@ -162,24 +163,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Check for Google OAuth callback
+  // Initialize session
   useEffect(() => {
+    // Check for Google OAuth callback first
     const urlParams = new URLSearchParams(window.location.search);
     const callbackToken = urlParams.get('token');
     
-    if (callbackToken) {
+    if (callbackToken && !isInitialized) {
       // Handle Google OAuth callback
-      localStorage.setItem(config.auth.tokenKey, callbackToken);
+      const handleGoogleCallback = async () => {
+        try {
+          // Get user data using the token
+          const response = await AuthService.getCurrentUser(callbackToken);
+          const userData = response.user;
+          
+          // Save both token and user data
+          localStorage.setItem(config.auth.tokenKey, callbackToken);
+          localStorage.setItem(config.auth.userKey, JSON.stringify(userData));
+          
+          // Update state
+          setUser(userData);
+          setToken(callbackToken);
+          setIsInitialized(true);
+          
+          // Clear URL parameters and navigate to dashboard
+          window.history.replaceState({}, document.title, window.location.pathname);
+          navigate('/dashboard');
+        } catch (error) {
+          console.error('Failed to handle Google callback:', error);
+          // If failed, clear token and redirect to auth
+          localStorage.removeItem(config.auth.tokenKey);
+          setIsInitialized(true);
+          navigate('/auth');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      handleGoogleCallback();
+    } else if (!isInitialized) {
+      // Normal session restoration
       restoreSession().then(() => {
-        navigate('/dashboard');
+        setIsInitialized(true);
       });
     }
-  }, [navigate]);
-
-  // Initialize session
-  useEffect(() => {
-    restoreSession();
-  }, []);
+  }, [navigate, isInitialized]);
 
   const value: AuthContextType = {
     user,

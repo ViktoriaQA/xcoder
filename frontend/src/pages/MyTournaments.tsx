@@ -454,6 +454,10 @@ const MyTournaments = () => {
     return role !== 'trainer' && role !== 'admin';
   };
 
+  const isUserFreeSubscription = () => {
+    return profile?.subscription_plan === 'Free' || !profile?.subscription_plan;
+  };
+
   const TournamentCard = ({ tournament, showJoinButton = true, showLeaveButton = true }: { tournament: Tournament; showJoinButton?: boolean; showLeaveButton?: boolean }) => (
     <Card className="border-border/50 bg-card/50 backdrop-blur-sm hover:neon-border transition-all duration-300 group cursor-pointer">
       <CardHeader className="space-y-3">
@@ -688,6 +692,7 @@ const MyTournaments = () => {
         {showJoinButton && (tournament.status === "active" || tournament.status === "upcoming") && (
           <Button 
             className="w-full font-mono text-sm group-hover:bg-primary/90 transition-colors"
+            disabled={!tournament.isJoined && isUserFreeSubscription()}
             onClick={() => {
               if (tournament.isJoined) {
                 handleTournamentClick(tournament.id);
@@ -705,9 +710,18 @@ const MyTournaments = () => {
               </>
             ) : (
               <>
-                <Gamepad2 className="h-4 w-4 mr-2" />
-                {t('tournaments.join')}
-                <ArrowRight className="h-4 w-4 ml-2" />
+                {isUserFreeSubscription() ? (
+                  <>
+                    <Lock className="h-4 w-4 mr-2" />
+                    {t('tournaments.join')}
+                  </>
+                ) : (
+                  <>
+                    <Gamepad2 className="h-4 w-4 mr-2" />
+                    {t('tournaments.join')}
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </>
             )}
           </Button>

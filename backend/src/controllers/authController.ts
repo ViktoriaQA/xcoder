@@ -105,8 +105,8 @@ export class AuthController {
 
   static async googleLogin(req: Request, res: Response) {
     try {
-      // TODO: Implement Google OAuth
-      res.status(501).json({ error: 'Google OAuth not implemented yet' });
+      const result = await AuthService.getGoogleAuthUrl();
+      res.status(200).json(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Google login failed';
       res.status(500).json({ error: message });
@@ -115,11 +115,21 @@ export class AuthController {
 
   static async googleCallback(req: Request, res: Response) {
     try {
-      // TODO: Implement Google OAuth callback
-      res.status(501).json({ error: 'Google OAuth callback not implemented yet' });
+      const { code } = req.query;
+      
+      if (!code || typeof code !== 'string') {
+        return res.status(400).json({ error: 'Authorization code is required' });
+      }
+
+      const result = await AuthService.handleGoogleCallback(code);
+      
+      // Redirect to frontend with token
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      res.redirect(`${frontendUrl}?token=${result.token}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Google callback failed';
-      res.status(500).json({ error: message });
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      res.redirect(`${frontendUrl}?error=${encodeURIComponent(message)}`);
     }
   }
 

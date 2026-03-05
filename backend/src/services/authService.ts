@@ -4,10 +4,18 @@ import { ValidationService } from './validationService';
 import { JWTService } from './jwtService';
 import { User, RegisterRequest, LoginRequest, AuthResponse, UserSession, SMSVerificationCode } from '../models/user';
 import { generateNicknameFromEmail, generateUniqueNickname } from '../utils/nicknameGenerator';
+import { OAuth2Client } from 'google-auth-library';
 
 const supabase = createClient(
   process.env.SUPABASE_URL || 'http://localhost:54321',
   process.env.SUPABASE_SERVICE_ROLE_KEY || 'service-role-key'
+);
+
+// Google OAuth configuration
+const oauth2Client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/auth/google/callback'
 );
 
 export class AuthService {
@@ -351,5 +359,134 @@ export class AuthService {
 
     const { password_hash: _, email_verification_token: __, ...userResponse } = user;
     return userResponse;
+  }
+
+  static async getGoogleAuthUrl(): Promise<{ auth_url: string }> {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      throw new Error('Google OAuth is not configured');
+    }
+
+    const scopes = [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile'
+    ];
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      prompt: 'consent'
+    });
+
+    return { auth_url: authUrl };
+  }
+
+  static async handleGoogleCallback(code: string): Promise<AuthResponse> {
+    try {
+      // Exchange code for tokens
+      const { tokens } = await oauth2Client.getToken(code);
+      oauth2Client.setCredentials(tokens);
+
+      // Get user info from Google
+      const ticket = await oauth2Client.verifyIdToken({
+        idToken: tokens.id_token!,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload || !payload.email) {
+        throw new Error('Failed to get user information from Google');
+      }
+
+      const googleEmail = payload.email;
+      const googleFirstName = payload.given_name || '';
+      const googleLastName = payload.family_name || '';
+
+      // Check if user already exists
+      let user = await this.findUserByEmailOrPhone(googleEmail);
+
+      if (!user) {
+        // Create new user
+        let nickname: string | undefined;
+        try {
+          nickname = generateNicknameFromEmail(googleEmail);
+          
+          // Check if nickname already exists and make it unique if needed
+          const { data: existingUsers } = await supabase
+            .from('custom_users')
+            .select('nickname')
+            .not('nickname', 'is', null);
+          
+          const existingNicknames = existingUsers?.map(u => u.nickname).filter(Boolean) || [];
+          nickname = generateUniqueNickname(nickname, existingNicknames);
+        } catch (error) {
+          console.error('Failed to generate nickname from email:', error);
+        }
+
+        // Create user in database
+        const { data: newUser, error } = await supabase
+          .from('custom_users')
+          .insert({
+            email: googleEmail,
+            first_name: googleFirstName,
+            last_name: googleLastName,
+            nickname: nickname,
+            role: 'student',
+            is_verified: true, // Google users are pre-verified
+            phone_verified: false,
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .select()
+          .single();
+
+        if (error || !newUser) {
+          throw new Error('Failed to create Google user');
+        }
+
+        user = newUser;
+      } else {
+        // Update existing user's Google info
+        const { data: updatedUser, error } = await supabase
+          .from('custom_users')
+          .update({
+            first_name: googleFirstName || user.first_name,
+            last_name: googleLastName || user.last_name,
+            is_verified: true, // Mark as verified if using Google
+            updated_at: new Date()
+          })
+          .eq('id', user.id)
+          .select()
+          .single();
+
+        if (error || !updatedUser) {
+          throw new Error('Failed to update Google user');
+        }
+
+        user = updatedUser;
+      }
+
+      // Ensure user is not null at this point
+      if (!user) {
+        throw new Error('User initialization failed');
+      }
+
+      // Generate JWT
+      const token = JWTService.generateJWT(user.id, user.email!, user.role);
+
+      // Save session
+      await this.saveUserSession(user.id, token);
+
+      // Return user without sensitive data
+      const { password_hash: _, email_verification_token: __, ...userResponse } = user;
+      
+      return {
+        user: userResponse,
+        token
+      };
+
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      throw new Error('Failed to authenticate with Google');
+    }
   }
 }
