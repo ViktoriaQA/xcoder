@@ -12,6 +12,10 @@ const supabase = createClient(
 );
 
 // Google OAuth configuration
+console.log('OAuth2Client initialization:');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
+console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`);
+
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -371,7 +375,14 @@ export class AuthService {
       'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`;
+    console.log('Environment variables:');
+console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'set' : 'not set');
+console.log('GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+
+const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`;
+    
+    console.log('Google OAuth redirect URI:', redirectUri);
     
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
