@@ -65,10 +65,11 @@ export class PistonService {
 
   /**
    * Створює екземпляр сервісу Piston
-   * @param pistonUrl URL Piston API (за замовчуванням https://emkc.org/api/v2/piston)
+   * @param pistonUrl URL Piston API (за замовчуванням http://localhost:2000 для локального інстансу)
    */
   constructor(pistonUrl: string = 'https://emkc.org/api/v2/piston') {
     this.baseUrl = pistonUrl;
+    console.log(`🔧 Piston Service initialized with URL: ${this.baseUrl}`);
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
       timeout: 30000, // 30 секунд таймаут
@@ -233,5 +234,15 @@ export class PistonService {
   }
 }
 
-// Експорт екземпляру сервісу за замовчуванням
-export const pistonService = new PistonService();
+// Експорт функції для створення сервісу
+export const createPistonService = (url?: string) => new PistonService(url);
+
+// Експорт екземпляру сервісу за замовчуванням (з відкладеною ініціалізацією)
+let pistonServiceInstance: PistonService | null = null;
+
+export const pistonService = () => {
+  if (!pistonServiceInstance) {
+    pistonServiceInstance = new PistonService();
+  }
+  return pistonServiceInstance;
+};

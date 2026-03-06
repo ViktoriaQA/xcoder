@@ -15,7 +15,7 @@ const supabase = createClient(
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/auth/google/callback'
+  process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`
 );
 
 export class AuthService {
@@ -371,10 +371,13 @@ export class AuthService {
       'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`;
+    
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      prompt: 'consent'
+      prompt: 'consent',
+      redirect_uri: redirectUri
     });
 
     return { auth_url: authUrl };
@@ -382,8 +385,13 @@ export class AuthService {
 
   static async handleGoogleCallback(code: string): Promise<AuthResponse> {
     try {
+      const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${process.env.FRONTEND_URL || 'http://localhost:3001'}/auth/google/callback`;
+      
       // Exchange code for tokens
-      const { tokens } = await oauth2Client.getToken(code);
+      const { tokens } = await oauth2Client.getToken({
+        code,
+        redirect_uri: redirectUri
+      });
       oauth2Client.setCredentials(tokens);
 
       // Get user info from Google

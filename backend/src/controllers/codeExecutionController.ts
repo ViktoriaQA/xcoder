@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { pistonService, ExecutionRequest } from '../services/pistonService';
 
+console.log('📝 CodeExecutionController loaded');
+
 /**
  * Контролер для обробки запитів на виконання коду
  */
@@ -13,12 +15,17 @@ export class CodeExecutionController {
    */
   async getLanguages(req: Request, res: Response): Promise<void> {
     try {
-      const languages = await pistonService.getAvailableLanguages();
+      console.log('🔍 Getting languages...');
+      const languages = await pistonService().getAvailableLanguages();
+      console.log(`✅ Got ${languages.length} languages`);
       
       // Фільтруємо тільки потрібні мови (JS, TS, Python, C++)
       const supportedLanguages = languages.filter(lang => 
         ['javascript', 'typescript', 'python', 'cpp', 'c++'].includes(lang.name.toLowerCase())
       );
+
+      // Сортуємо мови для кращого UX
+      supportedLanguages.sort((a, b) => a.name.localeCompare(b.name));
 
       res.json({
         success: true,
@@ -55,20 +62,10 @@ export class CodeExecutionController {
 
       const { language, version, code, stdin, time_limit, memory_limit } = req.body;
 
-      // Перевіряємо, чи підтримується мова
-      const isSupported = await pistonService.isLanguageSupported(language, version);
-      if (!isSupported) {
-        res.status(400).json({
-          success: false,
-          message: `Мова ${language} (${version}) не підтримується`
-        });
-        return;
-      }
-
       // Якщо версія не вказана, отримуємо рекомендовану
       let finalVersion = version;
       if (!finalVersion) {
-        finalVersion = await pistonService.getRecommendedVersion(language);
+        finalVersion = await pistonService().getRecommendedVersion(language);
         if (!finalVersion) {
           res.status(400).json({
             success: false,
@@ -76,6 +73,16 @@ export class CodeExecutionController {
           });
           return;
         }
+      }
+
+      // Перевіряємо, чи підтримується мова з версією
+      const isSupported = await pistonService().isLanguageSupported(language, finalVersion);
+      if (!isSupported) {
+        res.status(400).json({
+          success: false,
+          message: `Мова ${language} (${finalVersion}) не підтримується`
+        });
+        return;
       }
 
       // Формуємо запит на виконання
@@ -89,7 +96,7 @@ export class CodeExecutionController {
       };
 
       // Виконуємо код
-      const result = await pistonService.executeCode(executionRequest);
+      const result = await pistonService().executeCode(executionRequest);
 
       // Формуємо відповідь
       const response = {
@@ -160,8 +167,8 @@ export class CodeExecutionController {
         return;
       }
 
-      const isSupported = await pistonService.isLanguageSupported(language);
-      const recommendedVersion = await pistonService.getRecommendedVersion(language);
+      const isSupported = await pistonService().isLanguageSupported(language);
+      const recommendedVersion = await pistonService().getRecommendedVersion(language);
 
       if (!isSupported) {
         res.status(404).json({

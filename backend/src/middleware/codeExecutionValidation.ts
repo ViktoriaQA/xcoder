@@ -15,11 +15,11 @@ export const executeCodeValidation = [
 
   // Валідація версії (необов'язкова, якщо не вказано - буде використано рекомендовану)
   body('version')
-    .optional()
+    .optional({ checkFalsy: true })
     .isString()
     .trim()
     .notEmpty()
-    .withMessage('Версія повинна бути рядком'),
+    .withMessage('Версія повинна бути непорожнім рядком'),
 
   // Валідація коду
   body('code')
