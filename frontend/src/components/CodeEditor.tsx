@@ -43,11 +43,22 @@ interface ExecutionResponse {
   status: string;
 }
 
+interface Example {
+  id: string;
+  input: string;
+  output: string;
+  explanation?: string;
+}
+
+interface CodeEditorProps {
+  examples?: Example[];
+}
+
 /**
  * Компонент редактора коду з підтримкою Monaco Editor
  * Підтримує JavaScript, TypeScript, Python та C++
  */
-export const CodeEditor: React.FC = () => {
+export const CodeEditor: React.FC<CodeEditorProps> = ({ examples = [] }) => {
   const editorRef = useRef<any>(null);
   const isMobile = useIsMobile();
   const [selectedLanguage, setSelectedLanguage] = useState<string>('javascript');
@@ -129,6 +140,15 @@ int main() {
     };
     return monacoLanguages[language] || 'plaintext';
   };
+
+  /**
+   * Автоматично заповнювати вхідні дані з першого прикладу
+   */
+  useEffect(() => {
+    if (examples.length > 0 && !stdin) {
+      setStdin(examples[0].input);
+    }
+  }, [examples, stdin]);
 
   /**
    * Завантажити список доступних мов
@@ -379,13 +399,32 @@ int main() {
 
             {/* Вхідні дані */}
             <TabsContent value="input" className="flex-1 overflow-hidden mt-4">
-              <div className="h-full">
-                <Textarea
-                  value={stdin}
-                  onChange={(e) => setStdin(e.target.value)}
-                  placeholder="Введіть вхідні дані для програми..."
-                  className="font-mono h-full resize-none"
-                />
+              <div className="h-full flex flex-col space-y-2">
+                {/* Кнопки вибору прикладів */}
+                {examples.length > 0 && (
+                  <div className="flex flex-wrap gap-2 flex-shrink-0">
+                    <span className="text-xs font-mono text-muted-foreground self-center">Приклади:</span>
+                    {examples.map((ex, index) => (
+                      <Button
+                        key={ex.id}
+                        variant={stdin === ex.input ? "default" : "outline"}
+                        size="sm"
+                        className="font-mono text-xs h-6 px-2"
+                        onClick={() => setStdin(ex.input)}
+                      >
+                        {ex.id}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex-1 min-h-0">
+                  <Textarea
+                    value={stdin}
+                    onChange={(e) => setStdin(e.target.value)}
+                    placeholder="Введіть вхідні дані для програми..."
+                    className="font-mono h-full resize-none"
+                  />
+                </div>
               </div>
             </TabsContent>
 

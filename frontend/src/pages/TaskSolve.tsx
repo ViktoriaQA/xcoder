@@ -362,7 +362,7 @@ const TaskSolve = () => {
                       </span>
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <CodeEditor />
+                      <CodeEditor examples={task?.examples || []} />
                     </div>
                   </div>
                 </TabsContent>
@@ -480,7 +480,7 @@ const TaskSolve = () => {
                 <div className="h-full bg-background/40">
                   <div className="h-full flex flex-col">
                     <div className="flex-1 overflow-auto">
-                      <CodeEditor />
+                      <CodeEditor examples={task?.examples || []} />
                     </div>
                   </div>
                 </div>
