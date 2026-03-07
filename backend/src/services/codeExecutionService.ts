@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import * as crypto from 'crypto';
 
 /**
  * Інтерфейс для запиту на виконання коду
@@ -324,14 +325,14 @@ export class CodeExecutionManager extends EventEmitter {
    * Генерувати ключ для кешування
    */
   private generateCacheKey(request: CodeExecutionRequest): string {
-    const hash = Buffer.from(JSON.stringify({
+    const data = JSON.stringify({
       language: request.language,
-      code: request.code,
+      code: request.code.trim(),
       stdin: request.stdin || '',
       time_limit: request.time_limit,
       memory_limit: request.memory_limit
-    })).toString('base64');
-    return hash.substring(0, 32);
+    });
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
 
   /**
