@@ -510,10 +510,10 @@ const TaskSolve = () => {
                         <div className="border-b border-border/60 px-4 pt-4 pb-2">
                           <TabsList className="w-full">
                             <TabsTrigger value="local" className="flex-1">
-                              {t("tasks.localEditor", "Редактор")}
+                              {t("tasks.localEditor", "Виконання")}
                             </TabsTrigger>
                             <TabsTrigger value="onecompiler" className="flex-1">
-                              OneCompiler IDE
+                              {t("tasks.onecompiler", "Тренування")}
                             </TabsTrigger>
                           </TabsList>
                         </div>
