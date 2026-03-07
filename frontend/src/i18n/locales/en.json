@@ -342,5 +342,8 @@
     "comingSoon": "Analytics Dashboard",
     "comingSoonDescription": "Detailed analytics and reporting features will be available soon.",
     "underDevelopment": "Analytics features are currently under development."
+  },
+  "tasks": {
+    "tasksAddedSuccessfully": "{{successful}} tasks added, {{failed}} failed"
   }
 }

@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ArrowRight, ListChecks, Timer, BarChart3, Plus, BookOpen, Users, UserPlus, TrendingUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, ListChecks, Timer, BarChart3, Plus, BookOpen, Users, UserPlus, TrendingUp, Trash2, MoreVertical } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import AddTaskFromLibraryModal from "@/components/AddTaskFromLibraryModal";
 import AddStudentModal from "@/components/AddStudentModal";
 
@@ -250,6 +251,54 @@ const TournamentTasks = () => {
     navigate(`/tournaments/${tournamentId ?? "1"}/tasks/${taskId}`);
   };
 
+  // Функція для видалення задачі з турніру
+  const handleDeleteTask = async (taskId: string) => {
+    if (!tournamentId) return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.required', 'Необхідна автентифікація'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const response = await fetch(`/api/tournaments/${tournamentId}/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast({
+          title: t('common.success'),
+          description: t('tasks.taskDeletedSuccessfully', 'Задачу успішно видалено з турніру'),
+        });
+        // Оновлюємо список задач
+        setRefreshKey(prev => prev + 1);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast({
+          title: t('common.error'),
+          description: errorData.error?.message || t('tasks.deleteTaskError', 'Не вдалося видалити задачу'),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: t('common.error'),
+        description: t('tasks.deleteTaskError', 'Не вдалося видалити задачу'),
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -397,16 +446,44 @@ const TournamentTasks = () => {
                 >
                   <CardHeader className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <CardTitle className="font-mono text-base">
+                      <CardTitle className="font-mono text-base flex-1">
                         {task.title}
                       </CardTitle>
-                      <Badge className={`${difficultyColor[task.difficulty]} font-mono text-[11px]`}>
-                        {task.difficulty === "easy"
-                          ? t("tasks.difficulty.easy", "Легка")
-                          : task.difficulty === "medium"
-                          ? t("tasks.difficulty.medium", "Середня")
-                          : t("tasks.difficulty.hard", "Складна")}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${difficultyColor[task.difficulty]} font-mono text-[11px]`}>
+                          {task.difficulty === "easy"
+                            ? t("tasks.difficulty.easy", "Легка")
+                            : task.difficulty === "medium"
+                            ? t("tasks.difficulty.medium", "Середня")
+                            : t("tasks.difficulty.hard", "Складна")}
+                        </Badge>
+                        {canAddTasks && isTournamentCreator && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-destructive/10"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTask(task.id);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t('tasks.delete', 'Видалити')}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </div>
                     <CardDescription className="font-mono text-xs">
                       {task.shortDescription}

@@ -342,5 +342,8 @@
     "comingSoon": "Панель аналітики",
     "comingSoonDescription": "Детальна аналітика та звіти будуть доступні найближчим часом.",
     "underDevelopment": "Функції аналітики зараз знаходяться в розробці."
+  },
+  "tasks": {
+    "tasksAddedSuccessfully": "{{successful}} завдань додано, {{failed}} не вдалося"
   }
 }

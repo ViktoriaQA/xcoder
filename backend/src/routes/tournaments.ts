@@ -697,7 +697,17 @@ router.post('/:id/tasks', requireRole(['trainer', 'admin']), async (req: AuthReq
           points: existingTask.points || 100,
           order_index: 0, // Required field
           is_active: true,
-          created_by: userId
+          created_by: userId,
+          // Copy structured fields for proper task content
+          problem_statement: existingTask.problem_statement,
+          input_format: existingTask.input_format,
+          output_format: existingTask.output_format,
+          constraints: existingTask.constraints,
+          examples: existingTask.examples,
+          time_limit_ms: existingTask.time_limit_ms,
+          memory_limit_mb: existingTask.memory_limit_mb,
+          test_cases: existingTask.test_cases,
+          solution_template: existingTask.solution_template
         })
         .select()
         .single();
@@ -948,6 +958,120 @@ router.get('/:id/tasks/:taskId', async (req: AuthRequest, res, next) => {
     const { test_cases, ...taskWithoutTests } = task;
 
     res.json({ task: taskWithoutTests });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Trainer/Admin: Delete task from tournament
+router.delete('/:id/tasks/:taskId', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { id, taskId } = req.params;
+    const userId = req.user!.id;
+
+    // Check if tournament exists and user is the creator
+    const { data: tournament, error: checkError } = await supabase
+      .from('tournaments')
+      .select('created_by')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !tournament) {
+      throw createError('Tournament not found', 404);
+    }
+
+    // Only tournament creator or admin can delete tasks
+    if (tournament.created_by !== userId && req.user!.role !== 'admin') {
+      throw createError('Not authorized to delete tasks from this tournament', 403);
+    }
+
+    // Check if task exists in this tournament
+    const { data: task, error: taskError } = await supabase
+      .from('tournament_tasks')
+      .select('*')
+      .eq('id', taskId)
+      .eq('tournament_id', id)
+      .single();
+
+    if (taskError || !task) {
+      throw createError('Task not found in tournament', 404);
+    }
+
+    // Soft delete the task (set is_active to false)
+    const { data: deletedTask, error: deleteError } = await supabase
+      .from('tournament_tasks')
+      .update({ is_active: false })
+      .eq('id', taskId)
+      .eq('tournament_id', id)
+      .select()
+      .single();
+
+    if (deleteError) {
+      console.error('Supabase error deleting task from tournament:', deleteError);
+      throw createError('Failed to delete task from tournament', 500);
+    }
+
+    res.json({
+      message: 'Task deleted from tournament successfully',
+      task: deletedTask
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Trainer/Admin: Reactivate task in tournament
+router.patch('/:id/tasks/:taskId/reactivate', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { id, taskId } = req.params;
+    const userId = req.user!.id;
+
+    // Check if tournament exists and user is the creator
+    const { data: tournament, error: checkError } = await supabase
+      .from('tournaments')
+      .select('created_by')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !tournament) {
+      throw createError('Tournament not found', 404);
+    }
+
+    // Only tournament creator or admin can reactivate tasks
+    if (tournament.created_by !== userId && req.user!.role !== 'admin') {
+      throw createError('Not authorized to reactivate tasks in this tournament', 403);
+    }
+
+    // Check if task exists in this tournament
+    const { data: task, error: taskError } = await supabase
+      .from('tournament_tasks')
+      .select('*')
+      .eq('id', taskId)
+      .eq('tournament_id', id)
+      .single();
+
+    if (taskError || !task) {
+      throw createError('Task not found in tournament', 404);
+    }
+
+    // Reactivate the task (set is_active to true)
+    const { data: reactivatedTask, error: reactivateError } = await supabase
+      .from('tournament_tasks')
+      .update({ is_active: true })
+      .eq('id', taskId)
+      .eq('tournament_id', id)
+      .select()
+      .single();
+
+    if (reactivateError) {
+      console.error('Supabase error reactivating task in tournament:', reactivateError);
+      throw createError('Failed to reactivate task in tournament', 500);
+    }
+
+    res.json({
+      message: 'Task reactivated in tournament successfully',
+      task: reactivatedTask
+    });
   } catch (error) {
     next(error);
   }
