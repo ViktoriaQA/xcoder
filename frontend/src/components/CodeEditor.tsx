@@ -156,7 +156,7 @@ int main() {
   useEffect(() => {
     const loadLanguages = async () => {
       try {
-        const response = await fetch('/api/code-execution/languages');
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/languages`);
         const data = await response.json();
         
         if (data.success) {
@@ -228,7 +228,7 @@ int main() {
     setActiveTab('output');
 
     try {
-      const response = await fetch('/api/code-execution/execute', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
