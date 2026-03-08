@@ -5,11 +5,13 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Play, Code, Terminal, Save } from "lucide-react";
+import { Play, Code, Terminal, Save, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Alert, AlertDescription } from "./ui/alert";
 import { TestResultsDisplay } from "./TestResultsDisplay";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./ui/resizable";
 
 /**
  * Інтерфейс для мови програмування
@@ -619,264 +621,277 @@ int main() {
   return (
     <div className="w-full h-full min-h-[600px] flex flex-col overflow-hidden">
       <Card className="flex-1 flex flex-col overflow-hidden border-0">
-        <CardContent className="flex-1 flex flex-col overflow-hidden space-y-4 p-3 sm:p-4">
-          {/* Панель налаштувань */}
-          <div className="flex flex-wrap gap-3 sm:gap-4 items-center flex-shrink-0">
-            <div className="flex-1 min-w-[200px]">
-              <Select value={`${selectedLanguage}|${selectedVersion}`} onValueChange={(value) => {
-                const [lang, version] = value.split('|');
-                handleLanguageChange(lang, version);
-              }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Оберіть мову та версію" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLanguages
-                    .filter((lang, index, self) => 
-                      self.findIndex(l => l.name === lang.name) === index
-                    )
-                    .map((lang) => (
-                      <div key={`lang-group-${lang.name}`}>
-                        {lang.versions.map((version) => (
-                          <SelectItem key={`${lang.name}|${version}`} value={`${lang.name}|${version}`}>
-                            {lang.name.charAt(0).toUpperCase() + lang.name.slice(1)} ({version})
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex-1 min-w-[150px]">
-              <Select value={timeLimit.toString()} onValueChange={(value) => setTimeLimit(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem key="time-5000" value="5000">5с</SelectItem>
-                  <SelectItem key="time-10000" value="10000">10с</SelectItem>
-                  <SelectItem key="time-30000" value="30000">30с</SelectItem>
-                  <SelectItem key="time-60000" value="60000">60с</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex-1 min-w-[150px]">
-              <Select value={memoryLimit.toString()} onValueChange={(value) => setMemoryLimit(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem key="mem-64" value="64">64 MB</SelectItem>
-                  <SelectItem key="mem-128" value="128">128 MB</SelectItem>
-                  <SelectItem key="mem-256" value="256">256 MB</SelectItem>
-                  <SelectItem key="mem-512" value="512">512 MB</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Редактор коду */}
-          <div className="rounded-lg overflow-hidden relative" style={{ height: '400px' }}>
-            <Editor
-              height="100%"
-              language={getMonacoLanguage(selectedLanguage)}
-              value={code}
-              onChange={(value) => setCode(value || '')}
-              onMount={handleEditorDidMount}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                wordWrap: 'on',
-                lineNumbers: 'on',
-                renderWhitespace: 'selection',
-              }}
-            />
-            {/* Кнопка запуску в редакторі */}
-            <div className="absolute bottom-2 right-2 flex gap-2">
-              <Button
-                onClick={executeCode}
-                disabled={isLoading || isTestsLoading}
-                variant="outline"
-                className="flex items-center gap-2 px-3 py-2 h-8 bg-black/80 border-gray-600 hover:bg-black/90 hover:text-primary"
-                size="sm"
-              >
-                <Play className="w-4 h-4" />
-                RUN
-              </Button>
-              <Button
-                onClick={runAllTestsAndSubmit}
-                disabled={isLoading || isTestsLoading}
-                className="flex items-center gap-2 px-3 py-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground"
-                size="sm"
-              >
-                <Play className="w-4 h-4" />
-                Надіслати
-              </Button>
-            </div>
-          </div>
-
-          {/* Таби для входних даних, результатів та тестів */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-              <TabsTrigger value="input">Вхідні дані</TabsTrigger>
-              <TabsTrigger value="output">Виконання</TabsTrigger>
-              <TabsTrigger value="tests">Тест кейси</TabsTrigger>
-            </TabsList>
-
-            {/* Вхідні дані */}
-            <TabsContent value="input" className="flex-1 overflow-hidden mt-4">
-              <div className="h-full flex flex-col space-y-2">
-                {/* Кнопки вибору прикладів */}
-                {examples.filter(ex => ex.visible !== false).length > 0 && (
-                  <div className="flex flex-wrap gap-2 flex-shrink-0">
-                    <span className="text-xs font-mono text-muted-foreground self-center">Приклади:</span>
-                    {examples.filter(ex => ex.visible !== false).map((ex, index) => (
-                      <Button
-                        key={ex.id}
-                        variant={stdin === ex.input ? "default" : "outline"}
-                        size="sm"
-                        className="font-mono text-xs h-6 px-2"
-                        onClick={() => setStdin(ex.input)}
-                      >
-                        {ex.id}
+        <CardContent className="flex-1 flex flex-col overflow-hidden p-3 sm:p-4">
+          <ResizablePanelGroup direction="vertical" className="flex-1 gap-2">
+            {/* Верхня панель: редактор коду */}
+            <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
+              <div className="h-full p-1">
+                <div className="h-full rounded-lg overflow-hidden relative">
+                <Editor
+                  height="100%"
+                  language={getMonacoLanguage(selectedLanguage)}
+                  value={code}
+                  onChange={(value) => setCode(value || '')}
+                  onMount={handleEditorDidMount}
+                  theme="vs-dark"
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    wordWrap: 'on',
+                    lineNumbers: 'on',
+                    lineNumbersMinChars: 3,
+                    renderWhitespace: 'selection',
+                  }}
+                />
+                {/* Кнопки запуску в редакторі */}
+                <div className="absolute bottom-2 right-2 flex gap-2">
+                  <Button
+                    onClick={executeCode}
+                    disabled={isLoading || isTestsLoading}
+                    variant="outline"
+                    className="flex items-center gap-2 px-3 py-2 h-8 bg-black/80 border-gray-600 hover:bg-black/90 hover:text-primary"
+                    size="sm"
+                  >
+                    <Play className="w-4 h-4" />
+                    RUN
+                  </Button>
+                  <Button
+                    onClick={runAllTestsAndSubmit}
+                    disabled={isLoading || isTestsLoading}
+                    className="flex items-center gap-2 px-3 py-2 h-8 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    size="sm"
+                  >
+                    <Play className="w-4 h-4" />
+                    Надіслати
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="px-3 py-2 h-8 bg-black/80 border-gray-600 hover:bg-black/90 hover:text-primary">
+                        <Settings className="w-4 h-4" />
                       </Button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex-1 min-h-0">
-                  <Textarea
-                    value={stdin}
-                    onChange={(e) => setStdin(e.target.value)}
-                    placeholder="Введіть вхідні дані для програми..."
-                    className="font-mono h-full resize-none"
-                  />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <div className="p-2 space-y-3">
+                        {/* Вибір мови */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Мова програмування</label>
+                          <Select value={`${selectedLanguage}|${selectedVersion}`} onValueChange={(value) => {
+                            const [lang, version] = value.split('|');
+                            handleLanguageChange(lang, version);
+                          }}>
+                            <SelectTrigger className="text-xs">
+                              <SelectValue placeholder="Мова..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableLanguages
+                                .filter((lang, index, self) => 
+                                  self.findIndex(l => l.name === lang.name) === index
+                                )
+                                .map((lang) => (
+                                  <div key={`lang-group-${lang.name}`}>
+                                    {lang.versions.map((version) => (
+                                      <SelectItem key={`${lang.name}|${version}`} value={`${lang.name}|${version}`}>
+                                        {lang.name.charAt(0).toUpperCase() + lang.name.slice(1)}...
+                                      </SelectItem>
+                                    ))}
+                                  </div>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Ліміт часу */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Ліміт часу</label>
+                          <Select value={timeLimit.toString()} onValueChange={(value) => setTimeLimit(Number(value))}>
+                            <SelectTrigger className="text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem key="time-5000" value="5000">5с...</SelectItem>
+                              <SelectItem key="time-10000" value="10000">10с...</SelectItem>
+                              <SelectItem key="time-30000" value="30000">30с...</SelectItem>
+                              <SelectItem key="time-60000" value="60000">60с...</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Ліміт пам'яті */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Ліміт пам'яті</label>
+                          <Select value={memoryLimit.toString()} onValueChange={(value) => setMemoryLimit(Number(value))}>
+                            <SelectTrigger className="text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem key="mem-64" value="64">64MB...</SelectItem>
+                              <SelectItem key="mem-128" value="128">128MB...</SelectItem>
+                              <SelectItem key="mem-256" value="256">256MB...</SelectItem>
+                              <SelectItem key="mem-512" value="512">512MB...</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
-            </TabsContent>
+            </div>
+            </ResizablePanel>
 
-            {/* Результат виконання */}
-            <TabsContent value="output" className="flex-1 overflow-hidden mt-4 space-y-4">
-              <div className="overflow-auto">
-              {/* Повідомлення про помилку */}
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            {/* Горизонтальний сплітер */}
+            <ResizableHandle withHandle />
 
-              {result && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(result.status)}>
-                      {getStatusText(result.status)}
-                    </Badge>
-                    <Badge variant="outline" className="bg-gray-900 text-gray-100 border-gray-700">
-                      {result.execution_time_ms}ms
-                    </Badge>
-                    <Badge variant="outline" className="bg-gray-900 text-gray-100 border-gray-700">
-                      {result.memory_used_mb}MB
-                    </Badge>
+            {/* Нижня панель: таби для входних даних, результатів та тестів */}
+            <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
+              <div className="h-full p-1">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
+                  <TabsTrigger value="input">Вхідні дані</TabsTrigger>
+                  <TabsTrigger value="output">Виконання</TabsTrigger>
+                  <TabsTrigger value="tests">Тест кейси</TabsTrigger>
+                </TabsList>
+
+                {/* Вхідні дані */}
+                <TabsContent value="input" className="flex-1 overflow-hidden mt-4">
+                  <div className="h-full flex flex-col space-y-2">
+                    
+                    <div className="flex-1 min-h-0 max-h-28">
+                      <Textarea
+                        value={stdin}
+                        onChange={(e) => setStdin(e.target.value)}
+                        placeholder="Введіть вхідні дані для програми..."
+                        className="font-mono h-full resize-none border-primary"
+                      />
+                    </div>
                   </div>
+                </TabsContent>
 
-                  {/* Stdout */}
-                  {result.output.stdout && (
-                    <div>
-                      <h4 className="font-medium mb-2">Вивід (stdout):</h4>
-                      <pre className="bg-gray-900 text-gray-100 p-3 rounded text-sm font-mono max-h-48 overflow-auto">
-                        {result.output.stdout}
-                      </pre>
+                {/* Результат виконання */}
+                <TabsContent value="output" className="flex-1 overflow-hidden mt-4 space-y-4">
+                  <div className="overflow-auto">
+                  {/* Повідомлення про помилку */}
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {result && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Badge className={getStatusColor(result.status)}>
+                          {getStatusText(result.status)}
+                        </Badge>
+                        <Badge variant="outline" className="bg-gray-900 text-gray-100 border-gray-700">
+                          {result.execution_time_ms}ms
+                        </Badge>
+                        <Badge variant="outline" className="bg-gray-900 text-gray-100 border-gray-700">
+                          {result.memory_used_mb}MB
+                        </Badge>
+                      </div>
+
+                      {/* Stdout */}
+                      {result.output.stdout && (
+                        <div>
+                          <h4 className="font-medium mb-2">Вивід (stdout):</h4>
+                          <pre className="bg-gray-900 text-gray-100 p-3 rounded text-sm font-mono max-h-48 overflow-auto">
+                            {result.output.stdout}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Stderr */}
+                      {result.output.stderr && (
+                        <div>
+                          <h4 className="font-medium mb-2 text-red-600">Помилки (stderr):</h4>
+                          <pre className="bg-red-50 dark:bg-red-900/20 p-3 rounded text-sm font-mono max-h-48 overflow-auto text-red-700 dark:text-red-300">
+                            {result.output.stderr}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Compile output */}
+                      {result.output.compile_output && (
+                        <div>
+                          <h4 className="font-medium mb-2 text-yellow-600">Вивід компіляції:</h4>
+                          <pre className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded text-sm font-mono max-h-48 overflow-auto text-yellow-700 dark:text-yellow-300">
+                            {result.output.compile_output}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Детальна інформація */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Код виходу:</span>
+                          <div className="font-mono">{result.output.exit_code}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Час виконання:</span>
+                          <div className="font-mono">{result.output.time}s</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Пам'ять:</span>
+                          <div className="font-mono">{(result.output.memory / 1024 / 1024).toFixed(2)}MB</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Сигнал:</span>
+                          <div className="font-mono">{result.output.signal || 'N/A'}</div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  {/* Stderr */}
-                  {result.output.stderr && (
-                    <div>
-                      <h4 className="font-medium mb-2 text-red-600">Помилки (stderr):</h4>
-                      <pre className="bg-red-50 dark:bg-red-900/20 p-3 rounded text-sm font-mono max-h-48 overflow-auto text-red-700 dark:text-red-300">
-                        {result.output.stderr}
-                      </pre>
+                  {!result && !error && (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <Terminal className="w-10 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Натисніть кнопку RUN для виконання коду з вхідними даними</p>
+                        <p className="text-sm mt-1">або Надіслати для виконання всіх тестів та відправки рішення</p>
+                      </div>
                     </div>
                   )}
+                  </div>
+                </TabsContent>
 
-                  {/* Compile output */}
-                  {result.output.compile_output && (
-                    <div>
-                      <h4 className="font-medium mb-2 text-yellow-600">Вивід компіляції:</h4>
-                      <pre className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded text-sm font-mono max-h-48 overflow-auto text-yellow-700 dark:text-yellow-300">
-                        {result.output.compile_output}
-                      </pre>
+                {/* Тести */}
+                <TabsContent value="tests" className="flex-1 overflow-hidden mt-4">
+                  {isTestsLoading ? (
+                    <TestResultsDisplay results={null} isLoading={true} />
+                  ) : testResults ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-medium">Результати тестів</h3>
+                        <Button
+                          onClick={clearSavedResults}
+                          variant="outline"
+                          size="sm"
+                          className="text-sm"
+                        >
+                          Очистити результати
+                        </Button>
+                      </div>
+                      <div className="overflow-auto max-h-64">
+                        <TestResultsDisplay results={testResults} isLoading={false} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <Code className="w-10 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Натисніть кнопку Надіслати для виконання всіх тестів та відправки рішення</p>
+                        <p className="text-sm mt-2">RUN виконує код з вхідними даними у вкладці "Виконання"</p>
+                      </div>
                     </div>
                   )}
-
-                  {/* Детальна інформація */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Код виходу:</span>
-                      <div className="font-mono">{result.output.exit_code}</div>
-                    </div>
-                    <div>
-                      <span className="font-medium">Час виконання:</span>
-                      <div className="font-mono">{result.output.time}s</div>
-                    </div>
-                    <div>
-                      <span className="font-medium">Пам'ять:</span>
-                      <div className="font-mono">{(result.output.memory / 1024 / 1024).toFixed(2)}MB</div>
-                    </div>
-                    <div>
-                      <span className="font-medium">Сигнал:</span>
-                      <div className="font-mono">{result.output.signal || 'N/A'}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!result && !error && (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <Terminal className="w-10 h-12 mx-auto mb-2 opacity-50" />
-                    <p>Натисніть кнопку RUN для виконання коду з вхідними даними</p>
-                    <p className="text-sm mt-1">або Надіслати для виконання всіх тестів та відправки рішення</p>
-                  </div>
-                </div>
-              )}
+                </TabsContent>
+              </Tabs>
               </div>
-            </TabsContent>
-
-            {/* Тести */}
-            <TabsContent value="tests" className="flex-1 overflow-hidden mt-4">
-              {isTestsLoading ? (
-                <TestResultsDisplay results={null} isLoading={true} />
-              ) : testResults ? (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Результати тестів</h3>
-                    <Button
-                      onClick={clearSavedResults}
-                      variant="outline"
-                      size="sm"
-                      className="text-sm"
-                    >
-                      Очистити результати
-                    </Button>
-                  </div>
-                  <TestResultsDisplay results={testResults} isLoading={false} />
-                </div>
-              ) : (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <Code className="w-10 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Натисніть кнопку Надіслати для виконання всіх тестів та відправки рішення</p>
-                    <p className="text-sm mt-2">RUN виконує код з вхідними даними у вкладці "Виконання"</p>
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </CardContent>
       </Card>
     </div>

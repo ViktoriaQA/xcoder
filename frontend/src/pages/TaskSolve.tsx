@@ -553,9 +553,9 @@ const TaskSolve = () => {
               <ResizablePanel defaultSize={60} minSize={40}>
                 <div className="h-full bg-background/40">
                   <div className="h-full flex flex-col">
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-hidden">
                       <Tabs defaultValue="local" className="h-full flex flex-col">
-                        <div className="border-b border-border/60 px-4 pt-4 pb-2">
+                        <div className="border-b border-border/60 px-4 pt-4 pb-2 flex-shrink-0">
                           <TabsList className="w-full">
                             <TabsTrigger value="local" className="flex-1">
                               {t("tasks.localEditor", "Виконання")}
@@ -566,7 +566,7 @@ const TaskSolve = () => {
                           </TabsList>
                         </div>
                         
-                        <TabsContent value="local" className="flex-1 mt-0">
+                        <TabsContent value="local" className="flex-1 mt-0 overflow-hidden">
                           <div className="h-full">
                             <CodeEditor 
                               examples={task?.examples || []} 
@@ -579,7 +579,7 @@ const TaskSolve = () => {
                           </div>
                         </TabsContent>
                         
-                        <TabsContent value="onecompiler" className="flex-1 mt-0">
+                        <TabsContent value="onecompiler" className="flex-1 mt-0 overflow-hidden">
                           <div className="h-full p-4">
                             <div className="h-full border rounded-lg overflow-hidden bg-white">
                               <iframe
