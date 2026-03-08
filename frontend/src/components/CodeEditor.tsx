@@ -1,5 +1,10 @@
 import React, { useRef, useEffect, useState } from "react";
-import Editor from "@monaco-editor/react";
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { cpp } from '@codemirror/lang-cpp';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { EditorView } from '@codemirror/view';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
@@ -84,7 +89,8 @@ interface CodeEditorProps {
 }
 
 /**
- * Компонент редактора коду з підтримкою Monaco Editor
+ * Компонент редактора коду з підтримкою CodeMirror
+ * Оптимізовано для мобільних пристроїв та сенсорного введення
  * Підтримує JavaScript, TypeScript, Python та C++
  */
 export const CodeEditor: React.FC<CodeEditorProps> = ({ 
@@ -174,16 +180,20 @@ int main() {
   };
 
   /**
-   * Отримати Monaco мову для вибраної мови програмування
+   * Отримати розширення CodeMirror для вибраної мови програмування
    */
-  const getMonacoLanguage = (language: string): string => {
-    const monacoLanguages: Record<string, string> = {
-      javascript: 'javascript',
-      typescript: 'typescript',
-      python: 'python',
-      cpp: 'cpp',
-    };
-    return monacoLanguages[language] || 'plaintext';
+  const getCodeMirrorExtension = (language: string) => {
+    switch (language) {
+      case 'javascript':
+      case 'typescript':
+        return javascript({ jsx: true, typescript: language === 'typescript' });
+      case 'python':
+        return python();
+      case 'cpp':
+        return cpp();
+      default:
+        return [];
+    }
   };
 
   /**
@@ -261,17 +271,8 @@ int main() {
   /**
    * Обробник монтування редактора
    */
-  const handleEditorDidMount = (editor: any, monaco: any) => {
-    editorRef.current = editor;
-    
-    // Налаштування теми та розміру шрифту
-    monaco.editor.setTheme('vs-dark');
-    editor.updateOptions({
-      fontSize: 14,
-      minimap: { enabled: false },
-      scrollBeyondLastLine: false,
-      automaticLayout: true,
-    });
+  const handleEditorDidMount = () => {
+    // CodeMirror автоматично налаштовується через props
   };
 
   /**
@@ -627,22 +628,45 @@ int main() {
             <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
               <div className="h-full p-1">
                 <div className="h-full rounded-lg overflow-hidden relative">
-                <Editor
-                  height="100%"
-                  language={getMonacoLanguage(selectedLanguage)}
+                <CodeMirror
                   value={code}
-                  onChange={(value) => setCode(value || '')}
-                  onMount={handleEditorDidMount}
-                  theme="vs-dark"
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    wordWrap: 'on',
-                    lineNumbers: 'on',
-                    lineNumbersMinChars: 3,
-                    renderWhitespace: 'selection',
+                  height="100%"
+                  theme={oneDark}
+                  extensions={[getCodeMirrorExtension(selectedLanguage), EditorView.theme({
+                    '&': {
+                      fontSize: isMobile ? '12px' : '14px',
+                    },
+                    '.cm-content': {
+                      padding: isMobile ? '8px' : '12px',
+                    },
+                    '.cm-line': {
+                      lineHeight: '1.5',
+                    },
+                    // Touch-friendly scrolling
+                    '.cm-scroller': {
+                      overflowX: 'auto',
+                      scrollbarWidth: isMobile ? 'thin' : 'auto',
+                    },
+                    // Better mobile selection
+                    '.cm-selectionMatch': {
+                      backgroundColor: '#264f78',
+                    },
+                    // Mobile-friendly cursor
+                    '.cm-cursor': {
+                      width: isMobile ? '3px' : '2px',
+                    }
+                  })]}
+                  onChange={(value) => setCode(value)}
+                  basicSetup={{
+                    lineNumbers: true,
+                    foldGutter: true,
+                    dropCursor: false,
+                    allowMultipleSelections: false,
+                    indentOnInput: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    autocompletion: true,
+                    highlightSelectionMatches: true,
                   }}
                 />
                 {/* Кнопки запуску в редакторі */}
