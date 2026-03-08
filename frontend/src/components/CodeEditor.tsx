@@ -258,18 +258,61 @@ int main() {
 
   /**
    * Обробник монтування редактора
+   * 
+   * Чому на реальному мобільному пристрої є textarea:
+   * - Mobile браузер - обмежена підтримка складних редакторів
+   * - Fallback механізм - Monaco Editor переключається на textarea коли не може нормально працювати
+   * - Touch events - мобільні браузери обробляють ввод по-іншому
+   * - Performance - на мобільних Monaco може використовувати спрощений режим
    */
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     
-    // Налаштування теми та розміру шрифту
-    monaco.editor.setTheme('vs-dark');
-    editor.updateOptions({
-      fontSize: 14,
+    // Базові опції для всіх пристроїв
+    const baseOptions = {
+      fontSize: isMobile ? 12 : 14,
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       automaticLayout: true,
-    });
+      wordWrap: 'on',
+      lineNumbers: 'on',
+      renderWhitespace: 'selection',
+      // Вимикаємо accessibility features для мобільних
+      accessibilitySupport: 'off',
+    };
+    
+    // Спеціальні налаштування для мобільних пристроїв
+    if (isMobile) {
+      editor.updateOptions({
+        ...baseOptions,
+        // Зменшуємо складність для мобільних
+        folding: false,
+        lineDecorationsWidth: 0,
+        lineNumbersMinChars: 2,
+        glyphMargin: false,
+        // Вимикаємо features що можуть викликати fallback
+        suggestOnTriggerCharacters: false,
+        acceptSuggestionOnEnter: 'off',
+        tabCompletion: 'off',
+        quickSuggestions: false,
+        parameterHints: { enabled: false },
+        // Покращення для touch
+        mouseWheelZoom: false,
+        multiCursorModifier: 'ctrlCmd',
+        selectionHighlight: false,
+        occurrencesHighlight: 'off',
+        codeLens: false,
+        // lightbulb: { enabled: 'off' }, // Вимкнено через проблеми з типами
+        autoIndent: 'none',
+        formatOnType: false,
+        formatOnPaste: false,
+      });
+    } else {
+      editor.updateOptions(baseOptions);
+    }
+    
+    // Налаштування теми
+    monaco.editor.setTheme('vs-dark');
   };
 
   /**
@@ -687,13 +730,37 @@ int main() {
               onMount={handleEditorDidMount}
               theme="vs-dark"
               options={{
+                // Базові опції для всіх пристроїв
                 minimap: { enabled: false },
-                fontSize: 14,
+                fontSize: isMobile ? 12 : 14,
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 wordWrap: 'on',
                 lineNumbers: 'on',
                 renderWhitespace: 'selection',
+                // Вимикаємо accessibility features для мобільних
+                accessibilitySupport: 'off',
+                // Спеціальні налаштування для мобільних пристроїв
+                ...(isMobile && {
+                  folding: false,
+                  lineDecorationsWidth: 0,
+                  lineNumbersMinChars: 2,
+                  glyphMargin: false,
+                  suggestOnTriggerCharacters: false,
+                  acceptSuggestionOnEnter: 'off',
+                  tabCompletion: 'off',
+                  quickSuggestions: false,
+                  parameterHints: { enabled: false },
+                  mouseWheelZoom: false,
+                  multiCursorModifier: 'ctrlCmd',
+                  selectionHighlight: false,
+                  occurrencesHighlight: 'off',
+                  codeLens: false,
+                  // lightbulb: { enabled: 'off' }, // Вимкнено через проблеми з типами
+                  autoIndent: 'none',
+                  formatOnType: false,
+                  formatOnPaste: false,
+                }),
               }}
             />
             {/* Кнопка запуску в редакторі */}
