@@ -56,7 +56,7 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
         <div className="flex flex-1">
           {isAuthenticated && !isMobile && <AppSidebar />}
           <main className={`flex-1 flex flex-col min-w-0 ${!isAuthenticated ? 'w-full' : ''}`}>
-            <header className="h-12 flex-shrink-0 flex items-center border-b border-border px-4 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+            <header className="h-12 flex-shrink-0 flex items-center border-b border-border px-4 bg-card/30 backdrop-blur-lg sticky top-0 z-10">
               {isMobile && isAuthenticated && (
                 <Button
                   variant="ghost"
@@ -107,12 +107,12 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
                 )}
               </div>
             </header>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto pb-20">
               {children}
             </div>
           </main>
         </div>
-        {!isAuthenticated && <Footer />}
+        <Footer />
       </div>
       
       {/* Mobile Sidebar - only for authenticated users */}

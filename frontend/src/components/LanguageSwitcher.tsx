@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
       variant="ghost"
       size="sm"
       onClick={toggleLanguage}
-      className="flex items-center gap-2 text-sm"
+      className="flex items-center gap-2 text-sm hover:text-primary hover:bg-primary/10 transition-colors"
     >
       <FlagIcon />
       <span className="hidden md:inline">{currentLanguage}</span>
