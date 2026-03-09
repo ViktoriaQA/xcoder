@@ -107,7 +107,7 @@ function AppLayoutContent({ children }: { children: ReactNode }) {
                 )}
               </div>
             </header>
-            <div className="flex-1 overflow-auto pb-20">
+            <div className="flex-1 overflow-auto pb-16">
               {children}
             </div>
           </main>

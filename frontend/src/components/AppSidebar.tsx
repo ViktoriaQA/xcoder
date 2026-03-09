@@ -155,7 +155,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border p-3">
+      <SidebarFooter className="border-t border-border p-0.5">
         <div className={`flex items-center gap-2 ${collapsed ? "justify-center" : ""}`}>
           <Avatar className="w-10 h-10 border-2 border-primary/30 hover:border-primary/50 transition-colors cursor-pointer"
                   onClick={() => navigate("/profile")}

@@ -18,17 +18,20 @@ export function Footer({
   const isSidebarCollapsed = state === "collapsed";
   
   return (
-    <footer className={`fixed bottom-0 left-0 right-0 border-t border-border bg-card/30 backdrop-blur-lg py-3.5 px-6 z-50 transition-all duration-300 ${
+    <footer className={`fixed bottom-0 left-0 right-0 border-t border-border bg-card/30 backdrop-blur-lg py-1 px-6 z-50 transition-all duration-300 ${
       isSidebarCollapsed ? 'md:left-16' : 'md:left-64'
     }`}>
       <div className="container mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex-1 flex items-center justify-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
+          <div className="flex-1" />
+          <div className="flex items-center justify-center">
             {customContent || (
               <span>{t('footer.copyright', { year: currentYear })}</span>
             )}
           </div>
-          {showLanguageSwitcher && <LanguageSwitcher />}
+          <div className="flex-1 flex justify-end">
+            {showLanguageSwitcher && <LanguageSwitcher />}
+          </div>
         </div>
       </div>
     </footer>
