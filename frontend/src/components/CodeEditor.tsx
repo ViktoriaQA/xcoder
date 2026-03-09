@@ -10,7 +10,7 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Play, Code, Terminal, Save, Settings, RefreshCw } from "lucide-react";
+import { Play, Code, Terminal, Save, Settings, RefreshCw, Copy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Alert, AlertDescription } from "./ui/alert";
@@ -273,6 +273,18 @@ int main() {
    */
   const handleEditorDidMount = () => {
     // CodeMirror автоматично налаштовується через props
+  };
+
+  /**
+   * Копіювати код в буфер обміну
+   */
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      // Можна додати сповіщення про успішне копіювання
+    } catch (err) {
+      console.error('Помилка копіювання коду:', err);
+    }
   };
 
   /**
@@ -674,6 +686,16 @@ int main() {
                     highlightSelectionMatches: true,
                   }}
                 />
+                {/* Іконка копіювання вгорі */}
+                <div className="absolute top-2 right-2">
+                  <button
+                    onClick={copyCode}
+                    className="p-2 rounded hover:bg-gray-700/80 transition-colors"
+                    title="Копіювати код"
+                  >
+                    <Copy className="w-4 h-4 text-gray-400 hover:text-white" />
+                  </button>
+                </div>
                 {/* Кнопки запуску в редакторі */}
                 <div className="absolute bottom-2 right-2 flex gap-2">
                   <Button

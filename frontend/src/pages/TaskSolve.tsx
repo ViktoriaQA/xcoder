@@ -400,7 +400,7 @@ const TaskSolve = () => {
                 {/* Вкладка: редактор коду */}
                 <TabsContent value="editor" className="h-full mt-2">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
-                    <div className="h-full px-3 py-3">
+                    <div className="h-full">
                       <CodeEditor 
                         examples={task?.examples || []} 
                         taskId={taskId}
