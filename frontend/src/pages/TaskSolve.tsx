@@ -297,7 +297,7 @@ const TaskSolve = () => {
                     {t("tasks.editorTab", "Редактор")}
                   </TabsTrigger>
                   <TabsTrigger value="tests" className="flex-1 text-xs sm:text-sm">
-                    {t("tasks.testsTab", "Тести")}
+                    {t("tasks.testsTab", "Тренування")}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -400,52 +400,36 @@ const TaskSolve = () => {
                 {/* Вкладка: редактор коду */}
                 <TabsContent value="editor" className="h-full mt-2">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
-                    <ScrollArea className="h-full px-3 py-3">
-                      <Tabs defaultValue="local" className="h-full flex flex-col">
-                        <div className="px-0 pt-0 pb-2 border-b border-border/60">
-                          <TabsList className="w-full">
-                            <TabsTrigger value="local" className="flex-1 text-xs">
-                              {t("tasks.localEditor", "Виконання")}
-                            </TabsTrigger>
-                            <TabsTrigger value="onecompiler" className="flex-1 text-xs">
-                              {t("tasks.onecompiler", "Тестування")}
-                            </TabsTrigger>
-                          </TabsList>
-                        </div>
-                        
-                        <TabsContent value="local" className="flex-1 mt-0">
-                          <div className="h-full px-0 pb-0">
-                            <CodeEditor examples={task?.examples || []} />
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="onecompiler" className="flex-1 mt-0">
-                          <div className="h-full px-0 pb-0">
-                            <div className="h-full border rounded-lg overflow-hidden bg-white">
-                              <iframe
-                                src="https://onecompiler.com/embed/javascript?theme=dark"
-                                width="100%"
-                                height="100%"
-                                style={{ 
-                                  border: 'none',
-                                  minHeight: '400px'
-                                }}
-                                title="OneCompiler JavaScript Editor"
-                                loading="lazy"
-                              />
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </ScrollArea>
+                    <div className="h-full px-3 py-3">
+                      <CodeEditor 
+                        examples={task?.examples || []} 
+                        taskId={taskId}
+                        tournamentId={tournamentId}
+                        onSuccessfulSubmit={handleSuccessfulSubmit}
+                        onSaveCode={handleSaveCode}
+                        initialCode={savedCode}
+                      />
+                    </div>
                   </div>
                 </TabsContent>
 
                 {/* Вкладка: тести */}
                 <TabsContent value="tests" className="h-full mt-2">
-                  <div className="h-full border border-border/70 rounded-md bg-background/40 flex flex-col">
-                    <div className="flex-1 overflow-auto p-3">
-                      <TestResultsDisplay results={null} />
+                  <div className="h-full border border-border/70 rounded-md bg-background/40">
+                    <div className="h-full p-3">
+                      <div className="h-full border rounded-lg overflow-hidden bg-white">
+                        <iframe
+                          src="https://onecompiler.com/embed/javascript?theme=dark"
+                          width="100%"
+                          height="100%"
+                          style={{ 
+                            border: 'none',
+                            minHeight: '400px'
+                          }}
+                          title="OneCompiler JavaScript Editor"
+                          loading="lazy"
+                        />
+                      </div>
                     </div>
                   </div>
                 </TabsContent>

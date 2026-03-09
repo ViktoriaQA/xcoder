@@ -638,14 +638,19 @@ int main() {
                     },
                     '.cm-content': {
                       padding: isMobile ? '8px' : '12px',
+                      maxWidth: isMobile ? '100%' : 'none',
+                      // overflowX: isMobile ? 'scroll' : 'auto',
+                      wordBreak: isMobile ? 'break-all' : 'normal',
+                      whiteSpace: isMobile ? 'pre-wrap' : 'pre',
                     },
                     '.cm-line': {
                       lineHeight: '1.5',
                     },
                     // Touch-friendly scrolling
                     '.cm-scroller': {
-                      overflowX: 'auto',
-                      scrollbarWidth: isMobile ? 'thin' : 'auto',
+                      // overflowX: isMobile ? 'scroll' : 'auto',
+                      scrollbarWidth: 'auto',
+                      maxWidth: isMobile ? '100%' : 'none',
                     },
                     // Better mobile selection
                     '.cm-selectionMatch': {
@@ -717,7 +722,7 @@ int main() {
                                   <div key={`lang-group-${lang.name}`}>
                                     {lang.versions.map((version) => (
                                       <SelectItem key={`${lang.name}|${version}`} value={`${lang.name}|${version}`}>
-                                        {lang.name.charAt(0).toUpperCase() + lang.name.slice(1)}...
+                                        {lang.name.charAt(0).toUpperCase() + lang.name.slice(1)} {version}
                                       </SelectItem>
                                     ))}
                                   </div>
@@ -775,7 +780,7 @@ int main() {
                 <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
                   <TabsTrigger value="input">Вхідні дані</TabsTrigger>
                   <TabsTrigger value="output">Виконання</TabsTrigger>
-                  <TabsTrigger value="tests">Тест кейси</TabsTrigger>
+                  <TabsTrigger value="tests">Тести</TabsTrigger>
                 </TabsList>
 
                 {/* Вхідні дані */}
@@ -906,7 +911,7 @@ int main() {
                     <div className="h-full flex items-center justify-center text-muted-foreground">
                       <div className="text-center">
                         <Code className="w-10 h-12 mx-auto mb-4 opacity-50" />
-                        <p>Натисніть кнопку Надіслати для виконання всіх тестів та відправки рішення</p>
+                        <p>Натисніть кнопку Надіслати для виконання тестів та відправки рішення</p>
                         <p className="text-sm mt-2">RUN виконує код з вхідними даними у вкладці "Виконання"</p>
                       </div>
                     </div>
