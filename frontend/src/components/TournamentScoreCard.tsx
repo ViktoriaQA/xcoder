@@ -78,7 +78,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
 
             setUserProgress({
               totalScore,
-              maxScore: maxScore, // Will be calculated from tasks
+              maxScore: maxScore || 0, // Ensure maxScore is not undefined
               completedTasks,
               totalTasks,
               recentSubmissions
@@ -87,7 +87,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
             // No progress found for current user
             setUserProgress({
               totalScore: 0,
-              maxScore,
+              maxScore: maxScore || 0,
               completedTasks: 0,
               totalTasks: data.tasks?.length || 0,
               recentSubmissions: []
@@ -97,7 +97,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
           // Fallback to zero progress
           setUserProgress({
             totalScore: 0,
-            maxScore,
+            maxScore: maxScore || 0,
             completedTasks: 0,
             totalTasks: 0,
             recentSubmissions: []
@@ -108,7 +108,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
         // Fallback to zero progress
         setUserProgress({
           totalScore: 0,
-          maxScore,
+          maxScore: maxScore || 0,
           completedTasks: 0,
           totalTasks: 0,
           recentSubmissions: []
@@ -145,8 +145,8 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
     return [];
   };
 
-  const scorePercentage = userProgress ? (userProgress.totalScore / userProgress.maxScore) * 100 : 0;
-  const completionPercentage = userProgress?.totalTasks > 0 ? (userProgress.completedTasks / userProgress.totalTasks) * 100 : 0;
+  const scorePercentage = userProgress && userProgress.maxScore > 0 ? (userProgress.totalScore / userProgress.maxScore) * 100 : 0;
+  const completionPercentage = userProgress && userProgress.totalTasks > 0 ? (userProgress.completedTasks / userProgress.totalTasks) * 100 : 0;
 
   if (loading) {
     return (
@@ -194,7 +194,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-xs font-mono text-muted-foreground">
             <span>{t('common.progress', 'Прогрес')}</span>
-            <span>{Math.round(scorePercentage)}%</span>
+            <span>{!isNaN(scorePercentage) ? Math.round(scorePercentage) : 0}%</span>
           </div>
           <Progress 
             value={scorePercentage} 
@@ -220,7 +220,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
             <div className="flex items-center justify-center gap-2 text-blue-500 mb-1">
               <TrendingUp className="h-4 w-4" />
               <span className="text-lg font-bold font-mono">
-                {Math.round(completionPercentage)}%
+                {!isNaN(completionPercentage) ? Math.round(completionPercentage) : 0}%
               </span>
             </div>
             <div className="text-xs text-muted-foreground font-mono">
@@ -267,7 +267,7 @@ const TournamentScoreCard: React.FC<TournamentScoreCardProps> = ({
         {/* Motivational Message */}
         <div className="text-center p-3 bg-primary/5 rounded-lg border border-primary/20">
           <div className="text-sm font-mono text-primary">
-            {scorePercentage === 0 
+            {(!scorePercentage || isNaN(scorePercentage)) 
               ? t('tournaments.startSolving', 'Почніть розв\'язувати задачі, щоб заробити бали!')
               : scorePercentage < 50
               ? t('tournaments.keepGoing', 'Хороша робота! Продовжуйте в тому ж дусі!')

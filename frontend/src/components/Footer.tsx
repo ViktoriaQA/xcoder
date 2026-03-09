@@ -14,8 +14,16 @@ export function Footer({
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
-  const { state } = useSidebar();
-  const isSidebarCollapsed = state === "collapsed";
+  
+  // Try to use sidebar context, but provide fallback if not available
+  let isSidebarCollapsed = false;
+  try {
+    const { state } = useSidebar();
+    isSidebarCollapsed = state === "collapsed";
+  } catch (error) {
+    // Footer is used outside SidebarProvider, use default value
+    isSidebarCollapsed = false;
+  }
   
   return (
     <footer className={`fixed bottom-0 left-0 right-0 border-t border-border bg-card/30 backdrop-blur-lg py-1 px-6 z-50 transition-all duration-300 ${

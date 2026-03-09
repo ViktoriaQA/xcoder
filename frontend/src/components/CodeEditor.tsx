@@ -86,6 +86,7 @@ interface CodeEditorProps {
   onSaveCode?: (code: string) => void;
   onSuccessfulSubmit?: () => void;
   initialCode?: string;
+  initialTestResults?: TestResults | null;
 }
 
 /**
@@ -99,7 +100,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   tournamentId, 
   onSaveCode,
   onSuccessfulSubmit,
-  initialCode
+  initialCode,
+  initialTestResults
 }) => {
   const editorRef = useRef<any>(null);
   const isMobile = useIsMobile();
@@ -108,7 +110,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const [code, setCode] = useState<string>(initialCode || '// Ваш JavaScript код\nconsole.log("Hello, World!");');
   const [stdin, setStdin] = useState<string>('');
   const [result, setResult] = useState<ExecutionResponse | null>(null);
-  const [testResults, setTestResults] = useState<TestResults | null>(null);
+  const [testResults, setTestResults] = useState<TestResults | null>(initialTestResults || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isTestsLoading, setIsTestsLoading] = useState<boolean>(false);
   const [availableLanguages, setAvailableLanguages] = useState<Language[]>([]);
@@ -195,22 +197,6 @@ int main() {
         return [];
     }
   };
-
-  /**
-   * Завантажити збережені результати тестів з localStorage
-   */
-  useEffect(() => {
-    if (taskId) {
-      try {
-        const savedResults = localStorage.getItem(`test_results_${taskId}`);
-        if (savedResults) {
-          setTestResults(JSON.parse(savedResults));
-        }
-      } catch (error) {
-        console.warn('Failed to load saved test results:', error);
-      }
-    }
-  }, [taskId]);
 
   /**
    * Автоматично заповнювати вхідні дані з першого видимого прикладу

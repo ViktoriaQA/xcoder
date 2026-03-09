@@ -56,6 +56,8 @@ const TaskSolve = () => {
   const [error, setError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [savedCode, setSavedCode] = useState<string>('');
+  const [isRestoringCode, setIsRestoringCode] = useState(false);
+  const [savedTestResults, setSavedTestResults] = useState<any>(null);
 
   // Handle successful submission to trigger parent refresh
   const handleSuccessfulSubmit = () => {
@@ -77,20 +79,89 @@ const TaskSolve = () => {
     }
   };
 
-  // Restore saved code from localStorage
+  // Fetch last submission with test results from database
+  const fetchLastSubmission = async (taskId: string, tournamentId?: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) return null;
+
+      const url = new URL(`${config.api.baseUrl}/api/tasks/${taskId}/submissions`);
+      if (tournamentId) {
+        url.searchParams.set("tournament_id", tournamentId);
+      }
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      const submissions = data.submissions || [];
+      
+      // Get most recent submission with code and test results
+      const lastSubmission = submissions.find((sub: any) => sub.code && sub.test_results);
+      
+      if (lastSubmission) {
+        console.log('📥 Restored submission from database for task:', taskId);
+        return {
+          code: lastSubmission.code,
+          testResults: lastSubmission.test_results
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Failed to fetch last submission:', error);
+      return null;
+    }
+  };
+
+  // Restore saved code and test results from localStorage or database
   useEffect(() => {
     if (taskId) {
-      try {
-        const savedCodeFromStorage = localStorage.getItem(`task_code_${taskId}`);
-        if (savedCodeFromStorage) {
-          console.log('📂 Restored saved code for task:', taskId);
-          setSavedCode(savedCodeFromStorage);
+      const restoreCode = async () => {
+        setIsRestoringCode(true);
+        try {
+          // First try localStorage
+          const savedCodeFromStorage = localStorage.getItem(`task_code_${taskId}`);
+          const savedResultsFromStorage = localStorage.getItem(`test_results_${taskId}`);
+          
+          if (savedCodeFromStorage) {
+            console.log('📂 Restored saved code from localStorage for task:', taskId);
+            setSavedCode(savedCodeFromStorage);
+          }
+          
+          if (savedResultsFromStorage) {
+            console.log('📂 Restored test results from localStorage for task:', taskId);
+            setSavedTestResults(JSON.parse(savedResultsFromStorage));
+          }
+          
+          // If no localStorage, try database
+          if (!savedCodeFromStorage || !savedResultsFromStorage) {
+            const submission = await fetchLastSubmission(taskId, tournamentId);
+            if (submission) {
+              if (!savedCodeFromStorage && submission.code) {
+                setSavedCode(submission.code);
+              }
+              if (!savedResultsFromStorage && submission.testResults) {
+                setSavedTestResults(submission.testResults);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to restore saved code:', error);
+        } finally {
+          setIsRestoringCode(false);
         }
-      } catch (error) {
-        console.warn('Failed to restore saved code:', error);
-      }
+      };
+
+      restoreCode();
     }
-  }, [taskId]);
+  }, [taskId, tournamentId]);
 
   useEffect(() => {
     if (!session) {
@@ -200,12 +271,15 @@ const TaskSolve = () => {
     [task, t]
   );
 
-  if (loading) {
+  if (loading || isRestoringCode) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="flex items-center gap-2 text-muted-foreground font-mono text-sm">
           <Loader2 className="h-4 w-4 animate-spin" />
-          {t("common.loading", "Завантаження...")}
+          {isRestoringCode 
+            ? t("common.restoringCode", "Відновлення коду...") 
+            : t("common.loading", "Завантаження...")
+          }
         </div>
       </div>
     );
@@ -408,6 +482,7 @@ const TaskSolve = () => {
                         onSuccessfulSubmit={handleSuccessfulSubmit}
                         onSaveCode={handleSaveCode}
                         initialCode={savedCode}
+                        initialTestResults={savedTestResults}
                       />
                     </div>
                   </div>
@@ -559,6 +634,7 @@ const TaskSolve = () => {
                               onSuccessfulSubmit={handleSuccessfulSubmit}
                               onSaveCode={handleSaveCode}
                               initialCode={savedCode}
+                              initialTestResults={savedTestResults}
                             />
                           </div>
                         </TabsContent>
