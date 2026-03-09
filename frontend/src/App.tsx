@@ -6,9 +6,28 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "@/pages/Auth";
-import Onboarding from "@/pages/Onboarding";
+import AuthCallback from "@/pages/AuthCallback";
 import Dashboard from "@/pages/Dashboard";
+import Home from "@/pages/Home";
+import Tournaments from "@/pages/Tournaments";
+import TournamentsAuth from "@/pages/TournamentsAuth";
+import MyTournaments from "@/pages/MyTournaments";
+import Tasks from "@/pages/Tasks";
+import TasksCreate from "@/pages/TasksCreate";
+import Subscription from "@/pages/Subscription";
+import SubscriptionSuccess from "@/pages/SubscriptionSuccess";
+import Progress from "@/pages/Progress";
+import AdminSubscriptions from "@/pages/AdminSubscriptions";
+import AdminTournaments from "@/pages/AdminTournaments";
+import TournamentTasks from "@/pages/TournamentTasks";
+import TaskSolve from "@/pages/TaskSolve";
+import Certificates from "@/pages/Certificates";
+import Students from "@/pages/Students";
 import NotFound from "@/pages/NotFound";
+import Profile from "@/pages/Profile";
+import Ratings from "@/pages/Ratings";
+import Analytics from "@/pages/Analytics";
+import '@/i18n';
 
 const queryClient = new QueryClient();
 
@@ -17,11 +36,104 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route
+              path="/tournaments"
+              element={<Tournaments />}
+            />
+            <Route
+              path="/tournaments/:tournamentId"
+              element={
+                <AppLayout>
+                  <TournamentTasks />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/tournaments/:tournamentId/tasks/:taskId"
+              element={
+                <AppLayout>
+                  <TaskSolve />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/my-tournaments"
+              element={
+                <AppLayout>
+                  <MyTournaments />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/tasks"
+              element={
+                <AppLayout>
+                  <Tasks />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/tasks/create"
+              element={
+                <AppLayout>
+                  <TasksCreate />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/tasks/:id/edit"
+              element={
+                <AppLayout>
+                  <TasksCreate />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/subscription"
+              element={
+                <AppLayout>
+                  <Subscription />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/subscription/success"
+              element={
+                <AppLayout>
+                  <SubscriptionSuccess />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/progress"
+              element={
+                <AppLayout>
+                  <Progress />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/admin/subscriptions"
+              element={
+                <AppLayout>
+                  <AdminSubscriptions />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/admin/tournaments"
+              element={
+                <AppLayout>
+                  <AdminTournaments />
+                </AppLayout>
+              }
+            />
             <Route
               path="/dashboard"
               element={
@@ -30,7 +142,46 @@ const App = () => (
                 </AppLayout>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route
+              path="/students"
+              element={
+                <AppLayout>
+                  <Students />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <AppLayout>
+                  <Profile />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/rating"
+              element={
+                <AppLayout>
+                  <Ratings />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/certificates"
+              element={
+                <AppLayout>
+                  <Certificates />
+                </AppLayout>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <AppLayout>
+                  <Analytics />
+                </AppLayout>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

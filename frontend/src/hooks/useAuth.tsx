@@ -1,114 +1,248 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/components/ui/use-toast";
+import { AuthService, RegisterData, LoginData, AuthResponse } from "@/services/authService";
+import { config } from "@/config";
 
-type Profile = {
+type User = {
   id: string;
-  user_id: string;
-  nickname: string | null;
-  avatar_url: string | null;
-  subscription_status: string;
-  subscription_plan: string | null;
-  subscription_expires_at: string | null;
-  onboarded: boolean;
+  email?: string;
+  phone?: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_verified: boolean;
+  phone_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  nickname?: string;
+  subscription_status?: string;
+  subscription_plan?: string;
+  subscription_expires_at?: string;
+  onboarded?: boolean;
 };
 
 type AuthContextType = {
-  session: Session | null;
   user: User | null;
-  profile: Profile | null;
-  role: string | null;
+  token: string | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signOut: () => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  login: (data: LoginData) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithDiscord: () => Promise<void>;
+  logout: () => void;
+  restoreSession: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isAuthenticated: boolean;
+  profile: User | null;
+  role: string | null;
+  session: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const navigate = useNavigate();
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    setProfile(data as Profile | null);
+  const saveAuthData = (userData: User, authToken: string) => {
+    setUser(userData);
+    setToken(authToken);
+    localStorage.setItem(config.auth.tokenKey, authToken);
+    localStorage.setItem(config.auth.userKey, JSON.stringify(userData));
   };
 
-  const fetchRole = async (userId: string) => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .single();
-    setRole(data?.role ?? null);
+  const clearAuthData = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem(config.auth.tokenKey);
+    localStorage.removeItem(config.auth.userKey);
   };
 
-  const refreshProfile = async () => {
-    if (user) {
-      await Promise.all([fetchProfile(user.id), fetchRole(user.id)]);
+  const restoreSession = async () => {
+    try {
+      const storedToken = localStorage.getItem(config.auth.tokenKey);
+      const storedUser = localStorage.getItem(config.auth.userKey);
+
+      if (storedToken && storedUser) {
+        // Verify token is still valid
+        const response = await AuthService.getCurrentUser(storedToken);
+        setUser(response.user);
+        setToken(storedToken);
+      }
+    } catch (error) {
+      console.error('Failed to restore session:', error);
+      clearAuthData();
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await Promise.all([
-            fetchProfile(session.user.id),
-            fetchRole(session.user.id),
-          ]);
-        } else {
-          setProfile(null);
-          setRole(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchRole(session.user.id),
-        ]).then(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const signInWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin },
-    });
+  const register = async (data: RegisterData) => {
+    try {
+      setLoading(true);
+      const response = await AuthService.register(data);
+      saveAuthData(response.user, response.token);
+      toast({
+        title: "Registration successful",
+        description: "Your account has been created successfully.",
+      });
+      navigate('/dashboard');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Registration failed';
+      toast({
+        title: "Registration failed",
+        description: message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    setRole(null);
+  const login = async (data: LoginData) => {
+    try {
+      setLoading(true);
+      const response = await AuthService.login(data);
+      saveAuthData(response.user, response.token);
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
+      navigate('/dashboard');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Login failed';
+      toast({
+        title: "Login failed",
+        description: message,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const response = await AuthService.getGoogleAuthUrl();
+      window.location.href = response.auth_url;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google login failed';
+      toast({
+        title: "Google login failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loginWithDiscord = async () => {
+    try {
+      const response = await AuthService.getDiscordAuthUrl();
+      window.location.href = response.auth_url;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Discord login failed';
+      toast({
+        title: "Discord login failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const logout = () => {
+    clearAuthData();
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully.",
+    });
+    // Use setTimeout to ensure the redirect happens after state updates
+    setTimeout(() => {
+      navigate('/');
+    }, 0);
+  };
+
+  const refreshProfile = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await AuthService.getCurrentUser(token);
+      setUser(response.user);
+    } catch (error) {
+      console.error('Failed to refresh profile:', error);
+    }
+  };
+
+  // Initialize session
+  useEffect(() => {
+    // Check for OAuth callback first (Google or Discord)
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackToken = urlParams.get('token');
+    
+    if (callbackToken && !isInitialized) {
+      // Handle OAuth callback (Google or Discord)
+      const handleOAuthCallback = async () => {
+        try {
+          // Get user data using the token
+          const response = await AuthService.getCurrentUser(callbackToken);
+          const userData = response.user;
+          
+          // Save both token and user data
+          localStorage.setItem(config.auth.tokenKey, callbackToken);
+          localStorage.setItem(config.auth.userKey, JSON.stringify(userData));
+          
+          // Update state
+          setUser(userData);
+          setToken(callbackToken);
+          setIsInitialized(true);
+          
+          // Clear URL parameters and navigate to dashboard
+          window.history.replaceState({}, document.title, window.location.pathname);
+          navigate('/dashboard');
+        } catch (error) {
+          console.error('Failed to handle OAuth callback:', error);
+          // If failed, clear token and redirect to auth
+          localStorage.removeItem(config.auth.tokenKey);
+          setIsInitialized(true);
+          navigate('/auth');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      handleOAuthCallback();
+    } else if (!isInitialized) {
+      // Normal session restoration
+      restoreSession().then(() => {
+        setIsInitialized(true);
+      });
+    }
+  }, [navigate, isInitialized]);
+
+  const value: AuthContextType = {
+    user,
+    token,
+    loading,
+    register,
+    login,
+    loginWithGoogle,
+    loginWithDiscord,
+    logout,
+    restoreSession,
+    refreshProfile,
+    isAuthenticated: !!user && !!token,
+    profile: user,
+    role: user?.role || null,
+    session: !!user && !!token,
   };
 
   return (
-    <AuthContext.Provider
-      value={{ session, user, profile, role, loading, signInWithGoogle, signOut, refreshProfile }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,12 +6,40 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  envDir: '../',  // Шукати .env файл в батьківській директорії (корінь проєкту)
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', 'lucide-react'],
+          router: ['react-router-dom'],
+          query: ['@tanstack/react-query']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  },
   server: {
     host: "::",
     port: 5173,
     hmr: {
       overlay: false,
     },
+    ...(mode === 'development' && {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/auth': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    }),
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
