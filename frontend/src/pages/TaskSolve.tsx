@@ -68,13 +68,65 @@ const TaskSolve = () => {
     console.log('✅ OneCompiler iframe loaded successfully');
     console.log('🔍 Iframe details:', {
       src: isMobile 
-        ? 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true'
-        : 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        ? 'https://onecompiler.com/embed/javascript?theme=dark'
+        : 'https://onecompiler.com/embed/javascript?theme=dark',
       userAgent: navigator.userAgent,
       isMobile: isMobile,
       screen: `${window.screen.width}x${window.screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       devicePixelRatio: window.devicePixelRatio
+    });
+    
+    // Check iframe dimensions and parent containers
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach((iframe, index) => {
+      console.log(`📏 Iframe ${index} dimensions:`, {
+        iframeWidth: iframe.width,
+        iframeHeight: iframe.height,
+        offsetWidth: iframe.offsetWidth,
+        offsetHeight: iframe.offsetHeight,
+        clientWidth: iframe.clientWidth,
+        clientHeight: iframe.clientHeight,
+        styleWidth: iframe.style.width,
+        styleHeight: iframe.style.height,
+        computedWidth: window.getComputedStyle(iframe).width,
+        computedHeight: window.getComputedStyle(iframe).height
+      });
+      
+      // Check parent containers
+      let parent = iframe.parentElement;
+      let level = 0;
+      while (parent && level < 5) {
+        console.log(`📦 Parent ${level} dimensions:`, {
+          tagName: parent.tagName,
+          className: parent.className,
+          offsetWidth: parent.offsetWidth,
+          offsetHeight: parent.offsetHeight,
+          clientWidth: parent.clientWidth,
+          clientHeight: parent.clientHeight,
+          styleWidth: parent.style.width,
+          styleHeight: parent.style.height,
+          computedWidth: window.getComputedStyle(parent).width,
+          computedHeight: window.getComputedStyle(parent).height,
+          display: window.getComputedStyle(parent).display,
+          position: window.getComputedStyle(parent).position
+        });
+        parent = parent.parentElement;
+        level++;
+      }
+      
+      // Check if iframe is actually visible
+      const rect = iframe.getBoundingClientRect();
+      console.log(`📐 Iframe ${index} position:`, {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        bottom: rect.bottom,
+        right: rect.right,
+        isVisible: rect.width > 0 && rect.height > 0,
+        isInViewport: rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth
+      });
     });
     
     // Try to access iframe content to detect CORS blocking (handled gracefully)
@@ -109,8 +161,8 @@ const TaskSolve = () => {
       body: JSON.stringify({
         event: 'iframe_loaded',
         url: isMobile 
-          ? 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true'
-          : 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+          ? 'https://onecompiler.com/embed/javascript?theme=dark'
+          : 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -137,7 +189,7 @@ const TaskSolve = () => {
       },
       body: JSON.stringify({
         event: 'iframe_error',
-        url: 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        url: 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -162,7 +214,7 @@ const TaskSolve = () => {
       },
       body: JSON.stringify({
         event: 'tab_clicked',
-        url: 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        url: 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -636,10 +688,7 @@ const TaskSolve = () => {
                       ) : (
                         <div className="h-full rounded-lg overflow-hidden">
                           <iframe
-                            src={isMobile 
-                              ? "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true"
-                              : "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
-                            }
+                            src="https://onecompiler.com/embed/javascript?theme=dark"
                             width="100%"
                             height="100%"
                             style={{ 
@@ -818,10 +867,7 @@ const TaskSolve = () => {
                             ) : (
                               <div className="h-full rounded-lg overflow-hidden">
                                 <iframe
-                                  src={isMobile 
-                                    ? "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true"
-                                    : "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
-                                  }
+                                  src="https://onecompiler.com/embed/javascript?theme=dark"
                                   width="100%"
                                   height="100%"
                                   style={{ 
