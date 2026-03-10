@@ -36,8 +36,10 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Initialize vConsole only in development mode and on mobile devices
-    if (import.meta.env.DEV && isMobileDevice()) {
+    // Initialize vConsole based on environment variable and mobile device detection
+    const enableVConsole = import.meta.env.VITE_ENABLE_VCONSOLE === 'true';
+    
+    if (enableVConsole && isMobileDevice()) {
       const vConsole = new VConsole({
         defaultPlugins: ['system', 'network', 'element', 'storage'],
         onReady: () => {
