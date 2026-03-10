@@ -507,7 +507,7 @@ const TaskSolve = () => {
                       )}
                       <div className="h-full rounded-lg overflow-hidden">
                         <iframe
-                          src="https://onecompiler.com/embed/javascript?theme=dark"
+                          src="https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
                           width="100%"
                           height="100%"
                           style={{ 
@@ -518,6 +518,8 @@ const TaskSolve = () => {
                           title="OneCompiler JavaScript Editor"
                           loading="lazy"
                           onLoad={handleIframeLoad}
+                          referrerPolicy="no-referrer-when-downgrade"
+                          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                         />
                       </div>
                     </div>
@@ -666,7 +668,7 @@ const TaskSolve = () => {
                             )}
                             <div className="h-full rounded-lg overflow-hidden">
                               <iframe
-                                src="https://onecompiler.com/embed/javascript?theme=dark"
+                                src="https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
                                 width="100%"
                                 height="100%"
                                 style={{ 
@@ -677,6 +679,8 @@ const TaskSolve = () => {
                                 title="OneCompiler JavaScript Editor"
                                 loading="lazy"
                                 onLoad={handleIframeLoad}
+                                referrerPolicy="no-referrer-when-downgrade"
+                                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                               />
                             </div>
                           </div>
