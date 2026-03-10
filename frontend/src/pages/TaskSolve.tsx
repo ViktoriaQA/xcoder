@@ -61,6 +61,7 @@ const TaskSolve = () => {
   const [savedTestResults, setSavedTestResults] = useState<any>(null);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [isIframeError, setIsIframeError] = useState(false);
+  const [isMobileBlocked, setIsMobileBlocked] = useState(false);
 
   
   // Handle iframe loading
@@ -179,6 +180,12 @@ const TaskSolve = () => {
     console.error('❌ OneCompiler iframe failed to load');
     setIsIframeLoading(false);
     setIsIframeError(true);
+    
+    // Check if this is mobile blocking
+    if (isMobile && navigator.userAgent.includes('Mobile')) {
+      setIsMobileBlocked(true);
+      console.log('📱 Mobile device detected - OneCompiler might be blocked');
+    }
     
     // Send error log to server
     fetch(`${config.api.baseUrl}/api/logs/iframe`, {
@@ -531,8 +538,8 @@ const TaskSolve = () => {
         <CardContent className="p-0 flex-1 overflow-hidden">
           {/* Мобільний лейаут: контент у вкладках */}
           {isMobile ? (
-            <Tabs defaultValue="editor" className="h-full flex flex-col">
-              <div className="px-3 pt-3 pb-1 border-b border-border/60">
+            <Tabs defaultValue="editor" className="h-full flex flex-col min-h-0">
+              <div className="px-3 pt-3 pb-1 border-b border-border/60 flex-shrink-0">
                 <TabsList className="w-full justify-between">
                   <TabsTrigger value="statement" className="flex-1 text-xs sm:text-sm">
                     {t("tasks.statementTab", "Умова")}
@@ -546,9 +553,9 @@ const TaskSolve = () => {
                 </TabsList>
               </div>
 
-              <div className="flex-1 overflow-hidden px-3 pb-3">
+              <div className="flex-1 overflow-hidden px-3 pb-3 min-h-0">
                 {/* Вкладка: умова задачі */}
-                <TabsContent value="statement" className="h-full mt-2">
+                <TabsContent value="statement" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
                     <ScrollArea className="h-full px-3 py-3">
                       {task ? (
@@ -642,7 +649,7 @@ const TaskSolve = () => {
                 </TabsContent>
 
                 {/* Вкладка: редактор коду */}
-                <TabsContent value="editor" className="h-full mt-2">
+                <TabsContent value="editor" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
                     <div className="h-full">
                       <CodeEditor 
@@ -659,7 +666,7 @@ const TaskSolve = () => {
                 </TabsContent>
 
                 {/* Вкладка: тести */}
-                <TabsContent value="tests" className="h-full mt-2">
+                <TabsContent value="tests" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
                     <div className="h-full p-3 relative min-h-0">
                       {isIframeLoading && (
@@ -674,16 +681,37 @@ const TaskSolve = () => {
                         <div className="h-full flex flex-col items-center justify-center text-center p-4">
                           <div className="text-muted-foreground mb-4">
                             <Monitor className="h-8 w-8 mx-auto mb-2" />
-                            <p className="text-sm">Не вдалося завантажити тренування</p>
-                            <p className="text-xs mt-1">Спробуйте відкрити на реальному мобільному пристрої</p>
+                            <p className="text-sm mb-2">
+                              {isMobileBlocked 
+                                ? "OneCompiler недоступний на мобільних пристроях"
+                                : "Не вдалося завантажити тренування"
+                              }
+                            </p>
+                            <p className="text-xs mt-1">
+                              {isMobileBlocked 
+                                ? "Використовуйте комп'ютер або відкрийте в новому вікні"
+                                : "Спробуйте відкрити на реальному мобільному пристрої"
+                              }
+                            </p>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
-                          >
-                            Відкрити в новому вікні
-                          </Button>
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
+                            >
+                              Відкрити в новому вікні
+                            </Button>
+                            {isMobile && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open('https://onecompiler.com', '_blank')}
+                              >
+                                Перейти на OneCompiler
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="h-full w-full rounded-lg overflow-hidden min-h-0">
@@ -691,7 +719,8 @@ const TaskSolve = () => {
                             src="https://onecompiler.com/embed/javascript?theme=dark"
                             className="w-full h-full border-0"
                             style={{ 
-                              minHeight: 'calc(100vh - 250px)',
+                              height: 'calc(100vh - 200px)',
+                              maxHeight: 'calc(100vh - 200px)',
                               backgroundColor: 'transparent',
                               position: 'relative',
                               zIndex: 1
@@ -853,16 +882,37 @@ const TaskSolve = () => {
                               <div className="h-full flex flex-col items-center justify-center text-center p-4">
                                 <div className="text-muted-foreground mb-4">
                                   <Monitor className="h-8 w-8 mx-auto mb-2" />
-                                  <p className="text-sm">Не вдалося завантажити тренування</p>
-                                  <p className="text-xs mt-1">Спробуйте відкрити на реальному мобільному пристрої</p>
+                                  <p className="text-sm mb-2">
+                                    {isMobileBlocked 
+                                      ? "OneCompiler недоступний на мобільних пристроях"
+                                      : "Не вдалося завантажити тренування"
+                                    }
+                                  </p>
+                                  <p className="text-xs mt-1">
+                                    {isMobileBlocked 
+                                      ? "Використовуйте комп'ютер або відкрийте в новому вікні"
+                                      : "Спробуйте оновити сторінку"
+                                    }
+                                  </p>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
-                                >
-                                  Відкрити в новому вікні
-                                </Button>
+                                <div className="flex flex-col gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
+                                  >
+                                    Відкрити в новому вікні
+                                  </Button>
+                                  {isMobile && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => window.open('https://onecompiler.com', '_blank')}
+                                    >
+                                      Перейти на OneCompiler
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <div className="h-full w-full rounded-lg overflow-hidden min-h-0">
