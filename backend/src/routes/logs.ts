@@ -61,47 +61,57 @@ router.post('/iframe', authMiddleware, async (req: Request, res: Response) => {
     console.log('📊 Iframe Log Data:', JSON.stringify(logEntry, null, 2));
 
     // Save to log file
-    const logDir = path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true });
-    }
+    const logDir = path.join(process.cwd(), 'tmp', 'logs');
+    try {
+      if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+      }
 
-    const logFile = path.join(logDir, 'iframe.log');
-    const logLine = JSON.stringify(logEntry) + '\n';
-    
-    fs.appendFileSync(logFile, logLine);
+      const logFile = path.join(logDir, 'iframe.log');
+      const logLine = JSON.stringify(logEntry) + '\n';
+      
+      fs.appendFileSync(logFile, logLine);
+    } catch (fileError) {
+      console.warn('⚠️ Could not write to log file:', fileError);
+      // Continue without file logging - still log to console
+    }
 
     // Also save daily summary
     const today = new Date().toISOString().split('T')[0];
-    const summaryFile = path.join(logDir, `iframe-summary-${today}.json`);
+    const summaryFile = path.join(process.cwd(), 'tmp', 'logs', `iframe-summary-${today}.json`);
     
     let summary: DailySummary = {
       mobile: { loaded: 0, error: 0, clicked: 0 },
       desktop: { loaded: 0, error: 0, clicked: 0 }
     };
     
-    if (fs.existsSync(summaryFile)) {
-      summary = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));
+    try {
+      if (fs.existsSync(summaryFile)) {
+        summary = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));
+      }
+
+      // Update summary
+      if (!summary[event]) summary[event] = 0;
+      summary[event]++;
+
+      if (!summary.mobile) summary.mobile = { loaded: 0, error: 0, clicked: 0 };
+      if (!summary.desktop) summary.desktop = { loaded: 0, error: 0, clicked: 0 };
+
+      const eventType = event.replace('iframe_', '') as 'loaded' | 'error' | 'clicked';
+      
+      if (isMobile) {
+        summary.mobile[eventType]++;
+      } else {
+        summary.desktop[eventType]++;
+      }
+
+      summary.lastUpdate = new Date().toISOString();
+
+      fs.writeFileSync(summaryFile, JSON.stringify(summary, null, 2));
+    } catch (summaryError) {
+      console.warn('⚠️ Could not write summary file:', summaryError);
+      // Continue without summary file - still log to console
     }
-
-    // Update summary
-    if (!summary[event]) summary[event] = 0;
-    summary[event]++;
-
-    if (!summary.mobile) summary.mobile = { loaded: 0, error: 0, clicked: 0 };
-    if (!summary.desktop) summary.desktop = { loaded: 0, error: 0, clicked: 0 };
-
-    const eventType = event.replace('iframe_', '') as 'loaded' | 'error' | 'clicked';
-    
-    if (isMobile) {
-      summary.mobile[eventType]++;
-    } else {
-      summary.desktop[eventType]++;
-    }
-
-    summary.lastUpdate = new Date().toISOString();
-
-    fs.writeFileSync(summaryFile, JSON.stringify(summary, null, 2));
 
     res.json({ success: true, logged: true });
 
@@ -115,7 +125,7 @@ router.post('/iframe', authMiddleware, async (req: Request, res: Response) => {
 router.get('/iframe/summary', authMiddleware, async (req: Request, res: Response) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const summaryFile = path.join(process.cwd(), 'logs', `iframe-summary-${today}.json`);
+    const summaryFile = path.join(process.cwd(), 'tmp', 'logs', `iframe-summary-${today}.json`);
     
     if (fs.existsSync(summaryFile)) {
       const summary: DailySummary = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));
