@@ -13,6 +13,7 @@ services:
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
         VITE_UPLOAD_MAX_SIZE: ${VITE_UPLOAD_MAX_SIZE:-10485760}
         VITE_SUPPORTED_FORMATS: ${VITE_SUPPORTED_FORMATS:-jpg,jpeg,png,gif,webp,pdf,doc,docx,txt}
+        VITE_ENABLE_VCONSOLE: ${VITE_ENABLE_VCONSOLE:-false}
         
         # Backend build args
         NODE_ENV: ${NODE_ENV:-production}

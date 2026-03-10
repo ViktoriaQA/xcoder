@@ -58,11 +58,24 @@ app.get('/health', (req, res) => {
     : path.join(__dirname, '../../frontend/dist');
   const frontendReady = require('fs').existsSync(staticPath);
   
+  // Log vConsole status
+  const vConsoleEnabled = process.env.VITE_ENABLE_VCONSOLE === 'true';
+  console.log('🔍 vConsole Status Check:', {
+    VITE_ENABLE_VCONSOLE: process.env.VITE_ENABLE_VCONSOLE,
+    vConsoleEnabled,
+    NODE_ENV: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     frontend: frontendReady ? 'ready' : 'building',
-    static_path: staticPath
+    static_path: staticPath,
+    vconsole: {
+      enabled: vConsoleEnabled,
+      env_value: process.env.VITE_ENABLE_VCONSOLE
+    }
   });
 });
 
@@ -107,6 +120,15 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 CodeArena Backend server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  
+  // Log vConsole status on startup
+  const vConsoleEnabled = process.env.VITE_ENABLE_VCONSOLE === 'true';
+  console.log('🔧 vConsole Configuration:', {
+    VITE_ENABLE_VCONSOLE: process.env.VITE_ENABLE_VCONSOLE,
+    enabled: vConsoleEnabled,
+    environment: process.env.NODE_ENV,
+    message: vConsoleEnabled ? '✅ vConsole will be available on mobile devices' : '❌ vConsole is disabled'
+  });
 });
 
 export default app;
