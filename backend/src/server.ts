@@ -24,6 +24,7 @@ import paymentRoutes from './routes/payment';
 import paymentSwaggerRoutes from './routes/payment-swagger';
 import codeExecutionRoutes from './routes/codeExecutionRoutes';
 import logRoutes from './routes/logs';
+import testSwaggerRoutes from './routes/test-swagger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -101,6 +102,7 @@ app.get('/health', (req, res) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'CodeArena API Documentation',
+  customfavIcon: '/favicon.png',
   swaggerOptions: {
     persistAuthorization: true,
     displayRequestDuration: true,
@@ -110,8 +112,31 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     docExpansion: 'none',
     defaultModelsExpandDepth: 2,
     defaultModelExpandDepth: 2,
-    tryItOutEnabled: true
-  }
+    tryItOutEnabled: true,
+    requestInterceptor: (req: any) => {
+      // Add any custom headers if needed
+      return req;
+    },
+    responseInterceptor: (res: any) => {
+      return res;
+    },
+    onComplete: () => {
+      // Callback when Swagger UI is loaded
+      console.log('Swagger UI loaded successfully');
+    }
+  },
+  customJs: `
+    // Custom JavaScript for better authorization handling
+    window.onload = function() {
+      console.log('Swagger UI custom script loaded');
+      
+      // Auto-focus on authorize button if needed
+      const authorizeBtn = document.querySelector('.btn.authorize');
+      if (authorizeBtn) {
+        console.log('Authorize button found');
+      }
+    };
+  `
 }));
 
 // Swagger JSON specification
@@ -121,8 +146,38 @@ app.get('/api-docs.json', (req, res) => {
   res.send(swaggerSpec);
 });
 
+// Swagger diagnostics endpoint
+app.get('/api-docs/diagnostics', (req, res) => {
+  const diagnostics = {
+    environment: process.env.NODE_ENV,
+    baseUrl: process.env.NODE_ENV === 'production' ? 'https://olimpxx.pp.ua' : 'http://localhost:3001',
+    swaggerSpecKeys: Object.keys(swaggerSpec),
+    pathsCount: Object.keys((swaggerSpec as any).paths || {}).length,
+    componentsCount: Object.keys((swaggerSpec as any).components?.schemas || {}).length,
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    userAgent: req.get('User-Agent')
+  };
+  
+  res.json(diagnostics);
+});
+
+// Test endpoint for Swagger authorization
+app.get('/api/test/auth', authMiddleware, (req, res) => {
+  res.json({
+    message: 'Authorization successful',
+    user: {
+      id: (req as any).user?.id,
+      email: (req as any).user?.email,
+      role: (req as any).user?.role
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // API routes
 app.use('/auth', authRoutes);
+app.use('/api/test', testSwaggerRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tournaments', authMiddleware, tournamentRoutes);

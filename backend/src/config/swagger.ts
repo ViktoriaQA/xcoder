@@ -1,6 +1,12 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
+// Dynamic server configuration based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const baseUrl = isProduction 
+  ? 'https://olimpxx.pp.ua' 
+  : 'http://localhost:3001';
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -19,12 +25,8 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3001',
-        description: 'Development server'
-      },
-      {
-        url: 'https://olimpxx.pp.ua',
-        description: 'Production server'
+        url: baseUrl,
+        description: isProduction ? 'Production server' : 'Development server'
       }
     ],
     components: {
