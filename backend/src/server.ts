@@ -12,11 +12,16 @@ import { authMiddleware } from './middleware/auth';
 import { swaggerSpec, swaggerUi } from './config/swagger';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import userSwaggerRoutes from './routes/users-swagger';
 import subscriptionRoutes from './routes/subscriptions';
+import subscriptionSwaggerRoutes from './routes/subscriptions-swagger';
 import tournamentRoutes from './routes/tournaments';
+import tournamentSwaggerRoutes from './routes/tournaments-swagger';
 import taskRoutes from './routes/tasks';
+import taskSwaggerRoutes from './routes/tasks-swagger';
 import studentRoutes from './routes/students';
 import paymentRoutes from './routes/payment';
+import paymentSwaggerRoutes from './routes/payment-swagger';
 import codeExecutionRoutes from './routes/codeExecutionRoutes';
 import logRoutes from './routes/logs';
 
@@ -48,6 +53,18 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true
 }));
+
+// Special CORS handling for Swagger documentation
+app.use('/api-docs*', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -83,12 +100,24 @@ app.get('/health', (req, res) => {
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'CodeArena API Documentation'
+  customSiteTitle: 'CodeArena API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    showExtensions: true,
+    showCommonExtensions: true,
+    docExpansion: 'none',
+    defaultModelsExpandDepth: 2,
+    defaultModelExpandDepth: 2,
+    tryItOutEnabled: true
+  }
 }));
 
 // Swagger JSON specification
 app.get('/api-docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.send(swaggerSpec);
 });
 
@@ -106,6 +135,13 @@ app.use('/api/logs', authMiddleware, logRoutes);
 
 // Direct LiqPay callback route (without /api/v1 prefix)
 app.use('/payment', paymentRoutes);
+
+// Swagger documentation routes (for API documentation only)
+app.use('/swagger-docs/users', authMiddleware, userSwaggerRoutes);
+app.use('/swagger-docs/subscriptions', subscriptionSwaggerRoutes);
+app.use('/swagger-docs/tournaments', authMiddleware, tournamentSwaggerRoutes);
+app.use('/swagger-docs/tasks', authMiddleware, taskSwaggerRoutes);
+app.use('/swagger-docs/payment', paymentSwaggerRoutes);
 
 // Serve static files from frontend build
 const staticPath = process.env.NODE_ENV === 'production' 

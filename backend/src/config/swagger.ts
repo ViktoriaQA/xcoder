@@ -431,7 +431,12 @@ const options: swaggerJsdoc.Options = {
       }
     ]
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'], // Paths to files containing OpenAPI definitions
+  apis: [
+    './src/routes/*.ts', 
+    './src/routes/*-swagger.ts',
+    './src/controllers/*.ts',
+    './src/middleware/*.ts'
+  ], // Paths to files containing OpenAPI definitions
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
