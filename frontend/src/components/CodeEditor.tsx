@@ -131,53 +131,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
    */
   const codeTemplates: Record<string, string> = {
     javascript: `// JavaScript код
-function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-const n = 10;
-console.log(\`Fibonacci(\${n}) = \${fibonacci(n)}\`);`,
+console.log("Hello, World!");`,
     
     typescript: `// TypeScript код
-interface Person {
-  name: string;
-  age: number;
-}
-
-function greet(person: Person): string {
-  return \`Hello, \${person.name}! You are \${person.age} years old.\`;
-}
-
-const person: Person = { name: "Alice", age: 25 };
-console.log(greet(person));`,
+console.log("Hello, World!");`,
     
     python: `# Python код
-def factorial(n):
-    if n <= 1:
-        return 1
-    return n * factorial(n - 1)
-
-n = 5
-print(f"Factorial({n}) = {factorial(n)}")`,
+print("Hello, World!")`,
     
     cpp: `// C++ код
 #include <iostream>
-#include <vector>
-#include <algorithm>
 
 int main() {
-    std::vector<int> numbers = {5, 2, 8, 1, 9};
-    
-    std::sort(numbers.begin(), numbers.end());
-    
-    std::cout << "Sorted numbers: ";
-    for (int num : numbers) {
-        std::cout << num << " ";
-    }
-    std::cout << std::endl;
-    
+    std::cout << "Hello, World!" << std::endl;
     return 0;
+}`,
+
+    go: `// Go код
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
 }`
   };
 

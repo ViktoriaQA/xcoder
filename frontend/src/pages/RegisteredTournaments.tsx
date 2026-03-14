@@ -18,6 +18,7 @@ interface Tournament {
   description: string;
   status: "upcoming" | "active" | "completed";
   participants: number;
+  minParticipants?: number;
   maxParticipants: number;
   startDate: string;
   endDate: string;
@@ -79,7 +80,8 @@ const RegisteredTournaments = () => {
           name: tournament.name,
           description: tournament.description,
           status: tournament.status,
-          participants: tournament._count?.tournament_participants || 0,
+          participants: tournament.participants || 0,
+          minParticipants: tournament.minParticipants || 0,
           maxParticipants: tournament.max_participants || 50,
           startDate: tournament.start_time,
           endDate: tournament.end_time,
@@ -200,7 +202,10 @@ const RegisteredTournaments = () => {
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="font-mono text-muted-foreground">
-              {t('tournaments.participantsCount', { current: tournament.participants, max: tournament.maxParticipants })}
+              {tournament.minParticipants && tournament.minParticipants > 0
+                ? `${tournament.minParticipants + tournament.participants}/${tournament.maxParticipants} учасників`
+                : `${tournament.participants}/${tournament.maxParticipants} учасників`
+              }
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
@@ -222,7 +227,9 @@ const RegisteredTournaments = () => {
         <div className="w-full bg-muted rounded-full h-2">
           <div 
             className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(tournament.participants / tournament.maxParticipants) * 100}%` }}
+            style={{ 
+              width: `${((tournament.minParticipants || 0) + tournament.participants) / tournament.maxParticipants * 100}%` 
+            }}
           />
         </div>
 
@@ -276,7 +283,7 @@ const RegisteredTournaments = () => {
         </p>
       </div>
 
-      {/* Stats */}
+      {/* Stats
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-4 text-center">
@@ -310,7 +317,7 @@ const RegisteredTournaments = () => {
             <div className="text-sm text-muted-foreground font-mono">{t('tournaments.totalParticipants')}</div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Tabs */}
       <Tabs defaultValue="my-tournaments" className="space-y-4">

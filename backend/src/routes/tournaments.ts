@@ -60,8 +60,7 @@ router.get('/', async (req: AuthRequest | any, res, next) => {
       .from('tournaments')
       .select(`
         *,
-        creator:created_by(id, first_name, last_name, email),
-        _count:tournament_participants(count)
+        creator:created_by(id, first_name, last_name, email)
       `)
       .order('start_time', { ascending: true })
       .range(
@@ -94,8 +93,7 @@ router.get('/', async (req: AuthRequest | any, res, next) => {
         .select(`
           tournament:tournaments(
             *,
-            creator:created_by(id, first_name, last_name, email),
-            _count:tournament_participants(count)
+            creator:created_by(id, first_name, last_name, email)
           )
         `)
         .eq('user_id', req.user.id);
@@ -118,8 +116,7 @@ router.get('/', async (req: AuthRequest | any, res, next) => {
           .from('tournaments')
           .select(`
             *,
-            creator:created_by(id, first_name, last_name, email),
-            _count:tournament_participants(count)
+            creator:created_by(id, first_name, last_name, email)
           `)
           .eq('created_by', studentProfile.trainer_id)
           .eq('is_public', true); // Visible to trainer's students
@@ -139,15 +136,26 @@ router.get('/', async (req: AuthRequest | any, res, next) => {
       }, []);
 
       // Map database fields to frontend format
-      const mappedTournaments = uniqueTournaments.map(tournament => ({
-        ...tournament,
-        name: tournament.title, // database 'title' -> frontend 'name'
-        is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
-        prize: tournament.rules, // database 'rules' -> frontend 'prize'
-        // Remove database-specific fields
-        title: undefined,
-        is_public: undefined,
-        rules: undefined
+      const mappedTournaments = await Promise.all(uniqueTournaments.map(async (tournament) => {
+        // Get current participant count
+        const currentParticipants = await getCurrentParticipantCount(tournament.id);
+        
+        return {
+          ...tournament,
+          name: tournament.title, // database 'title' -> frontend 'name'
+          is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
+          prize: tournament.rules, // database 'rules' -> frontend 'prize'
+          maxParticipants: tournament.max_participants || 50,
+          minParticipants: tournament.prize_pool || 0, // Get min participants from prize_pool field
+          participants: currentParticipants, // Use actual participant count
+          startDate: tournament.start_time,
+          endDate: tournament.end_time,
+          difficulty: tournament.difficulty || 'medium',
+          // Remove database-specific fields
+          title: undefined,
+          is_public: undefined,
+          rules: undefined
+        };
       }));
 
       res.json({
@@ -170,16 +178,27 @@ router.get('/', async (req: AuthRequest | any, res, next) => {
     }
 
     // Map database fields to frontend format
-    const mappedTournaments = tournaments?.map(tournament => ({
-      ...tournament,
-      name: tournament.title, // database 'title' -> frontend 'name'
-      is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
-      prize: tournament.rules, // database 'rules' -> frontend 'prize'
-      // Remove database-specific fields
-      title: undefined,
-      is_public: undefined,
-      rules: undefined
-    })) || [];
+    const mappedTournaments = await Promise.all(tournaments?.map(async (tournament) => {
+      // Get current participant count
+      const currentParticipants = await getCurrentParticipantCount(tournament.id);
+      
+      return {
+        ...tournament,
+        name: tournament.title, // database 'title' -> frontend 'name'
+        is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
+        prize: tournament.rules, // database 'rules' -> frontend 'prize'
+        maxParticipants: tournament.max_participants || 50,
+        minParticipants: tournament.prize_pool || 0, // Get min participants from prize_pool field
+        participants: currentParticipants, // Use actual participant count
+        startDate: tournament.start_time,
+        endDate: tournament.end_time,
+        difficulty: tournament.difficulty || 'medium',
+        // Remove database-specific fields
+        title: undefined,
+        is_public: undefined,
+        rules: undefined
+      };
+    }) || []);
 
     res.json({
       tournaments: mappedTournaments,
@@ -242,11 +261,18 @@ router.get('/:id', async (req: AuthRequest, res, next) => {
     }
 
     // Map database fields to frontend format
+    const currentParticipants = await getCurrentParticipantCount(tournament.id);
     const mappedTournament = {
       ...tournament,
       name: tournament.title, // database 'title' -> frontend 'name'
       is_active: tournament.is_public, // database 'is_public' -> frontend 'is_active'
       prize: tournament.rules, // database 'rules' -> frontend 'prize'
+      maxParticipants: tournament.max_participants || 50,
+      minParticipants: tournament.prize_pool || 0, // Get min participants from prize_pool field
+      participants: currentParticipants, // Use actual participant count
+      startDate: tournament.start_time,
+      endDate: tournament.end_time,
+      difficulty: tournament.difficulty || 'medium',
       // Remove database-specific fields
       title: undefined,
       is_public: undefined,
@@ -561,20 +587,26 @@ router.get('/my/participations', async (req: AuthRequest, res, next) => {
     }, []);
 
     // Transform data to match frontend format
-    const transformedParticipations = uniqueParticipations.map(p => ({
-      ...p.tournament,
-      isJoined: true,
-      participants: p.tournament._count?.tournament_participants || 0,
-      maxParticipants: p.tournament.max_participants || 50,
-      startDate: p.tournament.start_time,
-      endDate: p.tournament.end_time,
-      difficulty: p.tournament.difficulty || 'medium',
-      prize: p.tournament.rules,
-      // Remove database-specific fields
-      title: undefined,
-      is_public: undefined,
-      rules: undefined
-    })) || [];
+    const transformedParticipations = await Promise.all(uniqueParticipations.map(async (p) => {
+      // Get current participant count
+      const currentParticipants = await getCurrentParticipantCount(p.tournament.id);
+      
+      return {
+        ...p.tournament,
+        isJoined: true,
+        participants: currentParticipants,
+        maxParticipants: p.tournament.max_participants || 50,
+        minParticipants: p.tournament.prize_pool || 0, // Get min participants from prize_pool field
+        startDate: p.tournament.start_time,
+        endDate: p.tournament.end_time,
+        difficulty: p.tournament.difficulty || 'medium',
+        prize: p.tournament.rules,
+        // Remove database-specific fields
+        title: undefined,
+        is_public: undefined,
+        rules: undefined
+      };
+    }) || []);
 
     res.json({
       tournaments: transformedParticipations
@@ -821,6 +853,84 @@ router.post('/:id/add-student', requireRole(['trainer', 'admin']), async (req: A
     res.status(201).json({
       message: 'Student added to tournament successfully',
       participant
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Trainer/Admin: Remove student from tournament by email
+router.delete('/:id/remove-student', requireRole(['trainer', 'admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+    const userId = req.user!.id;
+
+    if (!email) {
+      throw createError('Email is required', 400);
+    }
+
+    // Check if user is tournament creator or admin
+    const { data: tournament, error: checkError } = await supabase
+      .from('tournaments')
+      .select('created_by')
+      .eq('id', id)
+      .single();
+
+    if (checkError || !tournament) {
+      throw createError('Tournament not found', 404);
+    }
+
+    if (tournament.created_by !== userId && req.user!.role !== 'admin') {
+      throw createError('Not authorized to remove students from this tournament', 403);
+    }
+
+    // Find student by email
+    const { data: student, error: studentError } = await supabase
+      .from('custom_users')
+      .select('id, email, first_name, last_name, role')
+      .eq('email', email.toLowerCase())
+      .single();
+
+    if (studentError || !student) {
+      throw createError('Student with this email not found', 404);
+    }
+
+    if (student.role !== 'student') {
+      throw createError('User with this email is not a student', 400);
+    }
+
+    // Check if student is in tournament
+    const { data: existingParticipant } = await supabase
+      .from('tournament_participants')
+      .select('*')
+      .eq('tournament_id', id)
+      .eq('user_id', student.id)
+      .single();
+
+    if (!existingParticipant) {
+      throw createError('Student is not in this tournament', 400);
+    }
+
+    // Remove student from tournament
+    const { error: removeError } = await supabase
+      .from('tournament_participants')
+      .delete()
+      .eq('tournament_id', id)
+      .eq('user_id', student.id);
+
+    if (removeError) {
+      throw createError('Failed to remove student from tournament', 500);
+    }
+
+    res.json({
+      message: 'Student removed from tournament successfully',
+      student: {
+        id: student.id,
+        email: student.email,
+        first_name: student.first_name,
+        last_name: student.last_name
+      }
     });
   } catch (error) {
     next(error);

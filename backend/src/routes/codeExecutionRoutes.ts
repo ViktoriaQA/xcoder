@@ -68,7 +68,7 @@ router.get('/languages', codeExecutionController.getLanguages);
  *         required: true
  *         schema:
  *           type: string
- *           enum: [python, javascript, typescript, go]
+ *           enum: [python, javascript, typescript, go, cpp]
  *         description: Programming language name
  *     responses:
  *       200:
@@ -263,7 +263,7 @@ router.post('/execute',
  *             properties:
  *               language:
  *                 type: string
- *                 enum: [python, javascript, typescript, go]
+ *                 enum: [python, javascript, typescript, go, cpp]
  *                 description: Programming language
  *               code:
  *                 type: string
