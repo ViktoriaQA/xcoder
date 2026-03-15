@@ -21,6 +21,7 @@ import AdminSubscriptions from "@/pages/AdminSubscriptions";
 import AdminTournaments from "@/pages/AdminTournaments";
 import AdminSettings from "@/pages/AdminSettings";
 import AdminSessionCleaner from "@/pages/AdminSessionCleaner";
+import AdminUsers from "@/pages/AdminUsers";
 import TournamentTasks from "@/pages/TournamentTasks";
 import TaskSolve from "@/pages/TaskSolve";
 import Certificates from "@/pages/Certificates";
@@ -172,6 +173,14 @@ const App = () => {
                 element={
                   <AppLayout>
                     <AdminSessionCleaner />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <AppLayout>
+                    <AdminUsers />
                   </AppLayout>
                 }
               />

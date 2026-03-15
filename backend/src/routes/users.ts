@@ -313,4 +313,164 @@ router.get('/students', requireRole(['trainer', 'admin']), async (req: AuthReque
   }
 });
 
+// Admin: Get all users with subscription info
+router.get('/admin/all', requireRole(['admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+
+    const { data: users, error, count } = await supabase
+      .from('custom_users')
+      .select(`
+        id, email, first_name, last_name, nickname, role, is_verified, phone_verified, created_at, updated_at
+      `, { count: 'exact' })
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw createError('Failed to fetch users', 500);
+    }
+
+    // Get subscription info for each user
+    const usersWithSubscriptions = await Promise.all(
+      users.map(async (user: any) => {
+        // Check user_subscriptions for active subscription
+        const { data: subscription } = await supabase
+          .from('user_subscriptions')
+          .select(`
+            *,
+            subscription_plans (*)
+          `)
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .single();
+
+        // If no active subscription, check payment_attempts for completed payments
+        let paymentSubscription = null;
+        if (!subscription) {
+          const { data: paymentAttempt } = await supabase
+            .from('payment_attempts')
+            .select(`
+              *,
+              subscription_plans (*)
+            `)
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (paymentAttempt) {
+            paymentSubscription = {
+              plan: paymentAttempt.subscription_plans?.name || 'Unknown',
+              status: 'active',
+              expires_at: null,
+              features: paymentAttempt.subscription_plans?.features || [],
+              payment_id: paymentAttempt.id,
+              order_id: paymentAttempt.order_id
+            };
+          }
+        }
+
+        const subscriptionInfo = subscription ? {
+          plan: subscription.subscription_plans?.name || 'Unknown',
+          status: subscription.status,
+          expires_at: subscription.end_date,
+          features: subscription.subscription_plans?.features || [],
+          subscription_id: subscription.id,
+          auto_renew: subscription.auto_renew
+        } : paymentSubscription || {
+          plan: 'Free',
+          status: 'active',
+          expires_at: null,
+          features: ['Basic tournaments', 'Limited tasks']
+        };
+
+        return {
+          ...user,
+          subscription: subscriptionInfo
+        };
+      })
+    );
+
+    res.json({
+      users: usersWithSubscriptions,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        pages: Math.ceil((count || 0) / limit)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Admin: Cancel user subscription
+router.post('/admin/:userId/cancel-subscription', requireRole(['admin']), async (req: AuthRequest, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if user exists
+    const { data: user, error: userError } = await supabase
+      .from('custom_users')
+      .select('id, email')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !user) {
+      throw createError('User not found', 404);
+    }
+
+    // Cancel active subscription in user_subscriptions
+    const { data: subscription, error: subscriptionError } = await supabase
+      .from('user_subscriptions')
+      .update({ 
+        status: 'cancelled',
+        auto_renew: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .select()
+      .single();
+
+    if (subscriptionError) {
+      // If no active subscription in user_subscriptions, try to cancel recurring payment
+      const { data: paymentAttempt, error: paymentError } = await supabase
+        .from('payment_attempts')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .eq('order_type', 'recurring')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!paymentError && paymentAttempt) {
+        // Mark the recurring payment as cancelled
+        await supabase
+          .from('payment_attempts')
+          .update({ 
+            status: 'cancelled',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', paymentAttempt.id);
+      }
+    }
+
+    res.json({ 
+      message: 'Subscription cancelled successfully',
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;
