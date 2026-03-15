@@ -9,15 +9,22 @@ import path from 'path';
 
 import { errorHandler } from './middleware/errorHandler';
 import { authMiddleware } from './middleware/auth';
+import { swaggerSpec, swaggerUi } from './config/swagger';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import userSwaggerRoutes from './routes/users-swagger';
 import subscriptionRoutes from './routes/subscriptions';
+import subscriptionSwaggerRoutes from './routes/subscriptions-swagger';
 import tournamentRoutes from './routes/tournaments';
+import tournamentSwaggerRoutes from './routes/tournaments-swagger';
 import taskRoutes from './routes/tasks';
+import taskSwaggerRoutes from './routes/tasks-swagger';
 import studentRoutes from './routes/students';
 import paymentRoutes from './routes/payment';
+import paymentSwaggerRoutes from './routes/payment-swagger';
 import codeExecutionRoutes from './routes/codeExecutionRoutes';
 import logRoutes from './routes/logs';
+import testSwaggerRoutes from './routes/test-swagger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -47,6 +54,18 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true
 }));
+
+// Special CORS handling for Swagger documentation
+app.use('/api-docs*', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -58,16 +77,107 @@ app.get('/health', (req, res) => {
     : path.join(__dirname, '../../frontend/dist');
   const frontendReady = require('fs').existsSync(staticPath);
   
+  // Log vConsole status
+  const vConsoleEnabled = process.env.VITE_ENABLE_VCONSOLE === 'true';
+  console.log('🔍 vConsole Status Check:', {
+    VITE_ENABLE_VCONSOLE: process.env.VITE_ENABLE_VCONSOLE,
+    vConsoleEnabled,
+    NODE_ENV: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     frontend: frontendReady ? 'ready' : 'building',
-    static_path: staticPath
+    static_path: staticPath,
+    vconsole: {
+      enabled: vConsoleEnabled,
+      env_value: process.env.VITE_ENABLE_VCONSOLE
+    }
+  });
+});
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'CodeArena API Documentation',
+  customfavIcon: '/favicon.png',
+  swaggerOptions: {
+    persistAuthorization: true,
+    displayRequestDuration: true,
+    filter: true,
+    showExtensions: true,
+    showCommonExtensions: true,
+    docExpansion: 'none',
+    defaultModelsExpandDepth: 2,
+    defaultModelExpandDepth: 2,
+    tryItOutEnabled: true,
+    requestInterceptor: (req: any) => {
+      // Add any custom headers if needed
+      return req;
+    },
+    responseInterceptor: (res: any) => {
+      return res;
+    },
+    onComplete: () => {
+      // Callback when Swagger UI is loaded
+      console.log('Swagger UI loaded successfully');
+    }
+  },
+  customJs: `
+    // Custom JavaScript for better authorization handling
+    window.onload = function() {
+      console.log('Swagger UI custom script loaded');
+      
+      // Auto-focus on authorize button if needed
+      const authorizeBtn = document.querySelector('.btn.authorize');
+      if (authorizeBtn) {
+        console.log('Authorize button found');
+      }
+    };
+  `
+}));
+
+// Swagger JSON specification
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.send(swaggerSpec);
+});
+
+// Swagger diagnostics endpoint
+app.get('/api-docs/diagnostics', (req, res) => {
+  const diagnostics = {
+    environment: process.env.NODE_ENV,
+    baseUrl: process.env.NODE_ENV === 'production' ? 'https://olimpxx.pp.ua' : 'http://localhost:3001',
+    swaggerSpecKeys: Object.keys(swaggerSpec),
+    pathsCount: Object.keys((swaggerSpec as any).paths || {}).length,
+    componentsCount: Object.keys((swaggerSpec as any).components?.schemas || {}).length,
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    userAgent: req.get('User-Agent')
+  };
+  
+  res.json(diagnostics);
+});
+
+// Test endpoint for Swagger authorization
+app.get('/api/test/auth', authMiddleware, (req, res) => {
+  res.json({
+    message: 'Authorization successful',
+    user: {
+      id: (req as any).user?.id,
+      email: (req as any).user?.email,
+      role: (req as any).user?.role
+    },
+    timestamp: new Date().toISOString()
   });
 });
 
 // API routes
 app.use('/auth', authRoutes);
+app.use('/api/test', testSwaggerRoutes);
 app.use('/api/users', authMiddleware, userRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/tournaments', authMiddleware, tournamentRoutes);
@@ -80,6 +190,13 @@ app.use('/api/logs', authMiddleware, logRoutes);
 
 // Direct LiqPay callback route (without /api/v1 prefix)
 app.use('/payment', paymentRoutes);
+
+// Swagger documentation routes (for API documentation only)
+app.use('/swagger-docs/users', authMiddleware, userSwaggerRoutes);
+app.use('/swagger-docs/subscriptions', subscriptionSwaggerRoutes);
+app.use('/swagger-docs/tournaments', authMiddleware, tournamentSwaggerRoutes);
+app.use('/swagger-docs/tasks', authMiddleware, taskSwaggerRoutes);
+app.use('/swagger-docs/payment', paymentSwaggerRoutes);
 
 // Serve static files from frontend build
 const staticPath = process.env.NODE_ENV === 'production' 
@@ -107,6 +224,17 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 CodeArena Backend server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+  console.log(`📄 Swagger JSON: http://localhost:${PORT}/api-docs.json`);
+  
+  // Log vConsole status on startup
+  const vConsoleEnabled = process.env.VITE_ENABLE_VCONSOLE === 'true';
+  console.log('🔧 vConsole Configuration:', {
+    VITE_ENABLE_VCONSOLE: process.env.VITE_ENABLE_VCONSOLE,
+    enabled: vConsoleEnabled,
+    environment: process.env.NODE_ENV,
+    message: vConsoleEnabled ? '✅ vConsole will be available on mobile devices' : '❌ vConsole is disabled'
+  });
 });
 
 export default app;

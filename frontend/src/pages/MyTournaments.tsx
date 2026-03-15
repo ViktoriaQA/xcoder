@@ -21,6 +21,7 @@ interface Tournament {
   description: string;
   status: "upcoming" | "active" | "completed" | "archived";
   participants: number;
+  minParticipants?: number;
   maxParticipants: number;
   startDate?: string;
   endDate?: string;
@@ -102,7 +103,8 @@ const MyTournaments = () => {
             name: tournament.name,
             description: tournament.description,
             status: status,
-            participants: tournament._count?.tournament_participants || 0,
+            participants: tournament.participants || 0,
+            minParticipants: tournament.minParticipants || 0,
             maxParticipants: tournament.max_participants || 50,
             startDate: tournament.start_time,
             endDate: tournament.end_time,
@@ -115,27 +117,18 @@ const MyTournaments = () => {
           };
         });
 
-        setTournaments(transformedTournaments);
-        setMyTournaments(transformedTournaments.filter(t => t.isJoined));
+        // Filter out inactive tournaments for students
+        const filteredTournaments = role === 'student' 
+          ? transformedTournaments.filter(tournament => tournament.is_active)
+          : transformedTournaments;
+
+        setTournaments(filteredTournaments);
+        setMyTournaments(filteredTournaments.filter(t => t.isJoined));
         
       } catch (error) {
         console.error('Error fetching tournaments:', error);
-        // Fallback to mock data if API fails
-        const mockTournaments: Tournament[] = [
-          {
-            id: "1",
-            name: "Spring Coding Challenge 2024",
-            description: "Test your skills in this comprehensive coding competition featuring algorithmic challenges and problem-solving tasks.",
-            status: "active",
-            participants: 45,
-            maxParticipants: 100,
-            startDate: "2024-03-15",
-            endDate: "2027-03-20",
-            difficulty: "medium",
-            prize: "Premium subscription + Certificate"
-          }
-        ];
-        setTournaments(mockTournaments);
+        // Show empty state when API fails
+        setTournaments([]);
         setMyTournaments([]);
       } finally {
         setLoading(false);
@@ -662,7 +655,10 @@ const MyTournaments = () => {
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="font-mono text-muted-foreground">
-              {t('tournaments.maxParticipants', { max: tournament.maxParticipants })}
+              {tournament.minParticipants && tournament.minParticipants > 0
+                ? `${tournament.minParticipants + tournament.participants}/${tournament.maxParticipants} учасників`
+                : `${tournament.participants}/${tournament.maxParticipants} учасників`
+              }
             </span>
           </div>
           {/* {tournament.startDate && tournament.endDate && (
@@ -686,7 +682,9 @@ const MyTournaments = () => {
         <div className="w-full bg-muted rounded-full h-2">
           <div 
             className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(tournament.participants / tournament.maxParticipants) * 100}%` }}
+            style={{ 
+              width: `${((tournament.minParticipants || 0) + tournament.participants) / tournament.maxParticipants * 100}%` 
+            }}
           />
         </div>
 

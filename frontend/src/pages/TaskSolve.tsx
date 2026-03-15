@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { CodeEditor } from "@/components/CodeEditor";
 import { Loading } from "@/components/ui/loading";
-import { ArrowLeft, BookOpenText, Flame, Clock3, ListChecks, Monitor } from "lucide-react";
+import { ArrowLeft, BookOpenText, Flame, Clock3, ListChecks, Monitor, Copy } from "lucide-react";
 import { TestResultsDisplay } from "@/components/TestResultsDisplay";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,6 +61,7 @@ const TaskSolve = () => {
   const [savedTestResults, setSavedTestResults] = useState<any>(null);
   const [isIframeLoading, setIsIframeLoading] = useState(false);
   const [isIframeError, setIsIframeError] = useState(false);
+  const [isMobileBlocked, setIsMobileBlocked] = useState(false);
 
   
   // Handle iframe loading
@@ -68,8 +69,8 @@ const TaskSolve = () => {
     console.log('✅ OneCompiler iframe loaded successfully');
     console.log('🔍 Iframe details:', {
       src: isMobile 
-        ? 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true'
-        : 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        ? 'https://onecompiler.com/embed/javascript?theme=dark'
+        : 'https://onecompiler.com/embed/javascript?theme=dark',
       userAgent: navigator.userAgent,
       isMobile: isMobile,
       screen: `${window.screen.width}x${window.screen.height}`,
@@ -77,111 +78,76 @@ const TaskSolve = () => {
       devicePixelRatio: window.devicePixelRatio
     });
     
-    // Check if iframe actually has content after a delay
-    setTimeout(() => {
-      const iframes = document.querySelectorAll('iframe');
-      console.log(`🔍 Found ${iframes.length} iframes on page`);
+    // Check iframe dimensions and parent containers
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach((iframe, index) => {
+      console.log(`📏 Iframe ${index} dimensions:`, {
+        iframeWidth: iframe.width,
+        iframeHeight: iframe.height,
+        offsetWidth: iframe.offsetWidth,
+        offsetHeight: iframe.offsetHeight,
+        clientWidth: iframe.clientWidth,
+        clientHeight: iframe.clientHeight,
+        styleWidth: iframe.style.width,
+        styleHeight: iframe.style.height,
+        computedWidth: window.getComputedStyle(iframe).width,
+        computedHeight: window.getComputedStyle(iframe).height
+      });
       
-      iframes.forEach((iframe, index) => {
-        console.log(`🔍 Iframe ${index} details:`, {
-          src: iframe.src,
-          width: iframe.width,
-          height: iframe.height,
-          style: iframe.style.cssText,
-          className: iframe.className,
-          offsetWidth: iframe.offsetWidth,
-          offsetHeight: iframe.offsetHeight,
-          isVisible: iframe.offsetParent !== null,
-          display: window.getComputedStyle(iframe).display,
-          visibility: window.getComputedStyle(iframe).visibility
+      // Check parent containers
+      let parent = iframe.parentElement;
+      let level = 0;
+      while (parent && level < 5) {
+        console.log(`📦 Parent ${level} dimensions:`, {
+          tagName: parent.tagName,
+          className: parent.className,
+          offsetWidth: parent.offsetWidth,
+          offsetHeight: parent.offsetHeight,
+          clientWidth: parent.clientWidth,
+          clientHeight: parent.clientHeight,
+          styleWidth: parent.style.width,
+          styleHeight: parent.style.height,
+          computedWidth: window.getComputedStyle(parent).width,
+          computedHeight: window.getComputedStyle(parent).height,
+          display: window.getComputedStyle(parent).display,
+          position: window.getComputedStyle(parent).position
         });
-        
-        try {
-          // Try to access iframe content (may be blocked by CORS)
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-          if (iframeDoc) {
-            const hasContent = iframeDoc.body.innerHTML.length > 0;
-            console.log(`📄 Iframe ${index} content check:`, {
-              hasContent,
-              bodyLength: iframeDoc.body.innerHTML.length,
-              title: iframeDoc.title,
-              readyState: iframeDoc.readyState
-            });
-            
-            // Send content check log
-            fetch(`${config.api.baseUrl}/api/logs/iframe`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-              body: JSON.stringify({
-                event: 'iframe_content_check',
-                userAgent: navigator.userAgent,
-                isMobile: isMobile,
-                timestamp: new Date().toISOString(),
-                taskId,
-                tournamentId,
-                hasContent,
-                bodyLength: iframeDoc.body.innerHTML.length,
-                title: iframeDoc.title,
-                readyState: iframeDoc.readyState
-              })
-            }).catch(err => console.warn('Failed to send content check log:', err));
-          } else {
-            console.log(`🚫 Iframe ${index} content access blocked (CORS)`);
-            
-            // Send CORS blocked log
-            fetch(`${config.api.baseUrl}/api/logs/iframe`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-              body: JSON.stringify({
-                event: 'iframe_cors_blocked',
-                userAgent: navigator.userAgent,
-                isMobile: isMobile,
-                timestamp: new Date().toISOString(),
-                taskId,
-                tournamentId,
-                reason: 'content_document_access_blocked'
-              })
-            }).catch(err => console.warn('Failed to send CORS log:', err));
-          }
-        } catch (error) {
-          console.error(`🚫 Iframe ${index} access error:`, error);
-          console.error(`🚫 Error details:`, {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-          });
-          
-          // Send access error log
-          fetch(`${config.api.baseUrl}/api/logs/iframe`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify({
-              event: 'iframe_access_error',
-              userAgent: navigator.userAgent,
-              isMobile: isMobile,
-              timestamp: new Date().toISOString(),
-              taskId,
-              tournamentId,
-              error: error.toString(),
-              errorName: error.name,
-              errorMessage: error.message,
-              iframeSrc: iframe.src,
-              iframeWidth: iframe.width,
-              iframeHeight: iframe.height
-            })
-          }).catch(err => console.warn('Failed to send access error log:', err));
+        parent = parent.parentElement;
+        level++;
+      }
+      
+      // Check if iframe is actually visible
+      const rect = iframe.getBoundingClientRect();
+      console.log(`📐 Iframe ${index} position:`, {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+        bottom: rect.bottom,
+        right: rect.right,
+        isVisible: rect.width > 0 && rect.height > 0,
+        isInViewport: rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth
+      });
+    });
+    
+    // Try to access iframe content to detect CORS blocking (handled gracefully)
+    try {
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach((iframe) => {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (iframeDoc) {
+          console.log('📄 Iframe content accessible - no CORS blocking');
         }
       });
-    }, 3000); // Check after 3 seconds
+    } catch (error) {
+      // Handle SecurityError gracefully - this is expected on mobile due to CORS
+      if (error instanceof Error && error.name === 'SecurityError' && error.message.includes('cross-origin')) {
+        console.log('🔒 CORS detected - iframe content blocked (expected behavior)');
+        // Don't show error to user - this is normal behavior
+      } else {
+        console.warn('⚠️ Unexpected iframe access error:', error);
+      }
+    }
     
     setIsIframeLoading(false);
     setIsIframeError(false);
@@ -196,8 +162,8 @@ const TaskSolve = () => {
       body: JSON.stringify({
         event: 'iframe_loaded',
         url: isMobile 
-          ? 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true'
-          : 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+          ? 'https://onecompiler.com/embed/javascript?theme=dark'
+          : 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -215,6 +181,12 @@ const TaskSolve = () => {
     setIsIframeLoading(false);
     setIsIframeError(true);
     
+    // Check if this is mobile blocking
+    if (isMobile && navigator.userAgent.includes('Mobile')) {
+      setIsMobileBlocked(true);
+      console.log('📱 Mobile device detected - OneCompiler might be blocked');
+    }
+    
     // Send error log to server
     fetch(`${config.api.baseUrl}/api/logs/iframe`, {
       method: 'POST',
@@ -224,7 +196,7 @@ const TaskSolve = () => {
       },
       body: JSON.stringify({
         event: 'iframe_error',
-        url: 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        url: 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -249,7 +221,7 @@ const TaskSolve = () => {
       },
       body: JSON.stringify({
         event: 'tab_clicked',
-        url: 'https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true',
+        url: 'https://onecompiler.com/embed/javascript?theme=dark',
         userAgent: navigator.userAgent,
         isMobile: isMobile,
         timestamp: new Date().toISOString(),
@@ -276,6 +248,15 @@ const TaskSolve = () => {
       localStorage.setItem(`task_code_${taskId}`, code);
     } catch (error) {
       console.warn('Failed to save code:', error);
+    }
+  };
+
+  // Copy text to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
     }
   };
 
@@ -566,8 +547,8 @@ const TaskSolve = () => {
         <CardContent className="p-0 flex-1 overflow-hidden">
           {/* Мобільний лейаут: контент у вкладках */}
           {isMobile ? (
-            <Tabs defaultValue="editor" className="h-full flex flex-col">
-              <div className="px-3 pt-3 pb-1 border-b border-border/60">
+            <Tabs defaultValue="editor" className="h-full flex flex-col min-h-0">
+              <div className="px-3 pt-3 pb-1 border-b border-border/60 flex-shrink-0">
                 <TabsList className="w-full justify-between">
                   <TabsTrigger value="statement" className="flex-1 text-xs sm:text-sm">
                     {t("tasks.statementTab", "Умова")}
@@ -581,9 +562,9 @@ const TaskSolve = () => {
                 </TabsList>
               </div>
 
-              <div className="flex-1 overflow-hidden px-3 pb-3">
+              <div className="flex-1 overflow-hidden px-3 pb-3 min-h-0">
                 {/* Вкладка: умова задачі */}
-                <TabsContent value="statement" className="h-full mt-2">
+                <TabsContent value="statement" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
                     <ScrollArea className="h-full px-3 py-3">
                       {task ? (
@@ -677,7 +658,7 @@ const TaskSolve = () => {
                 </TabsContent>
 
                 {/* Вкладка: редактор коду */}
-                <TabsContent value="editor" className="h-full mt-2">
+                <TabsContent value="editor" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
                     <div className="h-full">
                       <CodeEditor 
@@ -694,9 +675,9 @@ const TaskSolve = () => {
                 </TabsContent>
 
                 {/* Вкладка: тести */}
-                <TabsContent value="tests" className="h-full mt-2">
+                <TabsContent value="tests" className="h-full m-0">
                   <div className="h-full border border-border/70 rounded-md bg-background/40">
-                    <div className="h-full p-3 relative">
+                    <div className="h-full p-3 relative min-h-0">
                       {isIframeLoading && (
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
                           <div className="flex items-center gap-2">
@@ -709,30 +690,49 @@ const TaskSolve = () => {
                         <div className="h-full flex flex-col items-center justify-center text-center p-4">
                           <div className="text-muted-foreground mb-4">
                             <Monitor className="h-8 w-8 mx-auto mb-2" />
-                            <p className="text-sm">Не вдалося завантажити тренування</p>
-                            <p className="text-xs mt-1">Спробуйте відкрити на реальному мобільному пристрої</p>
+                            <p className="text-sm mb-2">
+                              {isMobileBlocked 
+                                ? "OneCompiler недоступний на мобільних пристроях"
+                                : "Не вдалося завантажити тренування"
+                              }
+                            </p>
+                            <p className="text-xs mt-1">
+                              {isMobileBlocked 
+                                ? "Використовуйте комп'ютер або відкрийте в новому вікні"
+                                : "Спробуйте відкрити на реальному мобільному пристрої"
+                              }
+                            </p>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
-                          >
-                            Відкрити в новому вікні
-                          </Button>
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
+                            >
+                              Відкрити в новому вікні
+                            </Button>
+                            {isMobile && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open('https://onecompiler.com', '_blank')}
+                              >
+                                Перейти на OneCompiler
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       ) : (
-                        <div className="h-full rounded-lg overflow-hidden">
+                        <div className="h-full w-full rounded-lg overflow-hidden min-h-0">
                           <iframe
-                            src={isMobile 
-                              ? "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true"
-                              : "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
-                            }
-                            width="100%"
-                            height="100%"
+                            src="https://onecompiler.com/embed/javascript?theme=dark"
+                            className="w-full h-full border-0"
                             style={{ 
-                              border: 'none',
-                              minHeight: '400px',
-                              backgroundColor: 'transparent'
+                              height: 'calc(100vh - 200px)',
+                              maxHeight: 'calc(100vh - 200px)',
+                              backgroundColor: 'transparent',
+                              position: 'relative',
+                              zIndex: 1
                             }}
                             title="OneCompiler JavaScript Editor"
                             loading="lazy"
@@ -812,9 +812,18 @@ const TaskSolve = () => {
                                     <div className="text-[11px] text-muted-foreground mb-1">
                                       {t("tasks.input", "Вхід")}
                                     </div>
-                                    <pre className="bg-card/70 rounded px-2 py-1 whitespace-pre-wrap">
-                                      {ex.input}
-                                    </pre>
+                                    <div className="relative">
+                                      <pre className="bg-card/70 rounded px-2 py-1 whitespace-pre-wrap pr-8">
+                                        {ex.input}
+                                      </pre>
+                                      <button
+                                        onClick={() => copyToClipboard(ex.input)}
+                                        className="absolute top-1 right-1 p-1 hover:bg-muted rounded transition-colors"
+                                        title={t("tasks.copyInput", "Копіювати вхідні дані")}
+                                      >
+                                        <Copy className="w-3 h-3" />
+                                      </button>
+                                    </div>
                                   </div>
                                   <div>
                                     <div className="text-[11px] text-muted-foreground mb-1">
@@ -878,7 +887,7 @@ const TaskSolve = () => {
                         </TabsContent>
                         
                         <TabsContent value="onecompiler" className="flex-1 mt-0 overflow-hidden">
-                          <div className="h-full p-4 relative">
+                          <div className="h-full p-4 relative min-h-0">
                             {isIframeLoading && (
                               <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
                                 <div className="flex items-center gap-2">
@@ -891,30 +900,48 @@ const TaskSolve = () => {
                               <div className="h-full flex flex-col items-center justify-center text-center p-4">
                                 <div className="text-muted-foreground mb-4">
                                   <Monitor className="h-8 w-8 mx-auto mb-2" />
-                                  <p className="text-sm">Не вдалося завантажити тренування</p>
-                                  <p className="text-xs mt-1">Спробуйте відкрити на реальному мобільному пристрої</p>
+                                  <p className="text-sm mb-2">
+                                    {isMobileBlocked 
+                                      ? "OneCompiler недоступний на мобільних пристроях"
+                                      : "Не вдалося завантажити тренування"
+                                    }
+                                  </p>
+                                  <p className="text-xs mt-1">
+                                    {isMobileBlocked 
+                                      ? "Використовуйте комп'ютер або відкрийте в новому вікні"
+                                      : "Спробуйте оновити сторінку"
+                                    }
+                                  </p>
                                 </div>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
-                                >
-                                  Відкрити в новому вікні
-                                </Button>
+                                <div className="flex flex-col gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open('https://onecompiler.com/embed/javascript?theme=dark', '_blank')}
+                                  >
+                                    Відкрити в новому вікні
+                                  </Button>
+                                  {isMobile && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => window.open('https://onecompiler.com', '_blank')}
+                                    >
+                                      Перейти на OneCompiler
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             ) : (
-                              <div className="h-full rounded-lg overflow-hidden">
+                              <div className="h-full w-full rounded-lg overflow-hidden min-h-0">
                                 <iframe
-                                  src={isMobile 
-                                    ? "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true&mobile=true"
-                                    : "https://onecompiler.com/embed/javascript?theme=dark&hideNew=true&hideLanguageSelection=true"
-                                  }
-                                  width="100%"
-                                  height="100%"
+                                  src="https://onecompiler.com/embed/javascript?theme=dark"
+                                  className="w-full h-full border-0"
                                   style={{ 
-                                    border: 'none',
                                     minHeight: '400px',
-                                    backgroundColor: 'transparent'
+                                    backgroundColor: 'transparent',
+                                    position: 'relative',
+                                    zIndex: 1
                                   }}
                                   title="OneCompiler JavaScript Editor"
                                   loading="lazy"

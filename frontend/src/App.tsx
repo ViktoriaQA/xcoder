@@ -27,167 +27,192 @@ import NotFound from "@/pages/NotFound";
 import Profile from "@/pages/Profile";
 import Ratings from "@/pages/Ratings";
 import Analytics from "@/pages/Analytics";
+import ContractOffer from "@/pages/ContractOffer";
 import '@/i18n';
+import { isMobileDevice } from '@/utils/deviceDetection';
+import { useEffect } from 'react';
+import VConsole from 'vconsole';
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route
-              path="/tournaments"
-              element={<Tournaments />}
-            />
-            <Route
-              path="/tournaments/:tournamentId"
-              element={
-                <AppLayout>
-                  <TournamentTasks />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/tournaments/:tournamentId/tasks/:taskId"
-              element={
-                <AppLayout>
-                  <TaskSolve />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/my-tournaments"
-              element={
-                <AppLayout>
-                  <MyTournaments />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <AppLayout>
-                  <Tasks />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/tasks/create"
-              element={
-                <AppLayout>
-                  <TasksCreate />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/tasks/:id/edit"
-              element={
-                <AppLayout>
-                  <TasksCreate />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/subscription"
-              element={
-                <AppLayout>
-                  <Subscription />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/subscription/success"
-              element={
-                <AppLayout>
-                  <SubscriptionSuccess />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/progress"
-              element={
-                <AppLayout>
-                  <Progress />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/admin/subscriptions"
-              element={
-                <AppLayout>
-                  <AdminSubscriptions />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/admin/tournaments"
-              element={
-                <AppLayout>
-                  <AdminTournaments />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/students"
-              element={
-                <AppLayout>
-                  <Students />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <AppLayout>
-                  <Profile />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/rating"
-              element={
-                <AppLayout>
-                  <Ratings />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/certificates"
-              element={
-                <AppLayout>
-                  <Certificates />
-                </AppLayout>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <AppLayout>
-                  <Analytics />
-                </AppLayout>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    // Initialize vConsole based on environment variable and mobile device detection
+    const enableVConsole = import.meta.env.VITE_ENABLE_VCONSOLE === 'true';
+    
+    if (enableVConsole && isMobileDevice()) {
+      const vConsole = new VConsole({
+        defaultPlugins: ['system', 'network', 'element', 'storage'],
+        onReady: () => {
+          console.log('vConsole is ready');
+        },
+      });
+      
+      return () => {
+        vConsole.destroy();
+      };
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route
+                path="/tournaments"
+                element={<Tournaments />}
+              />
+              <Route
+                path="/tournaments/:tournamentId"
+                element={
+                  <AppLayout>
+                    <TournamentTasks />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/tournaments/:tournamentId/tasks/:taskId"
+                element={
+                  <AppLayout>
+                    <TaskSolve />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/my-tournaments"
+                element={
+                  <AppLayout>
+                    <MyTournaments />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/tasks"
+                element={
+                  <AppLayout>
+                    <Tasks />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/tasks/create"
+                element={
+                  <AppLayout>
+                    <TasksCreate />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/tasks/:id/edit"
+                element={
+                  <AppLayout>
+                    <TasksCreate />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/subscription"
+                element={
+                  <AppLayout>
+                    <Subscription />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/subscription/success"
+                element={
+                  <AppLayout>
+                    <SubscriptionSuccess />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/progress"
+                element={
+                  <AppLayout>
+                    <Progress />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/admin/subscriptions"
+                element={
+                  <AppLayout>
+                    <AdminSubscriptions />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/admin/tournaments"
+                element={
+                  <AppLayout>
+                    <AdminTournaments />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/students"
+                element={
+                  <AppLayout>
+                    <Students />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <AppLayout>
+                    <Profile />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/rating"
+                element={
+                  <AppLayout>
+                    <Ratings />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/certificates"
+                element={
+                  <AppLayout>
+                    <Certificates />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <AppLayout>
+                    <Analytics />
+                  </AppLayout>
+                }
+              />
+              <Route path="/contract" element={<ContractOffer />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

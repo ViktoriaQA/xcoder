@@ -212,7 +212,7 @@ const Tasks = () => {
                   {getDifficultyBadge((task.difficulty as Difficulty) ?? null)}
                 </div>
                 {task.category && (
-                  <Badge variant="outline" className="font-mono text-[10px]">
+                  <Badge variant="outline" className="font-mono text-[10px] w-fit">
                     {task.category}
                   </Badge>
                 )}

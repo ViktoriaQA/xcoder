@@ -551,6 +551,23 @@ router.delete('/:id', requireRole(['trainer', 'admin']), async (req: AuthRequest
 
       task = result.data;
       error = result.error;
+
+      // Also delete all tournament tasks that reference this task (hard delete)
+      if (!error && task) {
+        console.log(`Deleting tournament tasks for general task ${id}`);
+        const { data: affectedTasks, error: tournamentTasksError } = await supabase
+          .from('tournament_tasks')
+          .delete()
+          .eq('task_id', id)
+          .select('id, title');
+
+        if (tournamentTasksError) {
+          console.error('Failed to delete tournament tasks:', tournamentTasksError);
+          // Don't throw error here, just log it since the main task deletion succeeded
+        } else {
+          console.log(`Deleted ${affectedTasks?.length || 0} tournament tasks:`, affectedTasks);
+        }
+      }
     }
 
     if (error || !task) {

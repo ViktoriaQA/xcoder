@@ -35,6 +35,14 @@ if (missingVars.length > 0) {
 
 console.log('✅ Environment variables loaded successfully');
 
+// Log vConsole configuration
+const vConsoleEnabled = process.env.VITE_ENABLE_VCONSOLE === 'true';
+console.log('🔧 vConsole Configuration:', {
+  VITE_ENABLE_VCONSOLE: process.env.VITE_ENABLE_VCONSOLE,
+  enabled: vConsoleEnabled,
+  environment: process.env.NODE_ENV
+});
+
 // Then load the server
 import app from './server';
 

@@ -77,6 +77,8 @@ router.post('/iframe', authMiddleware, async (req: Request, res: Response) => {
     console.log('📊 Iframe Log Data:', JSON.stringify(logEntry, null, 2));
 
     // Try to save to log file (optional - fail silently if not possible)
+    // JSON logging disabled
+    /*
     const logDir = path.join(process.cwd(), 'logs');
     try {
       if (!fs.existsSync(logDir)) {
@@ -90,8 +92,11 @@ router.post('/iframe', authMiddleware, async (req: Request, res: Response) => {
     } catch (fileError) {
       // Silent fail - console logging is enough for debugging
     }
+    */
 
     // Also save daily summary
+    // JSON logging disabled
+    /*
     const today = new Date().toISOString().split('T')[0];
     const summaryFile = path.join(process.cwd(), 'logs', `iframe-summary-${today}.json`);
     
@@ -126,6 +131,7 @@ router.post('/iframe', authMiddleware, async (req: Request, res: Response) => {
     } catch (summaryError) {
       // Silent fail - console logging is enough for debugging
     }
+    */
 
     res.json({ success: true, logged: true });
 

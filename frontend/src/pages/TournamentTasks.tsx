@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
 import { useSidebar } from "@/components/ui/sidebar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import AddTaskFromLibraryModal from "@/components/AddTaskFromLibraryModal";
 import AddStudentModal from "@/components/AddStudentModal";
 import TournamentScoreCard from "@/components/TournamentScoreCard";
@@ -39,38 +40,6 @@ interface StudentProgress {
   totalScore: number;
 }
 
-const mockTasksByTournament: Record<string, Task[]> = {
-  "1": [
-    {
-      id: "a",
-      title: "Сума масиву",
-      difficulty: "easy",
-      maxScore: 100,
-      solved: false,
-      shortDescription: "Обчислити суму елементів масиву з обмеженнями за часом.",
-      estimatedTime: "10-15 хв",
-    },
-    {
-      id: "b",
-      title: "Парні й непарні",
-      difficulty: "easy",
-      maxScore: 150,
-      solved: false,
-      shortDescription: "Розділити числа на парні та непарні й підрахувати статистику.",
-      estimatedTime: "15-20 хв",
-    },
-    {
-      id: "c",
-      title: "Найдовша зростаюча підпослідовність",
-      difficulty: "medium",
-      maxScore: 250,
-      solved: false,
-      shortDescription: "Знайти довжину LIS для заданої послідовності.",
-      estimatedTime: "30-40 хв",
-    },
-  ],
-};
-
 const TournamentTasks = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -93,9 +62,17 @@ const TournamentTasks = () => {
     if (!profile || role !== 'student') return 'new';
     
     const currentUserProgress = progressData.find(p => p.userId === profile.id);
+    console.log('🎯 getTaskStatus debug:', {
+      taskId,
+      profileId: profile.id,
+      currentUserProgress,
+      taskScores: currentUserProgress?.taskScores,
+      score: currentUserProgress?.taskScores?.[taskId]
+    });
+    
     if (!currentUserProgress) return 'new';
     
-    const score = currentUserProgress.taskScores[taskId] || 0;
+    const score = currentUserProgress.taskScores?.[taskId] || 0;
     const task = tasks.find(t => t.id === taskId);
     if (score === 0) return 'new';
     if (task && score >= task.maxScore) return 'success';
@@ -145,9 +122,9 @@ const TournamentTasks = () => {
       case 'progress':
         return 'bg-yellow-500/5 border-l-2 border-l-yellow-500';
       case 'new':
-        return 'bg-gray-200';
+        return 'bg-card/30 border-l-2 border-l-border';
       default:
-        return 'bg-gray-200';
+        return 'bg-card/30 border-l-2 border-l-border';
     }
   };
 
@@ -159,8 +136,8 @@ const TournamentTasks = () => {
       try {
         const token = localStorage.getItem('auth_token');
         if (!token) {
-          // Fallback to mock data
-          setTasks(mockTasksByTournament[tournamentId] ?? mockTasksByTournament["1"] ?? []);
+          // Show empty state if not authenticated
+          setTasks([]);
           setLoading(false);
           return;
         }
@@ -180,7 +157,7 @@ const TournamentTasks = () => {
           const tournamentData = await tournamentResponse.json();
           console.log('Tournament data received:', tournamentData);
           setTournament(tournamentData.tournament);
-          setParticipants(tournamentData.tournament?.participants || []);
+          setParticipants(Array.isArray(tournamentData.tournament?.participants) ? tournamentData.tournament.participants : []);
         } else {
           const errorData = await tournamentResponse.json().catch(() => ({}));
           console.log('Tournament fetch error:', errorData);
@@ -205,7 +182,7 @@ const TournamentTasks = () => {
             maxScore: task.points || 100,
             solved: false, // TODO: Fetch from user progress
             shortDescription: task.description?.substring(0, 100) + '...' || '',
-            estimatedTime: `${Math.ceil((task.time_limit || 1000) / 1000)}-${Math.ceil((task.time_limit || 1000) / 500)} хв`,
+            estimatedTime: task.time_limit ? `${Math.ceil(task.time_limit / 1000)}-${Math.ceil(task.time_limit / 500)} хв` : '',
             points: task.points,
             category: task.category,
             time_limit: task.time_limit,
@@ -213,13 +190,13 @@ const TournamentTasks = () => {
           }));
           setTasks(transformedTasks);
         } else {
-          // Fallback to mock data
-          setTasks(mockTasksByTournament[tournamentId] ?? mockTasksByTournament["1"] ?? []);
+          // Show empty state if tasks fetch fails
+          setTasks([]);
         }
       } catch (error) {
         console.error('Error fetching tournament data:', error);
-        // Fallback to mock data
-        setTasks(mockTasksByTournament[tournamentId] ?? mockTasksByTournament["1"] ?? []);
+        // Show empty state on error
+        setTasks([]);
       } finally {
         setLoading(false);
       }
@@ -231,6 +208,12 @@ const TournamentTasks = () => {
   // Fetch progress data
   const fetchProgressData = async () => {
     if (!tournamentId) return;
+    
+    console.log('🚀 fetchProgressData called:', {
+      tournamentId,
+      tasksLength: tasks.length,
+      participantsLength: participants.length
+    });
     
     setLoadingProgress(true);
     try {
@@ -244,48 +227,30 @@ const TournamentTasks = () => {
         }
       });
 
+      console.log('📡 Progress response status:', progressResponse.status);
+
       if (progressResponse.ok) {
         const data = await progressResponse.json();
+        console.log('📊 Progress data received:', data);
         setProgressData(data.progress || []);
       } else {
-        // Fallback: create mock progress data
-        const mockProgress: StudentProgress[] = participants
-          .filter((p: any) => p.user?.role === 'student')
-          .map((participant: any) => {
-            const taskScores: Record<string, number> = {};
-            let totalScore = 0;
-            
-            tasks.forEach(task => {
-              // Mock random scores for demonstration
-              const score = Math.random() > 0.5 ? Math.floor(Math.random() * task.maxScore) : 0;
-              taskScores[task.id] = score;
-              totalScore += score;
-            });
-
-            return {
-              userId: participant.user?.id || participant.id,
-              userName: `${participant.user?.first_name || ''} ${participant.user?.last_name || ''}`.trim() || participant.user?.email || 'Unknown',
-              userEmail: participant.user?.email || '',
-              taskScores,
-              totalScore
-            };
-          });
-        
-        setProgressData(mockProgress);
+        console.error('❌ Progress response not ok:', progressResponse.status);
+        // Show empty progress data if fetch fails
+        setProgressData([]);
       }
     } catch (error) {
-      console.error('Error fetching progress data:', error);
+      console.error('❌ Error fetching progress data:', error);
     } finally {
       setLoadingProgress(false);
     }
   };
 
-  // Fetch progress data when tasks or participants change
+  // Fetch progress data when tasks change
   useEffect(() => {
-    if (tasks.length > 0 && participants.length > 0) {
+    if (tasks.length > 0) {
       fetchProgressData();
     }
-  }, [tasks, participants, tournamentId, refreshKey]);
+  }, [tasks, tournamentId, refreshKey]);
 
   // Listen for score updates from task solving
   useEffect(() => {
@@ -364,6 +329,55 @@ const TournamentTasks = () => {
       toast({
         title: t('common.error'),
         description: t('tasks.deleteTaskError', 'Не вдалося видалити задачу'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Функція для видалення студента з турніру
+  const handleRemoveStudent = async (studentEmail: string, studentName: string) => {
+    if (!tournamentId) return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: t('common.error'),
+          description: t('auth.required', 'Необхідна автентифікація'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const response = await fetch(`/api/tournaments/${tournamentId}/remove-student`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: studentEmail })
+      });
+
+      if (response.ok) {
+        toast({
+          title: t('common.success'),
+          description: t('tournaments.studentRemovedSuccessfully', 'Студента успішно видалено з турніру'),
+        });
+        // Оновлюємо список учасників
+        setRefreshKey(prev => prev + 1);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast({
+          title: t('common.error'),
+          description: errorData.message || t('tournaments.failedToRemoveStudent', 'Не вдалося видалити студента'),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error removing student:', error);
+      toast({
+        title: t('common.error'),
+        description: t('tournaments.failedToRemoveStudent', 'Не вдалося видалити студента'),
         variant: 'destructive',
       });
     }
@@ -536,12 +550,35 @@ const TournamentTasks = () => {
                   </CardHeader>
                   <CardContent className="flex items-center justify-between gap-3 pt-0">
                     <div className="flex items-center gap-4 text-xs font-mono text-muted-foreground">
-                      <span>
-                        {t("tasks.score", { defaultValue: "{{score}} балів", score: task.maxScore })
-                          .replace("{{score}}", String(task.maxScore))}
-                      </span>
-                      <span>•</span>
-                      <span>{task.estimatedTime}</span>
+                      {role === 'student' ? (
+                        <span>
+                          {(() => {
+                            console.log('🔍 Debug task score:', {
+                              taskId: task.id,
+                              taskTitle: task.title,
+                              taskMaxScore: task.maxScore,
+                              profileId: profile?.id,
+                              progressData: progressData,
+                              currentUserProgress: progressData.find(p => p.userId === profile?.id)
+                            });
+                            const currentUserProgress = progressData.find(p => p.userId === profile?.id);
+                            const currentScore = currentUserProgress?.taskScores?.[task.id] || 0;
+                            console.log('📊 Final score for task:', task.id, '=', currentScore);
+                            return `${currentScore}/${task.maxScore} балів`;
+                          })()}
+                        </span>
+                      ) : (
+                        <span>
+                          {t("tasks.score", { defaultValue: "{{score}} балів", score: task.maxScore })
+                            .replace("{{score}}", String(task.maxScore))}
+                        </span>
+                      )}
+                      {task.estimatedTime && (
+                        <>
+                          <span>•</span>
+                          <span>{task.estimatedTime}</span>
+                        </>
+                      )}
                     </div>
                     {role === 'student' && getTaskStatus(task.id) !== 'success' && (
                       <Button
@@ -643,7 +680,7 @@ const TournamentTasks = () => {
                                     <td key={task.id} className={`text-center p-3 ${getProgressCellStyle(status)}`}>
                                       <div className="space-y-1">
                                         <div className={`font-mono text-sm font-medium ${
-                                          score === 0 ? 'text-muted-foreground' : 
+                                          score === 0 ? 'text-muted-foreground/70' : 
                                           score === task.maxScore ? 'text-primary' : 'text-yellow-500'
                                         }`}>
                                           {score}/{task.maxScore}
@@ -722,7 +759,7 @@ const TournamentTasks = () => {
                                   </div>
                                   <div className="flex items-center gap-3">
                                     <div className={`font-mono text-sm font-medium ${
-                                      score === 0 ? 'text-muted-foreground' : 
+                                      score === 0 ? 'text-muted-foreground/70' : 
                                       score === task.maxScore ? 'text-primary' : 'text-yellow-500'
                                     }`}>
                                       {score}/{task.maxScore} {t('common.points', 'балів')}
@@ -831,6 +868,41 @@ const TournamentTasks = () => {
                             : participant.status
                           }
                         </Badge>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1 font-mono text-xs h-8 w-8 p-0"
+                              title={t('tournaments.removeStudent', 'Видалити студента')}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle className="font-mono">
+                                {t('tournaments.removeStudentConfirmation', 'Видалити студента?')}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription className="font-mono">
+                                {t('tournaments.removeStudentDescription', 'Ви впевнені, що хочете видалити студента {{name}} з турніру?', { 
+                                  name: `${participant.user?.first_name} ${participant.user?.last_name}` 
+                                })}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="font-mono">
+                                {t('common.cancel', 'Скасувати')}
+                              </AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleRemoveStudent(participant.user?.email, `${participant.user?.first_name} ${participant.user?.last_name}`)}
+                                className="font-mono"
+                              >
+                                {t('tournaments.removeStudent', 'Видалити')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   ))}

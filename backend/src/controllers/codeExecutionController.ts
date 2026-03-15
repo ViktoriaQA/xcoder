@@ -26,9 +26,9 @@ export class CodeExecutionController {
       const languages = await codeExecutionManager.getSupportedLanguages();
       console.log(`✅ Got ${languages.length} languages`);
       
-      // Фільтруємо тільки потрібні мови (JS, TS, Python, Go)
+      // Фільтруємо тільки потрібні мови (JS, TS, Python, Go, C++)
       const supportedLanguages = languages.filter(lang => 
-        ['javascript', 'typescript', 'python', 'go'].includes(lang.name.toLowerCase())
+        ['javascript', 'typescript', 'python', 'go', 'cpp'].includes(lang.name.toLowerCase())
       );
 
       // Сортуємо мови для кращого UX

@@ -18,6 +18,7 @@ interface Tournament {
   description: string;
   status: "upcoming" | "active" | "completed";
   participants: number;
+  minParticipants?: number;
   maxParticipants: number;
   startDate: string;
   endDate: string;
@@ -36,81 +37,71 @@ const RegisteredTournaments = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for tournaments
-    const mockTournaments: Tournament[] = [
-      {
-        id: "1",
-        name: "Spring Coding Challenge 2024",
-        description: "Test your skills in this comprehensive coding competition featuring algorithmic challenges and problem-solving tasks.",
-        status: "active",
-        participants: 45,
-        maxParticipants: 100,
-        startDate: "2024-03-15",
-        endDate: "2027-03-20",
-        difficulty: "medium",
-        prize: "Premium subscription + Certificate"
-      },
-      {
-        id: "2",
-        name: "Algorithm Masters",
-        description: "Advanced algorithmic tournament for experienced programmers. Focus on data structures and optimization.",
-        status: "upcoming",
-        participants: 12,
-        maxParticipants: 50,
-        startDate: "2024-03-25",
-        endDate: "2027-03-30",
-        difficulty: "hard",
-        prize: "Mentorship session"
-      },
-      {
-        id: "3",
-        name: "Beginner Friendly Contest",
-        description: "Perfect for newcomers! Learn the basics of competitive programming in a supportive environment.",
-        status: "completed",
-        participants: 78,
-        maxParticipants: 80,
-        startDate: "2025-03-01",
-        endDate: "2025-03-05",
-        difficulty: "easy",
-        prize: "Certificate + Badge"
-      },
-      {
-        id: "4",
-        name: "Speed Coding Sprint",
-        description: "Race against the clock! Solve as many problems as possible in the shortest time.",
-        status: "active",
-        participants: 23,
-        maxParticipants: 60,
-        startDate: "2024-03-18",
-        endDate: "2024-03-19",
-        difficulty: "medium",
-        prize: "Merchandise + Premium features"
-      },
-      {
-        id: "5",
-        name: "Data Structures Marathon",
-        description: "Comprehensive tournament covering all major data structures and their applications.",
-        status: "upcoming",
-        participants: 8,
-        maxParticipants: 40,
-        startDate: "2024-04-01",
-        endDate: "2024-04-05",
-        difficulty: "hard",
-        prize: "Advanced course access"
+    // Fetch real tournaments from API
+    const fetchTournaments = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setTournaments([]);
+          setMyTournaments([]);
+          return;
+        }
+
+        // Fetch all tournaments
+        const allResponse = await fetch('/api/tournaments', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // Fetch user's tournament participations
+        const myResponse = await fetch('/api/tournaments/my/participations', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        let allTournamentsData: any[] = [];
+        let myTournamentsData: any[] = [];
+
+        if (allResponse.ok) {
+          const allData = await allResponse.json();
+          allTournamentsData = allData.tournaments || [];
+        }
+
+        if (myResponse.ok) {
+          const myData = await myResponse.json();
+          myTournamentsData = myData.tournaments || [];
+        }
+
+        // Transform API data to frontend format
+        const transformedTournaments: Tournament[] = allTournamentsData.map((tournament: any) => ({
+          id: tournament.id,
+          name: tournament.name,
+          description: tournament.description,
+          status: tournament.status,
+          participants: tournament.participants || 0,
+          minParticipants: tournament.minParticipants || 0,
+          maxParticipants: tournament.max_participants || 50,
+          startDate: tournament.start_time,
+          endDate: tournament.end_time,
+          difficulty: tournament.difficulty || 'medium',
+          prize: tournament.prize,
+          isJoined: myTournamentsData.some(my => my.id === tournament.id)
+        }));
+
+        setTournaments(transformedTournaments);
+        setMyTournaments(transformedTournaments.filter(t => t.isJoined));
+      } catch (error) {
+        console.error('Error fetching tournaments:', error);
+        setTournaments([]);
+        setMyTournaments([]);
+      } finally {
+        setLoading(false);
       }
-    ];
+    };
 
-    // Simulate user joining some tournaments
-    const tournamentsWithJoinStatus = mockTournaments.map(tournament => ({
-      ...tournament,
-      isJoined: ["1", "4"].includes(tournament.id) // User joined tournaments with IDs 1 and 4
-    }));
-
-    setTimeout(() => {
-      setTournaments(tournamentsWithJoinStatus);
-      setMyTournaments(tournamentsWithJoinStatus.filter(t => t.isJoined));
-      setLoading(false);
-    }, 1000);
+    fetchTournaments();
   }, []);
 
   const getStatusColor = (status: Tournament["status"]) => {
@@ -211,7 +202,10 @@ const RegisteredTournaments = () => {
           <div className="flex items-center gap-2 text-sm">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="font-mono text-muted-foreground">
-              {t('tournaments.participantsCount', { current: tournament.participants, max: tournament.maxParticipants })}
+              {tournament.minParticipants && tournament.minParticipants > 0
+                ? `${tournament.minParticipants + tournament.participants}/${tournament.maxParticipants} учасників`
+                : `${tournament.participants}/${tournament.maxParticipants} учасників`
+              }
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
@@ -233,7 +227,9 @@ const RegisteredTournaments = () => {
         <div className="w-full bg-muted rounded-full h-2">
           <div 
             className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(tournament.participants / tournament.maxParticipants) * 100}%` }}
+            style={{ 
+              width: `${((tournament.minParticipants || 0) + tournament.participants) / tournament.maxParticipants * 100}%` 
+            }}
           />
         </div>
 
@@ -287,7 +283,7 @@ const RegisteredTournaments = () => {
         </p>
       </div>
 
-      {/* Stats */}
+      {/* Stats
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-4 text-center">
@@ -321,7 +317,7 @@ const RegisteredTournaments = () => {
             <div className="text-sm text-muted-foreground font-mono">{t('tournaments.totalParticipants')}</div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Tabs */}
       <Tabs defaultValue="my-tournaments" className="space-y-4">
@@ -367,7 +363,7 @@ const RegisteredTournaments = () => {
       </Tabs>
       
       {/* Footer */}
-      <Footer />
+      <Footer hasSidebar={false} />
     </div>
   );
 };

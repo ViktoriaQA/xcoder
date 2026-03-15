@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Search, Users, BookOpen, Mail } from "lucide-react";
+import { UserPlus, Search, Users, BookOpen, Mail, X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Student {
   id: string;
@@ -82,7 +83,7 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
 
       setEmail("");
       onSuccess();
-      onOpenChange(false);
+      fetchStudents(); // Refresh students list
     } catch (error) {
       console.error('Error adding student:', error);
       toast({
@@ -92,6 +93,46 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemoveStudent = async (studentEmail: string, studentName: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error(t('auth.loginRequired'));
+      }
+
+      const response = await fetch(`/api/tournaments/${tournamentId}/remove-student`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: studentEmail })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || t('tournaments.failedToRemoveStudent'));
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: t('common.success'),
+        description: t('tournaments.studentRemovedSuccessfully', 'Студента успішно видалено з турніру'),
+      });
+
+      onSuccess();
+      fetchStudents(); // Refresh students list
+    } catch (error) {
+      console.error('Error removing student:', error);
+      toast({
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : t('tournaments.failedToRemoveStudent'),
+        variant: "destructive",
+      });
     }
   };
 
@@ -257,6 +298,41 @@ const AddStudentModal: React.FC<AddStudentModalProps> = ({
                                 : student.status
                               }
                             </Badge>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-1 font-mono text-xs h-8 w-8 p-0"
+                                  title={t('tournaments.removeStudent', 'Видалити студента')}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="font-mono">
+                                    {t('tournaments.removeStudentConfirmation', 'Видалити студента?')}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="font-mono">
+                                    {t('tournaments.removeStudentDescription', 'Ви впевнені, що хочете видалити студента {{name}} з турніру?', { 
+                                      name: `${student.first_name} ${student.last_name}` 
+                                    })}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="font-mono">
+                                    {t('common.cancel', 'Скасувати')}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => handleRemoveStudent(student.email, `${student.first_name} ${student.last_name}`)}
+                                    className="font-mono"
+                                  >
+                                    {t('tournaments.removeStudent', 'Видалити')}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </div>
                       ))}
