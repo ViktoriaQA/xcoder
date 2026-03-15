@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Download, FileText, FileDown } from 'lucide-react';
 import { PLATFORM_CONFIG } from '@/config/platform';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ContractSection {
   id: string;
@@ -13,26 +15,41 @@ interface ContractSection {
 const ContractOffer: React.FC = () => {
   const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState<string>('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const lastDownloadDate = useRef<string | null>(null);
 
-  const createPlatformLink = () => 
-    `<a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" class="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>`;
+  const platformLink = `<a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.name}</a>`;
+
+ const CompanyLink = () => (
+      <a 
+        href="/" 
+        style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 600 }}
+        className="hover:opacity-80"
+        target="_blank" 
+        rel="noopener noreferrer"
+      >
+        {PLATFORM_CONFIG.name}
+      </a>
+  );
+
 
   const sections: ContractSection[] = [
     {
       id: '1',
       title: 'Загальні положення',
       content: [
-        `1.1. Даний Договір пубічної оферти (далі – "Договір") є офіційною пропозицією <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.company.name}</a> (далі – "Компанія") укласти договір про надання послуг платформи <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a> (далі – "Послуги") на умовах, викладених нижче.`,
-        `1.2. Згідно зі статтею 641 Цивільного кодексу України, у разі прийняття умов цього Договору шляхом реєстрації на платформі <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>, фізична чи юридична особа, яка приймає цю пропозицію, стає Замовником.`,
-        `1.3. Договір набирає чинності з моменту реєстрації Замовника на платформі <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a> та діє до моменту виконання сторонами своїх зобов\'язань.`,
-        `1.4. Компанія залишає за собою право вносити зміни до умов цього Договору, повідомляючи Замовника шляхом розміщення нової редакції на платформі <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>.`
+        `1.1. Даний Договір пубічної оферти (далі – "Договір") є офіційною пропозицією ${platformLink} (далі – "Компанія") укласти договір про надання послуг платформи ${platformLink} (далі – "Послуги") на умовах, викладених нижче.`,
+        `1.2. Згідно зі статтею 641 Цивільного кодексу України, у разі прийняття умов цього Договору шляхом реєстрації на платформі ${platformLink}, фізична чи юридична особа, яка приймає цю пропозицію, стає Замовником.`,
+        `1.3. Договір набирає чинності з моменту реєстрації Замовника на платформі ${platformLink}  та діє до моменту виконання сторонами своїх зобов\'язань.`,
+        `1.4. Компанія залишає за собою право вносити зміни до умов цього Договору, повідомляючи Замовника шляхом розміщення нової редакції на платформі ${platformLink} .`
       ]
     },
     {
       id: '2',
       title: 'Предмет Договору',
       content: [
-        `2.1. Компанія зобов\'язується надавати Замовнику доступ до платформи <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a> для організації та участі в освітніх змаганнях з програмування.`,
+        `2.1. Компанія зобов\'язується надавати Замовнику доступ до платформи ${platformLink}  для організації та участі в освітніх змаганнях з програмування.`,
         '2.2. Послуги включають: доступ до системи проведення турнірів, перевірки завдань, статистики результатів, навчальних матеріалів.',
         '2.3. Замовник зобов\'язується сплачувати за Послуги відповідно до обраного тарифного плану у встановлені терміни.'
       ]
@@ -51,7 +68,7 @@ const ContractOffer: React.FC = () => {
       id: '4',
       title: 'Вартість Послуг та порядок розрахунків',
       content: [
-        '4.1. Вартість Послуг визначається відповідно до тарифних планів, розміщених на платформі «OlimpX».',
+        `4.1. Вартість Послуг визначається відповідно до тарифних планів, розміщених на платформі ${platformLink}.`,
         '4.2. Оплата Послуг здійснюється в безготівковій формі через платіжні системи, інтегровані в платформу.',
         '4.3. Послуги надаються на передплаченій основі. Період оплати становить 1 місяць, 3 місяці або 1 рік залежно від обраного тарифу.',
         '4.4. У разі несвоєчасної оплати Компанія має право призупинити надання Послуг до моменту повного погашення заборгованості.'
@@ -73,7 +90,7 @@ const ContractOffer: React.FC = () => {
       content: [
         '6.1. Компанія зобов\'язується не розголошувати персональні дані Замовника, отримані в процесі надання Послуг.',
         '6.2. Персональні дані обробляються відповідно до Закону України «Про захист персональних даних».',
-        `6.3. Замовник дає згоду на обробку своїх персональних даних для цілей надання Послуг платформою <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>.`,
+        `6.3. Замовник дає згоду на обробку своїх персональних даних для цілей надання Послуг платформою ${platformLink} .`,
         '6.4. Компанія має право використовувати анонімізовані дані для статистичних аналізів та покращення якості Послуг.'
       ]
     },
@@ -81,10 +98,10 @@ const ContractOffer: React.FC = () => {
       id: '7',
       title: 'Термін дії Договору та порядок його зміни',
       content: [
-        `7.1. Даний Договір діє протягом усього періоду використання Замовником послуг платформи <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>.`,
+        `7.1. Даний Договір діє протягом усього періоду використання Замовником послуг платформи ${platformLink} .`,
         '7.2. Замовник має право розірвати Договір в односторонньому порядку, повідомивши Компанію за 7 днів до розірвання.',
         '7.3. Компанія має право розірвати Договір у разі систематичного порушення Замовником умов Договору.',
-        `7.4. Зміни до Договору набирають чинності з моменту їх розміщення на платформі <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>.`
+        `7.4. Зміни до Договору набирають чинності з моменту їх розміщення на платформі ${platformLink} .`
       ]
     },
     {
@@ -103,7 +120,7 @@ const ContractOffer: React.FC = () => {
       content: [
         '9.1. Цей Договір є повною згодою між сторонами щодо його предмета і скасовує всі попередні усні або письмові домовленості.',
         '9.2. Жодна із сторін не може передавати свої права та обов\'язки за цим Договором третім особам без письмової згоди іншої сторони.',
-        `9.3. Всі повідомлення та повідомлення між сторонами надсилаються електронною поштою або через платформу <a href="/" style="color: #2563eb !important; text-decoration: none; font-weight: 600;" className="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>.`,
+        `9.3. Всі повідомлення та повідомлення між сторонами надсилаються електронною поштою або через платформу ${platformLink} .`,
         '9.4. Договір складено українською мовою у двох примірниках, що мають однакову юридичну силу.'
       ]
     },
@@ -165,6 +182,72 @@ const ContractOffer: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const downloadPDF = async () => {
+    // Check if already downloaded today
+    const today = new Date().toDateString();
+    const storedDate = localStorage.getItem('pdf_download_date');
+    
+    if (storedDate === today) {
+      setPdfError('Ви можете завантажити PDF лише один раз на день');
+      setTimeout(() => setPdfError(null), 3000);
+      return;
+    }
+    
+    const element = document.getElementById('contract-content');
+    if (!element) {
+      setPdfError('Не знайдено контент для генерації PDF');
+      setTimeout(() => setPdfError(null), 3000);
+      return;
+    }
+
+    try {
+      setIsGeneratingPDF(true);
+      setPdfError(null);
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save('договір_оферти_olimpx.pdf');
+      
+      // Store today's date to prevent re-download
+      localStorage.setItem('pdf_download_date', today);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setPdfError('Помилка генерації PDF. Спробуйте ще раз.');
+      setTimeout(() => setPdfError(null), 5000);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -186,18 +269,26 @@ const ContractOffer: React.FC = () => {
                   {t('contract_offer', 'Договір пубічної оферти')}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  {t('contract_subtitle', PLATFORM_CONFIG.fullName)}
+                  {t('contract_subtitle', `${PLATFORM_CONFIG.fullName} `)} <CompanyLink />
                 </p>
               </div>
             </div>
             
-            <button
-              onClick={downloadContract}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              {t('download_contract', 'Завантажити')}
-            </button>
+            <div className="flex items-center space-x-4">
+              {pdfError && (
+                <div className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                  {pdfError}
+                </div>
+              )}
+              <button
+                onClick={downloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                {isGeneratingPDF ? 'Генерація...' : 'Завантажити PDF'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -224,15 +315,7 @@ const ContractOffer: React.FC = () => {
         </div>
 
         {/* Contract Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <div className="mb-8 pb-6 border-b border-gray-200">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              <strong>Дата публікації:</strong> 15.03.2026<br />
-              <strong>Версія:</strong> 1.0<br />
-              <strong>Місце укладення:</strong> м. Київ, Україна
-            </p>
-          </div>
-
+        <div id="contract-content" className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           {sections.map((section) => (
             <div 
               key={section.id}
@@ -258,12 +341,18 @@ const ContractOffer: React.FC = () => {
           <div className="mt-12 pt-8 border-t border-gray-200">
             <div className="text-center text-gray-600 text-sm">
               <p dangerouslySetInnerHTML={{ 
-                  __html: t('contract_footer_note', `Реєструючись на платформі <a href="/" style="color: #2563eb !important; text-decoration: underline; font-weight: 600;" class="hover:opacity-80" target="_blank" rel="noopener noreferrer">${PLATFORM_CONFIG.displayName}</a>, ви підтверджуєте, що ознайомилися з умовами цього Договору та повністю погоджуєтеся з ними.`)
+                  __html: t('contract_footer_note', `Реєструючись на платформі ${platformLink}, ви підтверджуєте, що ознайомилися з умовами цього Договору та повністю погоджуєтеся з ними.`)
                 }}></p>
-              <p>
+              {/* <p>
                 {t('last_updated', 'Останнє оновлення')}: 15.03.2026
-              </p>
+              </p> */}
             </div>
+          </div>
+             <div className="mb-8 pb-6 border-b border-gray-200">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              <strong>Email:</strong> {PLATFORM_CONFIG.email}
+              <p><strong>Телефон:</strong> {PLATFORM_CONFIG.phone}</p>
+            </p>
           </div>
         </div>
 
@@ -282,9 +371,9 @@ const ContractOffer: React.FC = () => {
               </p>
             </div>
             <div>
-              <p className="text-gray-600">
-                <strong>Адреса:</strong> {PLATFORM_CONFIG.address}
-              </p>
+              {/* <p className="text-gray-600">
+                <strong>Адреса:</strong> м. Київ, Україна
+              </p> */}
               <p className="text-gray-600">
                 <strong>Графік роботи:</strong> Пн-Пт, 9:00-18:00
               </p>
