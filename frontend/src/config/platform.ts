@@ -1,7 +1,6 @@
 export const PLATFORM_CONFIG = {
-  name: 'olimpx.pro',
-  domain: 'olimpx.pro',
-  email: 'support@olimpx.pro',
-  phone: '+380 44 123 45 67',
+  name: 'xcode24.com',
+  domain: 'xcode24.com',
+  email: 'support@xcode24.com'
 
 } as const;

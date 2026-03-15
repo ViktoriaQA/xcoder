@@ -186,7 +186,7 @@ const ContractOffer: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'договір_оферти_olimpx.txt';
+    link.download = 'договір_оферти_xCode.txt';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -362,7 +362,7 @@ const ContractOffer: React.FC = () => {
              <div className="mb-8 pb-6 border-b border-gray-200">
             <p className="text-gray-600 text-sm leading-relaxed">
               <strong>Email:</strong> {PLATFORM_CONFIG.email}
-              <p><strong>{t('contract.phone')}:</strong> {PLATFORM_CONFIG.phone}</p>
+              {/* <p><strong>{t('contract.phone')}:</strong> {PLATFORM_CONFIG.phone}</p> */}
             </p>
           </div>
         </div>
@@ -377,9 +377,9 @@ const ContractOffer: React.FC = () => {
               <p className="text-gray-600">
                 <strong>Email:</strong> {PLATFORM_CONFIG.email}
               </p>
-              <p className="text-gray-600">
+              {/* <p className="text-gray-600">
                 <strong>{t('contract.phone')}:</strong> {PLATFORM_CONFIG.phone}
-              </p>
+              </p> */}
             </div>
             <div>
               {/* <p className="text-gray-600">
