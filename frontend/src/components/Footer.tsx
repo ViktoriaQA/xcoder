@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { Mail, Clock } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
@@ -34,22 +35,34 @@ export function Footer({
     }`}>
       <div className="container mx-auto">
         <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div className="flex-1" />
+          <div className="flex-1 flex justify-start">
+            <span>{t('footer.copyright', { year: currentYear })}</span>
+          </div>
           <div className="flex items-center justify-center gap-4">
             {customContent || (
               <>
-                <span>{t('footer.copyright', { year: currentYear })}</span>
-                <span className="text-muted-foreground/50">•</span>
-                <Link 
-                  to="/contract" 
-                  className="hover:text-primary transition-colors"
+                <a 
+                  href="mailto:support@xcode24.com" 
+                  className="hover:text-primary transition-colors flex items-center gap-1"
                 >
-                  {t('footer.contract', 'Договір оферти')}
-                </Link>
+                  <Mail className="h-3 w-3" />
+                  support@xcode24.com
+                </a>
+                <span className="text-muted-foreground/50">|</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Пн-Пт: 9:00-18:00
+                </span> 
               </>
             )}
           </div>
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end items-center gap-4">
+            | <Link 
+              to="/contract" 
+              className="hover:text-primary transition-colors"
+            >
+              {t('footer.contract', 'Договір оферти')}
+            </Link> |
             {showLanguageSwitcher && <LanguageSwitcher />}
           </div>
         </div>
