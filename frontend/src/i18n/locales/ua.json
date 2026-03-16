@@ -211,7 +211,7 @@
     "proOnlyTooltip": "Потрібна Premium підписка"
   },
   "footer": {
-    "copyright": "© {{year}} CodeArena",
+    "copyright": "© {{year}} Xcode",
     "version": "Версія",
     "allRightsReserved": "Всі права захищено",
     "contract": "Договір оферти"

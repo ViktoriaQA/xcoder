@@ -212,7 +212,7 @@
     "proOnlyTooltip": "Premium subscription required"
   },
   "footer": {
-    "copyright": "© {{year}} CodeArena",
+    "copyright": "© {{year}} Xcode",
     "version": "Version",
     "allRightsReserved": "All rights reserved",
     "contract": "Terms of Service"
