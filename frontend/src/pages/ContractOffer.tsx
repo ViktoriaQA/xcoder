@@ -101,7 +101,7 @@ const ContractOffer: React.FC = () => {
       content: [
         t('contract.section_7_1', 'Компанія зобов\'язується не розголошувати персональні дані Замовника, отримані в процесі надання Послуг.'),
         t('contract.section_7_2', 'Персональні дані обробляються відповідно до Закону України «Про захист персональних даних».'),
-        t('contract.section_7_3', `Замовник дає згоду на обробку своїх персональних даних для цілей надання Послуг платформою ${platformLink} .`),
+        `Замовник дає згоду на обробку своїх персональних даних для цілей надання Послуг платформою ${platformLink} .`,
         t('contract.section_7_4', 'Компанія має право використовувати анонімізовані дані для статистичних аналізів та покращення якості Послуг.')
       ]
     },
@@ -360,12 +360,7 @@ const ContractOffer: React.FC = () => {
               </p> */}
             </div>
           </div>
-             <div className="mb-8 pb-6 border-b border-gray-200">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              <strong>Email:</strong> {PLATFORM_CONFIG.email}
-              {/* <p><strong>{t('contract.phone')}:</strong> {PLATFORM_CONFIG.phone}</p> */}
-            </p>
-          </div>
+        
         </div>
 
         {/* Contact Info */}
@@ -378,6 +373,11 @@ const ContractOffer: React.FC = () => {
               {/* <p className="text-gray-600">
                 <strong>Адреса:</strong> м. Київ, Україна
               </p> */}
+
+              <p className="text-gray-600 text-sm leading-relaxed">
+                <strong>Email:</strong> {PLATFORM_CONFIG.email}
+                {/* <p><strong>{t('contract.phone')}:</strong> {PLATFORM_CONFIG.phone}</p> */}
+              </p>
               <p className="text-gray-600">
                 <strong>Графік роботи:</strong> Пн-Пт, 9:00-18:00
               </p>
