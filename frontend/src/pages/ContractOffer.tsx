@@ -135,20 +135,31 @@ const ContractOffer: React.FC = () => {
         t('contract.section_10_4', 'Договір складено українською мовою у двох примірниках, що мають однакову юридичну силу.')
       ]
     },
-    // {
-    //   id: '10',
-    //   title: 'Реквізити Компанії',
-    //   content: [
-    //     `10.1. ${PLATFORM_CONFIG.company.name}`,
-    //     `10.2. Код ЄДРПОУ: ${PLATFORM_CONFIG.company.code}`,
-    //     `10.3. ІПН: ${PLATFORM_CONFIG.company.taxNumber}`,
-    //     `10.4. Адреса: ${PLATFORM_CONFIG.address}`,
-    //     `10.5. Email: ${PLATFORM_CONFIG.email}`,
-    //     `10.6. Телефон: ${PLATFORM_CONFIG.phone}`,
-    //     `10.7. Банк: ${PLATFORM_CONFIG.company.bank}`,
-    //     `10.8. Рахунок: ${PLATFORM_CONFIG.company.account}`
-    //   ]
-    // }
+    {
+      id: '11',
+      title: t('contract.section_11_title', 'Повернення коштів'),
+      content: [
+        t('contract.section_11_1', 'Замовник має право на повернення коштів у випадках, передбачених цим Договором та чинним законодавством України.'),
+        t('contract.section_11_2', 'Повернення коштів здійснюється протягом 14 робочих днів з моменту отримання письмової заяви від Замовника.'),
+        t('contract.section_11_3', 'Для повернення коштів Замовник повинен надіслати заяву на електронну пошту Компанії, вказавши причину повернення та реквізити для здійснення повернення.'),
+        t('contract.section_11_4', 'Повернення коштів не здійснюється у випадках: якщо Замовник скористався Послугами в повному обсязі; у разі порушення умов Договору з вини Замовника; якщо з моменту оплати минуло більше 30 днів.'),
+        t('contract.section_11_5', 'При поверненні коштів сума комісії платіжних систем (включно з комісією LiqPay) не компенсується та утримується з суми повернення.'),
+        t('contract.section_11_6', 'У випадку оплати через платіжну систему LiqPay, повернення коштів можливо лише через цю ж платіжну систему згідно з її правилами та термінами.'),
+        t('contract.section_11_7', 'Компанія не несе відповідальності за затримки повернення коштів, пов\'язані з роботою банківських установ чи платіжних систем.')
+      ]
+    },
+    {
+      id: '12',
+      title: t('contract.section_12_title', 'Реквізити Компанії'),
+      content: [
+        `12.1. ${PLATFORM_CONFIG.company.name}`,
+        `12.2. ${t('contract.section_12_2', 'Повне ім\'я')}: ${PLATFORM_CONFIG.company.fullName}`,
+        `12.3. ${t('contract.section_12_3', 'Код ЄДРПОУ')}: ${PLATFORM_CONFIG.company.edrpou}`,
+        `12.4. ${t('contract.section_12_4', 'Адреса')}: ${PLATFORM_CONFIG.address}`,
+        `12.7. ${t('contract.section_12_7', 'Рахунок')}: ${PLATFORM_CONFIG.company.account}`,
+        `12.8. ${t('contract.section_12_8', 'Email')}: ${PLATFORM_CONFIG.email}`
+      ]
+    }
   ];
 
   useEffect(() => {
