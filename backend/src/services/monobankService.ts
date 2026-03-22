@@ -179,10 +179,10 @@ export class MonobankService {
         // webHookUrl: this.callbackUrl, // Monobank не підтримує webhook'и через інтерфейс
         validity: 3600, // 1 година
         paymentMethod: 'card',
-        // saveCardData: request.order_type === 'recurring' ? {
-        //   saveCard: true,
-        //   walletId: request.customer || `user_${request.order_id.split('_')[1]}` // використовуємо user_id як walletId
-        // } : undefined,
+        saveCardData: request.order_type === 'recurring' ? {
+          saveCard: true,
+          walletId: request.customer || `user_${request.order_id.split('_')[1]}` // використовуємо user_id як walletId
+        } : undefined,
       };
 
       console.log('📝 [MONOBANK] Invoice request prepared:', JSON.stringify(invoiceRequest, null, 2));
@@ -488,6 +488,96 @@ export class MonobankService {
       default:
         console.log('⏳ [MONOBANK] Unknown status, mapping to processing');
         return 'processing';
+    }
+  }
+
+  async createRecurringPayment(cardToken: string, amount: number, ccy: number = 980, redirectUrl?: string, webHookUrl?: string): Promise<any> {
+    try {
+      console.log('💳 [MONOBANK] Creating recurring payment with token...');
+      console.log('📋 [MONOBANK] Payment details:', {
+        cardToken: cardToken.substring(0, 10) + '...',
+        amount: amount / 100,
+        currency: ccy === 980 ? 'UAH' : 'Other',
+        redirectUrl,
+        webHookUrl
+      });
+
+      const requestBody: any = {
+        cardToken,
+        amount,
+        ccy
+      };
+
+      if (redirectUrl) {
+        requestBody.redirectUrl = redirectUrl;
+      }
+
+      if (webHookUrl) {
+        requestBody.webHookUrl = webHookUrl;
+      }
+
+      console.log('📝 [MONOBANK] Recurring payment request:', JSON.stringify(requestBody, null, 2));
+      console.log('🌐 [MONOBANK] API endpoint:', `${this.baseUrl}/api/merchant/charge`);
+
+      const response = await fetch(`${this.baseUrl}/api/merchant/charge`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('📡 [MONOBANK] Recurring payment API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (parseError) {
+          errorData = { errText: errorText };
+        }
+
+        console.error('❌ [MONOBANK] Recurring payment API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorBody: errorData
+        });
+
+        const errorMessage = this.handleRecurringPaymentError(response.status, errorData);
+        throw new Error(errorMessage);
+      }
+
+      const paymentData = await response.json();
+      console.log('✅ [MONOBANK] Recurring payment created successfully');
+      console.log('🔍 [MONOBANK] Response:', paymentData);
+
+      return paymentData;
+    } catch (error) {
+      console.error('💥 [MONOBANK] Error creating recurring payment:', error);
+      throw error;
+    }
+  }
+
+  private handleRecurringPaymentError(status: number, errorData: any): string {
+    switch (status) {
+      case 400:
+        const errCode = errorData?.errCode;
+        switch (errCode) {
+          case 'TOKEN_NOT_FOUND':
+            return 'Токен картки не знайдено - потрібна нова оплата';
+          case 'CARD_EXPIRED':
+            return 'Термін дії картки минув - оновіть картку';
+          case 'INSUFFICIENT_FUNDS':
+            return 'Недостатньо коштів на картці';
+          case 'CARD_BLOCKED':
+            return 'Картка заблокована - зверніться до банку';
+          default:
+            return `Помилка платежу: ${errorData?.errText || 'Невідома помилка'}`;
+        }
+      case 403:
+        return 'Доступ заборонено - перевірте токен';
+      default:
+        return `Помилка Monobank (${status}): ${errorData?.errText || 'Невідома помилка'}`;
     }
   }
 

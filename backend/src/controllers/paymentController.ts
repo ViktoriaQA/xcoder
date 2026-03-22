@@ -819,6 +819,53 @@ export class PaymentController {
     }
   }
 
+  async createRecurringPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      console.log('💳 [RECURRING_PAYMENT] Creating recurring payment...');
+      
+      const { cardToken, amount, description } = req.body;
+      
+      if (!cardToken || !amount) {
+        res.status(400).json({
+          error: 'Missing required fields: cardToken, amount'
+        });
+        return;
+      }
+
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+      const amountInKopiyky = Math.round(amount * 100);
+      
+      const paymentData = await this.monobankService.createRecurringPayment(
+        cardToken,
+        amountInKopiyky,
+        980, // UAH
+        `${this.resultUrl}?user_id=${userId}&recurring=true`,
+        this.callbackUrl
+      );
+
+      console.log('✅ [RECURRING_PAYMENT] Payment created successfully');
+
+      res.json({
+        success: true,
+        paymentId: paymentData.invoiceId,
+        status: 'processing',
+        amount: amount,
+        currency: 'UAH',
+        description: description || 'Автоматичне списання'
+      });
+
+    } catch (error) {
+      console.error('💥 [RECURRING_PAYMENT] Error:', error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Internal server error'
+      });
+    }
+  }
+
   async handleRecurringStatusCallback(req: Request, res: Response): Promise<void> {
     try {
       console.log('📊 [RECURRING_STATUS] Received recurring status callback...');
