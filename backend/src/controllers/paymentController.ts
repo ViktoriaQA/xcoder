@@ -27,6 +27,48 @@ export class PaymentController {
     this.telegramService = new TelegramService();
     this.resultUrl = process.env.MONOBANK_RESULT_URL || '';
     this.callbackUrl = process.env.MONOBANK_CALLBACK_URL || '';
+    
+    // Apply migration for order_id column
+    this.applyOrderIdMigration();
+  }
+
+  private async applyOrderIdMigration(): Promise<void> {
+    try {
+      // Check if order_id column exists
+      const { data: columns, error: checkError } = await supabase
+        .from('information_schema.columns')
+        .select('column_name')
+        .eq('table_name', 'user_subscriptions')
+        .eq('column_name', 'order_id')
+        .single();
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Column doesn't exist, add it
+        console.log('🔧 [MIGRATION] Adding order_id column to user_subscriptions...');
+        const { error: alterError } = await supabase.rpc('exec_sql', {
+          sql: 'ALTER TABLE user_subscriptions ADD COLUMN order_id TEXT'
+        });
+
+        if (alterError) {
+          console.error('❌ [MIGRATION] Error adding order_id column:', alterError);
+        } else {
+          console.log('✅ [MIGRATION] order_id column added successfully');
+          
+          // Create index
+          const { error: indexError } = await supabase.rpc('exec_sql', {
+            sql: 'CREATE INDEX IF NOT EXISTS idx_user_subscriptions_order_id ON user_subscriptions(order_id)'
+          });
+          
+          if (indexError) {
+            console.error('❌ [MIGRATION] Error creating index:', indexError);
+          } else {
+            console.log('✅ [MIGRATION] Index created successfully');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ [MIGRATION] Migration failed:', error);
+    }
   }
 
   async initiateSubscriptionPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -433,7 +475,8 @@ export class PaymentController {
       await this.assignPackageToUserWithDuration(
         userId,
         paymentAttempt.package_id!,
-        durationMonths
+        durationMonths,
+        paymentAttempt.order_id
       );
       console.log('✅ [VERIFY] User subscription profile updated');
 
@@ -738,7 +781,8 @@ export class PaymentController {
         await this.assignPackageToUserWithDuration(
           paymentAttempt.user_id,
           paymentAttempt.package_id!,
-          durationMonths
+          durationMonths,
+          paymentAttempt.order_id
         );
         
         console.log('✅ [RECURRING_CHARGE] Subscription extended successfully');
@@ -946,7 +990,8 @@ export class PaymentController {
           const subscriptionId = await this.assignPackageToUserWithDuration(
             existingAttempt.user_id,
             existingAttempt.package_id,
-            durationMonths
+            durationMonths,
+            existingAttempt.order_id
           );
           console.log('✅ [SUCCESS] Subscription activated successfully');
           
@@ -1311,7 +1356,7 @@ export class PaymentController {
     }
   }
 
-  private async assignPackageToUserWithDuration(userId: string, packageId: string, durationMonths: number): Promise<string> {
+  private async assignPackageToUserWithDuration(userId: string, packageId: string, durationMonths: number, orderId?: string): Promise<string> {
     try {
       console.log('🎯 [ASSIGN] Assigning package to user:', { userId, packageId, durationMonths });
       
@@ -1325,6 +1370,25 @@ export class PaymentController {
         end: endDate.toISOString(),
         duration: durationMonths + ' months'
       });
+
+      // Check if user already has an active subscription for this package
+      console.log('🔍 [ASSIGN] Checking for existing active subscription...');
+      const { data: existingSubscription, error: checkError } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('package_id', packageId)
+        .eq('status', 'active')
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = not found
+        console.error('❌ [ASSIGN] Error checking existing subscription:', checkError);
+      }
+      
+      if (existingSubscription) {
+        console.log('✅ [ASSIGN] Active subscription already exists:', existingSubscription.id);
+        return existingSubscription.id;
+      }
 
       // First, deactivate any existing active subscriptions for this user (regardless of package)
       console.log('🔄 [ASSIGN] Deactivating existing subscriptions...');
@@ -1355,7 +1419,8 @@ export class PaymentController {
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
           created_at: startDate.toISOString(),
-          updated_at: startDate.toISOString()
+          updated_at: startDate.toISOString(),
+          order_id: orderId || `sub_${userId}_${Date.now()}` // Use provided order_id or generate new
         })
         .select()
         .single();

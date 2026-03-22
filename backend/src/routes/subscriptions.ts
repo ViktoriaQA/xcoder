@@ -179,10 +179,28 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
     // Combine and transform data
     const historyItems: any[] = [];
     
-    // Add payment attempts
+    // Create a map of order_id -> subscription info for quick lookup
+    const subscriptionMap = new Map();
+    if (subscriptions) {
+      subscriptions.forEach(subscription => {
+        // Extract order_id from subscription if it exists, or use subscription_id
+        const key = subscription.order_id || subscription.id;
+        subscriptionMap.set(key, subscription);
+      });
+    }
+    
+    // Add payment attempts but check if they have corresponding subscriptions
     if (paymentAttempts) {
       paymentAttempts.forEach(payment => {
         const plan = payment.subscription_plans;
+        const existingSubscription = subscriptionMap.get(payment.order_id);
+        
+        // If there's a corresponding subscription, skip the payment record to avoid duplication
+        if (existingSubscription) {
+          console.log('🔄 [HISTORY] Skipping payment record due to existing subscription:', payment.order_id);
+          return;
+        }
+        
         historyItems.push({
           id: payment.id,
           order_id: payment.order_id,

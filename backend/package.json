@@ -10,7 +10,8 @@
     "lint": "eslint src/**/*.ts",
     "test": "jest",
     "cron:check-expired": "tsx src/scripts/checkExpiredSubscriptions.ts",
-    "cron:process-renewals": "tsx src/scripts/runRenewalCron.ts"
+    "cron:process-renewals": "tsx src/scripts/runRenewalCron.ts",
+    "cleanup:subscriptions": "tsx src/scripts/cleanupTestSubscriptions.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
