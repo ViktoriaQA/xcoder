@@ -496,6 +496,24 @@ export class PaymentController {
       const subscription = await this.getUserSubscription(userId, paymentAttempt.package_id!);
       console.log('📋 [VERIFY] User subscription:', JSON.stringify(subscription, null, 2));
 
+      // Check if auto-renewal is actually enabled (has token in recurring subscription)
+      console.log('🔍 [VERIFY] Checking auto-renewal status...');
+      const { data: recurringSub } = await supabase
+        .from('recurring_subscriptions')
+        .select('is_active, status, rec_token')
+        .eq('user_id', userId)
+        .eq('subscription_id', subscription?.id || paymentAttempt.order_id)
+        .single();
+
+      const autoRenewalEnabled = recurringSub && recurringSub.is_active && recurringSub.status === 'active' && recurringSub.rec_token;
+      console.log('🔄 [VERIFY] Auto-renewal status:', { 
+        found: !!recurringSub, 
+        isActive: recurringSub?.is_active, 
+        status: recurringSub?.status,
+        hasToken: !!recurringSub?.rec_token,
+        enabled: autoRenewalEnabled 
+      });
+
       const response = {
         success: true,
         subscription: {
@@ -507,7 +525,7 @@ export class PaymentController {
           price: paymentAttempt.amount,
           duration: paymentAttempt.order_type === 'recurring' ? 'місяць' : 'рік',
           payment_method: 'Monobank',
-          auto_renewal: true, // Subscriptions always have auto-renewal enabled
+          auto_renewal: autoRenewalEnabled,
         }
       };
 
