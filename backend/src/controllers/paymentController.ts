@@ -1326,7 +1326,7 @@ export class PaymentController {
         duration: durationMonths + ' months'
       });
 
-      // First, deactivate any existing active subscriptions for this user and package
+      // First, deactivate any existing active subscriptions for this user (regardless of package)
       console.log('🔄 [ASSIGN] Deactivating existing subscriptions...');
       const { data: existingSubs, error: deactivateError } = await supabase
         .from('user_subscriptions')
@@ -1335,7 +1335,6 @@ export class PaymentController {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId)
-        .eq('package_id', packageId)
         .eq('status', 'active')
         .select();
         
@@ -1448,6 +1447,26 @@ export class PaymentController {
         last: lastPaymentDate.toISOString(),
         next: nextPaymentDate.toISOString()
       });
+
+      // First, deactivate any existing recurring subscriptions for this user
+      console.log('🔄 [RECURRING] Deactivating existing recurring subscriptions...');
+      const { data: existingRecurring, error: deactivateError } = await supabase
+        .from('recurring_subscriptions')
+        .update({
+          is_active: false,
+          status: 'cancelled',
+          cancelled_at: lastPaymentDate.toISOString(),
+          updated_at: lastPaymentDate.toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .select();
+
+      if (deactivateError) {
+        console.error('❌ [RECURRING] Error deactivating existing recurring subscriptions:', deactivateError);
+      } else {
+        console.log('✅ [RECURRING] Existing recurring subscriptions deactivated:', existingRecurring?.length || 0);
+      }
 
       // Create recurring subscription record
       const { data: recurringSub, error: insertError } = await supabase

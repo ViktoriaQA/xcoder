@@ -112,7 +112,7 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
         subscription_plans(name, price_monthly, price_yearly, features)
       `)
       .eq('user_id', userId)
-      .in('status', ['completed', 'pending', 'processing', 'initiated'])
+      .in('status', ['completed', 'pending', 'processing'])
       .order('created_at', { ascending: false });
 
     console.log('💳 [HISTORY] Payment attempts result:', { data: paymentAttempts, error: paymentError });
