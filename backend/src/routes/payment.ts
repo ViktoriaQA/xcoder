@@ -83,6 +83,14 @@ router.post(
   paymentController.handleRecurringChargeCallback.bind(paymentController)
 );
 
+// Create recurring payment with token
+router.post(
+  '/recurring/payment',
+  authMiddleware,
+  validateRequest,
+  paymentController.createRecurringPayment.bind(paymentController)
+);
+
 // Handle recurring status webhook (Monobank)
 router.post(
   '/recurring/status',

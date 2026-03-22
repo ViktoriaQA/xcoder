@@ -160,10 +160,20 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
 
     console.log('🔄 [HISTORY] Recurring subscriptions:', { data: recurringSubs, error: recurringError });
 
-    // Create a map of subscription_id -> auto_renewal status
+    // Create a map of order_id -> auto_renewal status for payments
+    // and subscription_id -> auto_renewal status for subscriptions
     const autoRenewalMap = new Map();
     if (recurringSubs) {
       recurringSubs.forEach(rs => {
+        // Map by order_id for payments
+        if (rs.payment_id) {
+          autoRenewalMap.set(rs.payment_id, {
+            enabled: rs.status === 'active' && rs.is_active,
+            next_payment_date: rs.next_payment_date,
+            failed_attempts: rs.failed_attempts
+          });
+        }
+        // Map by subscription_id for subscriptions  
         autoRenewalMap.set(rs.subscription_id, {
           enabled: rs.status === 'active' && rs.is_active,
           next_payment_date: rs.next_payment_date,
@@ -201,17 +211,21 @@ router.get('/history', authMiddleware, async (req: AuthRequest, res, next) => {
           return;
         }
         
+        // Check if this payment setup auto-renewal (has token in recurring subscription)
+        const paymentAutoRenewal = autoRenewalMap.get(payment.order_id);
+        console.log(`🔍 [HISTORY] Checking auto-renewal for payment ${payment.order_id}:`, paymentAutoRenewal);
+        
         historyItems.push({
           id: payment.id,
           order_id: payment.order_id,
           plan_name: plan?.name || 'Невідомий план',
-          status: payment.status, // Use actual payment status
+          status: payment.status,
           start_date: payment.created_at,
           end_date: null,
           price: payment.amount,
           duration: payment.billing_period === 'month' ? 'місяць' : 'рік',
           payment_method: 'Monobank',
-          auto_renewal: payment.order_type === 'recurring',
+          auto_renewal: paymentAutoRenewal ? paymentAutoRenewal.enabled : false,
           type: 'payment'
         });
       });
