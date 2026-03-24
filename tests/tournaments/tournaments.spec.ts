@@ -11,14 +11,14 @@ test.describe('Tournaments', () => {
     homePage = new HomePage(page);
   });
 
-  test('should display tournaments page correctly', async ({ page }) => {
+  test('@UI should display tournaments page correctly', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForPageLoad();
     
     expect(await tournamentsPage.verifyTournamentsListVisible()).toBe(true);
   });
 
-  test('should navigate to tournaments from home', async ({ page }) => {
+  test('@UI should navigate to tournaments from home', async ({ page }) => {
     await homePage.navigateToHome();
     await homePage.navigateToTournaments();
     
@@ -26,7 +26,7 @@ test.describe('Tournaments', () => {
     expect(await tournamentsPage.verifyTournamentsListVisible()).toBe(true);
   });
 
-  test('should display create tournament button for authenticated users', async ({ authenticatedPage }) => {
+  test('@UI should display create tournament button for authenticated users', async ({ authenticatedPage }) => {
     tournamentsPage = new TournamentsPage(authenticatedPage);
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
@@ -34,14 +34,14 @@ test.describe('Tournaments', () => {
     expect(await tournamentsPage.verifyCreateButtonVisible()).toBe(true);
   });
 
-  test('should not display create tournament button for unauthenticated users', async ({ page }) => {
+  test('@UI should not display create tournament button for unauthenticated users', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
     
     expect(await tournamentsPage.verifyCreateButtonVisible()).toBe(false);
   });
 
-  test('should search tournaments', async ({ page }) => {
+  test('@UI should search tournaments', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
     
@@ -53,7 +53,7 @@ test.describe('Tournaments', () => {
     expect(searchResults).toBeLessThanOrEqual(initialCount);
   });
 
-  test('should switch between available and my tournaments tabs', async ({ authenticatedPage }) => {
+  test('@UI should switch between available and my tournaments tabs', async ({ authenticatedPage }) => {
     tournamentsPage = new TournamentsPage(authenticatedPage);
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
@@ -67,7 +67,7 @@ test.describe('Tournaments', () => {
     expect(await tournamentsPage.verifyTournamentsListVisible()).toBe(true);
   });
 
-  test('should display tournament cards with required information', async ({ page }) => {
+  test('@UI should display tournament cards with required information', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
     
@@ -81,7 +81,7 @@ test.describe('Tournaments', () => {
     }
   });
 
-  test('should handle tournament registration', async ({ authenticatedPage }) => {
+  test('@API @E2E should handle tournament registration', async ({ authenticatedPage }) => {
     tournamentsPage = new TournamentsPage(authenticatedPage);
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
@@ -107,7 +107,7 @@ test.describe('Tournaments', () => {
     }
   });
 
-  test('should handle tournament creation for admin users', async ({ adminPage }) => {
+  test('@API @E2E should handle tournament creation for admin users', async ({ adminPage }) => {
     tournamentsPage = new TournamentsPage(adminPage);
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
@@ -124,7 +124,7 @@ test.describe('Tournaments', () => {
     expect(hasCreateUrl || hasAdminUrl).toBe(true);
   });
 
-  test('should handle tournament filtering', async ({ page }) => {
+  test('@UI should handle tournament filtering', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
     await tournamentsPage.waitForTournamentsToLoad();
     

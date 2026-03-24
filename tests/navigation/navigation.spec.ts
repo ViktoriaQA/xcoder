@@ -1,14 +1,14 @@
 import { test, expect } from '../fixtures/auth.fixture';
 import { HomePage } from '../pages/HomePage';
 
-test.describe('Navigation', () => {
+test.describe('@E2E Navigation', () => {
   let homePage: HomePage;
 
   test.beforeEach(async ({ page }) => {
     homePage = new HomePage(page);
   });
 
-  test('should load home page correctly', async ({ page }) => {
+  test('@UI should load home page correctly', async ({ page }) => {
     await homePage.navigateToHome();
     await homePage.waitForPageLoad();
     
@@ -16,7 +16,7 @@ test.describe('Navigation', () => {
     expect(await homePage.verifyNavigationLinksVisible()).toBe(true);
   });
 
-  test('should navigate between main sections', async ({ page }) => {
+  test('@UI should navigate between main sections', async ({ page }) => {
     await homePage.navigateToHome();
     
     await homePage.navigateToTournaments();
@@ -29,14 +29,14 @@ test.describe('Navigation', () => {
     expect(page.url()).toBe('http://localhost:5173/');
   });
 
-  test('should display navigation elements correctly for unauthenticated users', async ({ page }) => {
+  test('@UI should display navigation elements correctly for unauthenticated users', async ({ page }) => {
     await homePage.navigateToHome();
     
     expect(await homePage.verifyElementVisible(homePage.loginButton)).toBe(true);
     expect(await homePage.verifyElementVisible(homePage.registerButton)).toBe(true);
   });
 
-  test('should display navigation elements correctly for authenticated users', async ({ authenticatedPage }) => {
+  test('@UI should display navigation elements correctly for authenticated users', async ({ authenticatedPage }) => {
     const authenticatedHomePage = new HomePage(authenticatedPage);
     await authenticatedHomePage.navigateToHome();
     
@@ -57,7 +57,7 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('should handle mobile navigation', async ({ page }) => {
+  test('@E2E should handle mobile navigation', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await homePage.navigateToHome();
     
@@ -71,7 +71,7 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('should handle breadcrumb navigation', async ({ authenticatedPage }) => {
+  test('@E2E should handle breadcrumb navigation', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/tasks');
     await authenticatedPage.waitForLoadState('networkidle');
     
@@ -101,7 +101,7 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('should handle 404 page for non-existent routes', async ({ page }) => {
+  test('@UI should handle 404 page for non-existent routes', async ({ page }) => {
     await page.goto('/non-existent-route');
     await page.waitForLoadState('networkidle');
     
@@ -118,7 +118,7 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('should handle back and forward browser navigation', async ({ page }) => {
+  test('@UI should handle back and forward browser navigation', async ({ page }) => {
     await homePage.navigateToHome();
     
     await homePage.navigateToTournaments();
@@ -131,7 +131,7 @@ test.describe('Navigation', () => {
     expect(page.url()).toContain('/tournaments');
   });
 
-  test('should handle external links correctly', async ({ page }) => {
+  test('@UI should handle external links correctly', async ({ page }) => {
     await homePage.navigateToHome();
     
     const externalLink = page.locator('a[href*="http"]').first();

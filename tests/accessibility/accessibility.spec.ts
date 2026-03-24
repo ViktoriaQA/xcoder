@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Accessibility', () => {
-  test('should have proper page titles', async ({ page }) => {
+test.describe('@UI @E2E Accessibility', () => {
+  test('@UI should have proper page titles', async ({ page }) => {
     const routes = [
       { path: '/', expectedTitle: 'OlimpX' },
       { path: '/auth', expectedTitle: 'Auth' },
@@ -18,7 +18,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper heading hierarchy', async ({ page }) => {
+  test('@UI should have proper heading hierarchy', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -31,7 +31,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have alt text for images', async ({ page }) => {
+  test('@UI should have alt text for images', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -47,7 +47,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper form labels', async ({ page }) => {
+  test('@UI should have proper form labels', async ({ page }) => {
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
     
@@ -68,7 +68,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper button accessibility', async ({ page }) => {
+  test('@UI should have proper button accessibility', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -82,7 +82,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should support keyboard navigation', async ({ page }) => {
+  test('@UI should support keyboard navigation', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -96,7 +96,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper link accessibility', async ({ page }) => {
+  test('@UI should have proper link accessibility', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -113,7 +113,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper ARIA roles', async ({ page }) => {
+  test('@UI should have proper ARIA roles', async ({ page }) => {
     await page.goto('/tournaments');
     await page.waitForLoadState('networkidle');
     
@@ -134,7 +134,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should have proper color contrast', async ({ page }) => {
+  test('@UI should have proper color contrast', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     
@@ -154,7 +154,7 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('should handle screen reader announcements', async ({ page }) => {
+  test('@UI should handle screen reader announcements', async ({ page }) => {
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
     
