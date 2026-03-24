@@ -483,9 +483,9 @@ const AdminUsers = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => navigate(`/profile/${user.id}`)}
+                                title="Профіль"
                               >
-                                <Shield className="w-3 h-3 mr-1" />
-                                Профіль
+                                <Shield className="w-4 h-4" />
                               </Button>
                               
                               {/* Delete button - only for student/trainer roles */}
@@ -496,9 +496,9 @@ const AdminUsers = () => {
                                       variant="destructive"
                                       size="sm"
                                       disabled={actionLoading === user.id}
+                                      title="Видалити"
                                     >
-                                      <Trash2 className="w-3 h-3 mr-1" />
-                                      Видалити
+                                      <Trash2 className="w-4 h-4" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -539,11 +539,11 @@ const AdminUsers = () => {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-6 text-xs"
+                                      className="h-8 text-xs"
                                       disabled={actionLoading === user.id}
+                                      title="Очистити підписки"
                                     >
-                                      <Sparkles className="w-3 h-3 mr-1" />
-                                      Очистити
+                                      <Sparkles className="w-4 h-4" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>

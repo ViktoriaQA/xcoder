@@ -530,7 +530,8 @@ router.delete('/admin/:userId', requireRole(['admin']), async (req: AuthRequest,
 
     if (deleteError) {
       console.error('Cascade delete error:', deleteError);
-      throw createError('Failed to delete user and related data', 500);
+      console.error('Error details:', JSON.stringify(deleteError, null, 2));
+      throw createError(`Failed to delete user: ${deleteError.message}`, 500);
     }
 
     res.json({ 
