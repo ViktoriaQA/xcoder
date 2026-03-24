@@ -8,7 +8,7 @@ const router = Router();
 // Get all tasks (with filtering)
 router.get('/', async (req: AuthRequest, res, next) => {
   try {
-    const { difficulty, category, page = 1, limit = 20, tournament_id } = req.query;
+    const { difficulty, category, page = 1, limit = 20, tournament_id, sort_by = 'created_at', sort_order = 'desc' } = req.query;
 
     let query;
     
@@ -18,16 +18,14 @@ router.get('/', async (req: AuthRequest, res, next) => {
         .from('tournament_tasks')
         .select('*')
         .eq('tournament_id', tournament_id)
-        .eq('is_active', true)
-        .order('order_index', { ascending: true });
+        .eq('is_active', true);
     } else {
       // Get general tasks
       query = supabase
         .from('tasks')
         .select('*')
         .eq('is_public', true)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
     }
 
     if (difficulty) {
@@ -36,6 +34,16 @@ router.get('/', async (req: AuthRequest, res, next) => {
     if (category) {
       query = query.eq('category', category);
     }
+
+    // Add sorting
+    const sortField = sort_by as string;
+    const ascending = sort_order === 'asc';
+    
+    // Validate sort field
+    const allowedSortFields = ['created_at', 'title', 'points', 'difficulty', 'category'];
+    const finalSortField = allowedSortFields.includes(sortField) ? sortField : 'created_at';
+    
+    query = query.order(finalSortField, { ascending });
 
     const { data: tasks, error, count } = await query
       .range(
@@ -69,6 +77,29 @@ router.get('/', async (req: AuthRequest, res, next) => {
         pages: Math.ceil((count || 0) / Number(limit))
       }
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get unique categories
+router.get('/categories', async (req: AuthRequest, res, next) => {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('category')
+      .eq('is_public', true)
+      .eq('is_active', true)
+      .not('category', 'is', null);
+
+    if (error) {
+      throw createError('Failed to fetch categories', 500);
+    }
+
+    // Extract unique categories
+    const categories = [...new Set((data || []).map(task => task.category).filter(Boolean))];
+    
+    res.json({ categories });
   } catch (error) {
     next(error);
   }
