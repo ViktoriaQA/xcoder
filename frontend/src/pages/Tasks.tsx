@@ -6,7 +6,8 @@ import { config } from "@/config";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Plus, BookOpen } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, BookOpen, Filter, ArrowUpDown } from "lucide-react";
 
 type Difficulty = "easy" | "medium" | "hard" | null;
 
@@ -38,6 +39,12 @@ const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    difficulty: 'all',
+    category: 'all',
+    sortOrder: 'desc' as 'asc' | 'desc'
+  });
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (!session) {
@@ -50,7 +57,13 @@ const Tasks = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`${config.api.baseUrl}/api/tasks`, {
+        const params = new URLSearchParams();
+        if (filters.difficulty && filters.difficulty !== 'all') params.append('difficulty', filters.difficulty);
+        if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+        params.append('sort_by', 'created_at');
+        params.append('sort_order', filters.sortOrder);
+
+        const response = await fetch(`${config.api.baseUrl}/api/tasks?${params.toString()}`, {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -73,7 +86,32 @@ const Tasks = () => {
     };
 
     fetchTasks();
-  }, [session, token, navigate]);
+  }, [session, token, navigate, filters]);
+
+  // Fetch unique categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${config.api.baseUrl}/api/tasks/categories`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+
+    if (session) {
+      fetchCategories();
+    }
+  }, [session, token]);
 
   const getDifficultyBadge = (difficulty?: Difficulty) => {
     if (!difficulty) return null;
@@ -140,6 +178,53 @@ const Tasks = () => {
             <Plus className="h-4 w-4" />
           </Button>
         )}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 p-4 bg-card/50 rounded-lg border border-border/60">
+        <div className="flex items-center gap-2 text-sm font-mono text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          {t("tasks.filters", "Фільтри")}:
+        </div>
+        
+        <Select value={filters.difficulty} onValueChange={(value) => setFilters(prev => ({ ...prev, difficulty: value === 'all' ? '' : value }))}>
+          <SelectTrigger className="w-full md:w-40 h-8 text-xs font-mono">
+            <SelectValue placeholder={t("tasks.difficultyPlaceholder", "Складність")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("tasks.allDifficulties", "Всі складності")}</SelectItem>
+            <SelectItem value="easy">{t("tasks.difficulty.easy", "Легка")}</SelectItem>
+            <SelectItem value="medium">{t("tasks.difficulty.medium", "Середня")}</SelectItem>
+            <SelectItem value="hard">{t("tasks.difficulty.hard", "Складна")}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.category || 'all'} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value === 'all' ? '' : value }))}>
+          <SelectTrigger className="w-full md:w-40 h-8 text-xs font-mono">
+            <SelectValue placeholder={t("tasks.categoryPlaceholder", "Категорія")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("tasks.allCategories", "Всі категорії")}</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <Select value={filters.sortOrder} onValueChange={(value: 'asc' | 'desc') => setFilters(prev => ({ ...prev, sortOrder: value }))}>
+            <SelectTrigger className="w-full md:w-32 h-8 text-xs font-mono">
+              <SelectValue placeholder={t("tasks.sortBy", "Сортування")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">{t("tasks.newestFirst", "Спочатку нові")}</SelectItem>
+              <SelectItem value="asc">{t("tasks.oldestFirst", "Спочатку старі")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {loading ? (
