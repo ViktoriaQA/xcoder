@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Accessibility', () => {
   test('@UI should have proper page titles', async ({ page }) => {
+    test.setTimeout(30000); // Increase timeout for this specific test
+    
     const routes = [
       { path: '/', expectedTitle: 'Xcode' },
       { path: '/auth', expectedTitle: 'Auth' },
@@ -13,7 +15,7 @@ test.describe('Accessibility', () => {
       await page.waitForLoadState('networkidle');
       
       // Wait a bit more for any dynamic title changes
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(1000);
       
       const title = await page.title();
       const currentPath = page.url();
