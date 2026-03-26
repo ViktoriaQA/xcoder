@@ -44,6 +44,7 @@ jobs:
         cp .env.example .env
         echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/olimpx_test" >> .env
         echo "NODE_ENV=test" >> .env
+        echo "BASE_URL=http://localhost:5173" >> .env
     
     - name: Setup Playwright
       run: npm run test:e2e:install

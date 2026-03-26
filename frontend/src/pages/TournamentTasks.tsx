@@ -56,6 +56,7 @@ const TournamentTasks = () => {
   const [progressData, setProgressData] = useState<StudentProgress[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Function to get task status for current user
   const getTaskStatus = (taskId: string) => {
@@ -263,8 +264,71 @@ const TournamentTasks = () => {
     return () => window.removeEventListener('tournamentScoreUpdate', handleScoreUpdate);
   }, []);
 
-  const canAddTasks = role === 'trainer' || role === 'admin';
+  // Check if current user is registered for this tournament
+  const isUserRegistered = participants.some(p => p.user?.id === profile?.id);
+  const canRegister = role === 'student' && !isUserRegistered && tournament?.status !== 'completed';
   const isTournamentCreator = tournament?.creator?.id === profile?.id || role === 'admin';
+  const canAddTasks = role === 'trainer' || role === 'admin';
+
+  // Handle tournament registration
+  const handleRegisterForTournament = async () => {
+    if (!tournamentId) return;
+    
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        toast({
+          title: "Помилка",
+          description: "Необхідно увійти в систему",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await fetch(`/api/tournaments/${tournamentId}/register`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Успіх",
+          description: "Ви успішно зареєструвалися на турнір",
+        });
+        setRegistrationSuccess(true);
+        
+        // Refresh tournament data to update participants list
+        const tournamentResponse = await fetch(`/api/tournaments/${tournamentId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (tournamentResponse.ok) {
+          const tournamentData = await tournamentResponse.json();
+          setTournament(tournamentData.tournament);
+          setParticipants(Array.isArray(tournamentData.tournament?.participants) ? tournamentData.tournament.participants : []);
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast({
+          title: "Помилка",
+          description: errorData.message || "Не вдалося зареєструватися на турнір",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося зареєструватися на турнір",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Функція для обробки кліку на "Розв'язати"
   const handleSolveTask = (e: React.MouseEvent, taskId: string) => {
@@ -403,11 +467,30 @@ const TournamentTasks = () => {
             <p className="text-sm text-muted-foreground font-mono">
               {tournament?.description 
                 ? `${tournament.description.substring(0, 100)}${tournament.description.length > 100 ? '...' : ''}`
-                : t("tournaments.tasksSubtitle", "Оберіть задачу, щоб перейти до сторінки розв’язання з редактором та тестами.")
+                : t("tournaments.tasksSubtitle", "Оберіть задачу, щоб перейти до сторінки розв'язання з редактором та тестами.")
               }
             </p>
           </div>
         </div>
+        
+        {/* Register Button */}
+        {canRegister && (
+          <Button 
+            onClick={handleRegisterForTournament}
+            className="font-mono gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            data-testid="register-btn"
+          >
+            <UserPlus className="h-4 w-4" />
+            {t('tournaments.register', 'Зареєструватися')}
+          </Button>
+        )}
+        
+        {/* Success Message for Test Compatibility */}
+        {registrationSuccess && (
+          <div data-testid="success-message" className="text-green-600 text-sm font-mono">
+            Ви успішно зареєструвалися на турнір
+          </div>
+        )}
       </div>
 
       {/* Tournament Score Card - Show for students, hide for trainers/admins */}

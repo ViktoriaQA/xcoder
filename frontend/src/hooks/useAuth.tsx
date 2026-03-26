@@ -70,10 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedToken && storedUser) {
         // Verify token is still valid
         console.log('🔄 [AUTH] Restoring session with token...');
-        const response = await AuthService.getCurrentUser(storedToken);
-        console.log('✅ [AUTH] Session restored, user data:', response.user);
-        setUser(response.user);
-        setToken(storedToken);
+        try {
+          const response = await AuthService.getCurrentUser(storedToken);
+          console.log('✅ [AUTH] Session restored, user data:', response.user);
+          setUser(response.user);
+          setToken(storedToken);
+        } catch (apiError) {
+          console.warn('⚠️ [AUTH] API verification failed, using stored user data:', apiError);
+          // Fallback to stored user data if API fails
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          setToken(storedToken);
+        }
       }
     } catch (error) {
       console.error('❌ [AUTH] Failed to restore session:', error);

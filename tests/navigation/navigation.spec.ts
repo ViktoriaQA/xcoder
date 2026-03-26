@@ -26,11 +26,15 @@ test.describe('@E2E Navigation', () => {
     expect(page.url()).toContain('/tasks');
     
     await homePage.navigateToHome();
-    expect(page.url()).toBe('http://localhost:5173/');
+    expect(page.url()).toBe(`${process.env.BASE_URL || 'http://localhost:5173'}/`);
   });
 
   test('@UI should display navigation elements correctly for unauthenticated users', async ({ page }) => {
     await homePage.navigateToHome();
+    await homePage.waitForPageLoad();
+    
+    // Wait a bit for the page to settle
+    await page.waitForTimeout(1000);
     
     expect(await homePage.verifyElementVisible(homePage.loginButton)).toBe(true);
     expect(await homePage.verifyElementVisible(homePage.registerButton)).toBe(true);
@@ -97,7 +101,7 @@ test.describe('@E2E Navigation', () => {
       await firstNavItem.click();
       await authenticatedPage.waitForLoadState('networkidle');
       
-      expect(authenticatedPage.url()).not.toBe('http://localhost:5173/dashboard');
+      expect(authenticatedPage.url()).not.toBe(`${process.env.BASE_URL || 'http://localhost:5173'}/dashboard`);
     }
   });
 
@@ -113,7 +117,7 @@ test.describe('@E2E Navigation', () => {
       if (await homeLink.isVisible()) {
         await homeLink.click();
         await page.waitForLoadState('networkidle');
-        expect(page.url()).toBe('http://localhost:5173/');
+        expect(page.url()).toBe(`${process.env.BASE_URL || 'http://localhost:5173'}/`);
       }
     }
   });
@@ -125,7 +129,7 @@ test.describe('@E2E Navigation', () => {
     expect(page.url()).toContain('/tournaments');
     
     await page.goBack();
-    expect(page.url()).toBe('http://localhost:5173/');
+    expect(page.url()).toBe(`${process.env.BASE_URL || 'http://localhost:5173'}/`);
     
     await page.goForward();
     expect(page.url()).toContain('/tournaments');

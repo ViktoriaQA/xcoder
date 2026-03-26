@@ -70,7 +70,7 @@ test.describe('Authentication', () => {
   test('@UI should show validation error for mismatched passwords in registration', async ({ page }) => {
     await authPage.navigateToAuth();
     await authPage.switchToRegisterTab();
-    await authPage.fillRegistrationForm('Test User', 'test@example.com', 'password123', 'password456');
+    await authPage.fillRegistrationForm('Test', 'User', 'test@example.com', 'password123', 'password456');
     await authPage.clickRegister();
     
     const errorMessage = await authPage.getErrorMessage();
@@ -80,6 +80,7 @@ test.describe('Authentication', () => {
   test('@UI should navigate to auth page from home', async ({ page }) => {
     await homePage.navigateToHome();
     await homePage.clickLogin();
+    await authPage.waitForPageLoad();
     
     expect(page.url()).toContain('/auth');
     expect(await authPage.verifyLoginFormVisible()).toBe(true);

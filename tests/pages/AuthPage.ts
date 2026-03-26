@@ -8,6 +8,7 @@ export class AuthPage extends BasePage {
   readonly registerTab: Locator;
   readonly loginTab: Locator;
   readonly nameInput: Locator;
+  readonly lastNameInput: Locator;
   readonly confirmPasswordInput: Locator;
   readonly errorMessage: Locator;
   readonly successMessage: Locator;
@@ -19,7 +20,8 @@ export class AuthPage extends BasePage {
     this.loginButton = page.locator('[data-testid="login-submit-btn"]');
     this.registerTab = page.locator('[data-testid="register-tab"]');
     this.loginTab = page.locator('[data-testid="login-tab"]');
-    this.nameInput = page.locator('input[name="name"]');
+    this.nameInput = page.locator('input[name="firstName"]');
+    this.lastNameInput = page.locator('input[name="lastName"]');
     this.confirmPasswordInput = page.locator('input[name="confirmPassword"]');
     this.errorMessage = page.locator('[data-testid="error-message"]');
     this.successMessage = page.locator('[data-testid="success-message"]');
@@ -34,9 +36,10 @@ export class AuthPage extends BasePage {
     await this.fillInput(this.passwordInput, password);
   }
 
-  async fillRegistrationForm(name: string, email: string, password: string, confirmPassword: string): Promise<void> {
+  async fillRegistrationForm(firstName: string, lastName: string, email: string, password: string, confirmPassword: string): Promise<void> {
     await this.clickElement(this.registerTab);
-    await this.fillInput(this.nameInput, name);
+    await this.fillInput(this.nameInput, firstName);
+    await this.fillInput(this.lastNameInput, lastName);
     await this.fillInput(this.emailInput, email);
     await this.fillInput(this.passwordInput, password);
     await this.fillInput(this.confirmPasswordInput, confirmPassword);
@@ -75,9 +78,10 @@ export class AuthPage extends BasePage {
 
   async verifyRegistrationFormVisible(): Promise<boolean> {
     const nameVisible = await this.verifyElementVisible(this.nameInput);
+    const lastNameVisible = await this.verifyElementVisible(this.lastNameInput);
     const emailVisible = await this.verifyElementVisible(this.emailInput);
     const passwordVisible = await this.verifyElementVisible(this.passwordInput);
     const confirmVisible = await this.verifyElementVisible(this.confirmPasswordInput);
-    return nameVisible && emailVisible && passwordVisible && confirmVisible;
+    return nameVisible && lastNameVisible && emailVisible && passwordVisible && confirmVisible;
   }
 }

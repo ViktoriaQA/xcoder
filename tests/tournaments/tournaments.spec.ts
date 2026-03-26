@@ -13,7 +13,7 @@ test.describe('Tournaments', () => {
 
   test('@UI should display tournaments page correctly', async ({ page }) => {
     await tournamentsPage.navigateToTournaments();
-    await tournamentsPage.waitForPageLoad();
+    await tournamentsPage.waitForTournamentsToLoad();
     
     expect(await tournamentsPage.verifyTournamentsListVisible()).toBe(true);
   });
@@ -21,6 +21,7 @@ test.describe('Tournaments', () => {
   test('@UI should navigate to tournaments from home', async ({ page }) => {
     await homePage.navigateToHome();
     await homePage.navigateToTournaments();
+    await tournamentsPage.waitForTournamentsToLoad();
     
     expect(page.url()).toContain('/tournaments');
     expect(await tournamentsPage.verifyTournamentsListVisible()).toBe(true);
@@ -90,18 +91,35 @@ test.describe('Tournaments', () => {
     if (tournamentCount > 0) {
       await tournamentsPage.clickFirstTournament();
       await authenticatedPage.waitForLoadState('networkidle');
+      // Wait a bit more for the page to fully stabilize
+      await authenticatedPage.waitForTimeout(1000);
       
       expect(authenticatedPage.url()).toContain('/tournaments/');
       
       const registerButton = authenticatedPage.locator('[data-testid="register-btn"]');
       if (await registerButton.isVisible()) {
-        await registerButton.click();
-        await authenticatedPage.waitForTimeout(2000);
+        // Retry clicking the register button if it's unstable
+        let clickSucceeded = false;
+        for (let i = 0; i < 3; i++) {
+          try {
+            await registerButton.waitFor({ state: 'attached', timeout: 3000 });
+            await registerButton.click({ force: true });
+            clickSucceeded = true;
+            break;
+          } catch (error) {
+            if (i === 2) throw error;
+            await authenticatedPage.waitForTimeout(1000);
+          }
+        }
         
-        const successMessage = authenticatedPage.locator('[data-testid="success-message"]');
-        if (await successMessage.isVisible()) {
-          const message = await successMessage.textContent();
-          expect(message).toContain('зареєстрували');
+        if (clickSucceeded) {
+          await authenticatedPage.waitForTimeout(2000);
+          
+          const successMessage = authenticatedPage.locator('[data-testid="success-message"]');
+          if (await successMessage.isVisible()) {
+            const message = await successMessage.textContent();
+            expect(message).toContain('зареєстрували');
+          }
         }
       }
     }

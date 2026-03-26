@@ -30,6 +30,8 @@ export const usePageTitle = () => {
   useEffect(() => {
     const currentPath = location.pathname;
     
+    console.log('🔍 usePageTitle: Path changed to:', currentPath);
+    
     // Handle dynamic routes
     let title = routeTitles[currentPath];
     
@@ -48,6 +50,66 @@ export const usePageTitle = () => {
       title = 'Xcode';
     }
     
-    document.title = title;
+    console.log('🎯 usePageTitle: Setting title to:', title);
+    
+    // Function to force update title
+    const updateTitle = () => {
+      const currentTitle = document.title;
+      if (currentTitle !== title) {
+        console.log('🔄 usePageTitle: Changing title from', currentTitle, 'to', title);
+        document.title = title;
+      } else {
+        console.log('✅ usePageTitle: Title already correct:', title);
+      }
+    };
+    
+    // Set title immediately
+    updateTitle();
+    
+    // Set title after various delays
+    const timeout1 = setTimeout(updateTitle, 50);
+    const timeout2 = setTimeout(updateTitle, 200);
+    const timeout3 = setTimeout(updateTitle, 500);
+    
+    // Use MutationObserver to detect and fix title changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList' && document.title !== title) {
+          console.log('🚨 usePageTitle: Title changed by external source, fixing...');
+          updateTitle();
+        }
+      });
+    });
+    
+    // Observe the title element
+    const titleElement = document.querySelector('title');
+    if (titleElement) {
+      observer.observe(titleElement, { childList: true, characterData: true, subtree: true });
+    }
+    
+    // Also check periodically for first few seconds
+    const interval = setInterval(() => {
+      updateTitle();
+    }, 100);
+    
+    // Clear all timers and observer after 3 seconds
+    const clearAll = setTimeout(() => {
+      clearInterval(interval);
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+      clearTimeout(clearAll);
+      observer.disconnect();
+      console.log('🛑 usePageTitle: Cleanup completed');
+    }, 3000);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+      clearTimeout(clearAll);
+      clearInterval(interval);
+      observer.disconnect();
+    };
   }, [location.pathname]);
 };

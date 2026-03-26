@@ -40,8 +40,12 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 
 const queryClient = new QueryClient();
 
-const App = () => {
+const PageTitleManager = () => {
   usePageTitle();
+  return null;
+};
+
+const App = () => {
   
   useEffect(() => {
     // Initialize vConsole based on environment variable and mobile device detection
@@ -68,6 +72,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <PageTitleManager />
             <AuthProvider>
               <Routes>
               <Route path="/" element={<Home />} />

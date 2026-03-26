@@ -244,7 +244,7 @@ const ContractOffer: React.FC = () => {
         heightLeft -= pageHeight;
       }
 
-      pdf.save('договір_оферти_olimpx.pdf');
+      pdf.save('договір_оферти_xcode.pdf');
       
       // Store today's date to prevent re-download
       localStorage.setItem('pdf_download_date', today);

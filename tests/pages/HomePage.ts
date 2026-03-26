@@ -14,8 +14,8 @@ export class HomePage extends BasePage {
     this.getStartedButton = page.locator('[data-testid="get-started-btn"], button:has-text("Get Started"), button:has-text("Почати")');
     this.tournamentsLink = page.locator('[data-testid="tournaments-link"], a:has-text("Tournaments"), a:has-text("Турніри")');
     this.tasksLink = page.locator('[data-testid="tasks-link"], a:has-text("Tasks"), a:has-text("Завдання"), a[href*="tasks"]');
-    this.loginButton = page.locator('[data-testid="login-btn"], button:has-text("Login"), button:has-text("Увійти")');
-    this.registerButton = page.locator('[data-testid="register-btn"], button:has-text("Register"), button:has-text("Реєстрація")');
+    this.loginButton = page.locator('[data-testid="login-btn"]').first();
+    this.registerButton = page.locator('[data-testid="register-btn"]').first();
     this.heroSection = page.locator('[data-testid="hero-section"], .hero, section:has(h1)');
   }
 

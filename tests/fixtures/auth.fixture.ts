@@ -47,7 +47,7 @@ export const test = base.extend<{
     });
 
     // Navigate to the domain first to set localStorage
-    await page.goto('http://localhost:5173');
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173');
     await page.waitForLoadState('networkidle');
     
     // Set localStorage using evaluate
@@ -122,7 +122,7 @@ export const test = base.extend<{
     });
 
     // Navigate to the domain first to set localStorage
-    await page.goto('http://localhost:5173');
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173');
     await page.waitForLoadState('networkidle');
     
     // Set localStorage using evaluate

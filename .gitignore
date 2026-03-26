@@ -5,10 +5,9 @@ build/
 .env.local
 .env.development.local
 .DS_Store
-*.log       
+test-results/
+test-results/**
+playwright-report/
 
- backend/.env
- frontend/.env
-
- playwright-report/
- test-results/
+# Logs
+*.log

@@ -64,19 +64,57 @@ export class TournamentsPage extends BasePage {
   }
 
   async verifyTournamentsListVisible(): Promise<boolean> {
-    return await this.verifyElementVisible(this.tournamentsList);
+    // Wait for loading to complete
+    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForTimeout(1000);
+    
+    // Check if the tournaments list is visible
+    const isVisible = await this.verifyElementVisible(this.tournamentsList);
+    
+    // Also check if it's not in a loading state
+    const loadingElement = this.page.locator('[data-testid="loading"], .loading, [class*="loading"]');
+    const isLoading = await loadingElement.isVisible().catch(() => false);
+    
+    // If list container is not visible, check if we have tournament cards as fallback
+    if (!isVisible) {
+      const cardCount = await this.tournamentCard.count();
+      return cardCount > 0 && !isLoading;
+    }
+    
+    return isVisible && !isLoading;
   }
 
   async verifyCreateButtonVisible(): Promise<boolean> {
+    // Wait a bit for the button to potentially render
+    await this.page.waitForTimeout(1000);
     return await this.verifyElementVisible(this.createTournamentButton);
   }
 
   async verifyTournamentCardVisible(): Promise<boolean> {
-    return await this.verifyElementVisible(this.tournamentCard);
+    return await this.verifyElementVisible(this.tournamentCard.first());
   }
 
   async waitForTournamentsToLoad(): Promise<void> {
-    await this.waitForElement(this.tournamentsList, 10000);
+    // First wait for the tournaments list container
+    try {
+      await this.waitForElement(this.tournamentsList, 10000);
+    } catch (error) {
+      // If tournaments list is not visible, check if page has loaded content
+      await this.page.waitForLoadState('networkidle');
+      await this.page.waitForTimeout(2000);
+      
+      // Check if we have tournament cards even if list container is not visible
+      const cardCount = await this.tournamentCard.count();
+      if (cardCount === 0) {
+        throw error; // Re-throw original error if no cards found
+      }
+      return; // Exit early if we found cards
+    }
+    
+    // Then wait for loading to complete (check if loading state is gone)
+    await this.page.waitForLoadState('networkidle');
+    // Wait a bit for the tournaments to render
+    await this.page.waitForTimeout(1000);
   }
 
   async clickFirstTournament(): Promise<void> {
