@@ -1,7 +1,7 @@
 # Piston API Integration Documentation
 
 ## Overview
-This document describes the integration of Piston API for code execution functionality in the OlimpX application.
+This document describes the integration of Piston API for code execution functionality in the Xcode application.
 
 ## Architecture
 

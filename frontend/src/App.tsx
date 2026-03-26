@@ -36,10 +36,13 @@ import '@/i18n';
 import { isMobileDevice } from '@/utils/deviceDetection';
 import { useEffect } from 'react';
 import VConsole from 'vconsole';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  usePageTitle();
+  
   useEffect(() => {
     // Initialize vConsole based on environment variable and mobile device detection
     const enableVConsole = import.meta.env.VITE_ENABLE_VCONSOLE === 'true';

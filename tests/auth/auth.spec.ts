@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/auth.fixture';
 import { AuthPage } from '../pages/AuthPage';
 import { HomePage } from '../pages/HomePage';
 
-test.describe('@E2E Authentication', () => {
+test.describe('Authentication', () => {
   let authPage: AuthPage;
   let homePage: HomePage;
 

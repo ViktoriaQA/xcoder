@@ -9,3 +9,6 @@ build/
 
  backend/.env
  frontend/.env
+
+ playwright-report/
+ test-results/

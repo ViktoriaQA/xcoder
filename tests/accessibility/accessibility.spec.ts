@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('@UI @E2E Accessibility', () => {
+test.describe('Accessibility', () => {
   test('@UI should have proper page titles', async ({ page }) => {
     const routes = [
-      { path: '/', expectedTitle: 'OlimpX' },
+      { path: '/', expectedTitle: 'Xcode' },
       { path: '/auth', expectedTitle: 'Auth' },
       { path: '/tournaments', expectedTitle: 'Tournaments' },
       { path: '/tasks', expectedTitle: 'Tasks' }
@@ -127,7 +127,7 @@ test.describe('@UI @E2E Accessibility', () => {
         'button', 'link', 'navigation', 'main', 'complementary', 
         'contentinfo', 'banner', 'search', 'dialog', 'alert', 
         'status', 'tabpanel', 'tablist', 'tab', 'checkbox', 
-        'radio', 'textbox', 'combobox', 'listbox', 'option'
+        'radio', 'textbox', 'combobox', 'listbox', 'option', 'region'
       ];
       
       expect(validRoles).toContain(role);
@@ -141,6 +141,18 @@ test.describe('@UI @E2E Accessibility', () => {
     const textElements = await page.locator('p, h1, h2, h3, h4, h5, h6, span, a, button').all();
     
     for (const element of textElements) {
+      // Skip sr-only elements as they are meant to be visually hidden
+      const srOnly = await element.evaluate(el => {
+        return el.classList.contains('sr-only') || 
+               window.getComputedStyle(el).position === 'absolute' && 
+               (window.getComputedStyle(el).clip === 'rect(0px, 0px, 0px, 0px)' ||
+                window.getComputedStyle(el).clipPath === 'inset(50%)');
+      });
+      
+      if (srOnly) {
+        continue;
+      }
+      
       const styles = await element.evaluate(el => {
         const computed = window.getComputedStyle(el);
         return {

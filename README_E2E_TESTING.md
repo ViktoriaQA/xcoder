@@ -1,6 +1,6 @@
 # E2E Testing with Playwright
 
-This document describes the E2E testing setup for the OlimpX project using Playwright.
+This document describes the E2E testing setup for the Xcode project using Playwright.
 
 ## 📋 Table of Contents
 
