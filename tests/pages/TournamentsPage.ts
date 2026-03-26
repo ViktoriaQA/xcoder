@@ -66,9 +66,8 @@ export class TournamentsPage extends BasePage {
   async verifyTournamentsListVisible(): Promise<boolean> {
     // Wait for loading to complete
     await this.page.waitForLoadState('networkidle');
-    await this.page.waitForTimeout(1000);
     
-    // Check if the tournaments list container is attached to DOM
+    // Check if tournaments list container is attached to DOM
     const listContainer = this.page.locator('[data-testid="tournaments-list"]');
     const isAttached = await listContainer.count() > 0;
     
@@ -79,13 +78,12 @@ export class TournamentsPage extends BasePage {
     // Check if it's visible
     const isVisible = await this.verifyElementVisible(this.tournamentsList);
     
-    // If not visible, check if we have tournament cards (which might mean the container is hidden but content exists)
+    // If not visible, check if we have tournament cards (which might mean container is hidden but content exists)
     if (!isVisible) {
       const cardCount = await this.tournamentCard.count();
       if (cardCount > 0) {
         return true; // Cards exist even if container is hidden
       }
-      
       // Check if we have empty state message (valid state)
       const emptyState = this.page.locator('text=/Немає доступних турнірів|No tournaments available/');
       const hasEmptyState = await emptyState.isVisible().catch(() => false);
@@ -98,8 +96,6 @@ export class TournamentsPage extends BasePage {
   }
 
   async verifyCreateButtonVisible(): Promise<boolean> {
-    // Wait a bit for the button to potentially render
-    await this.page.waitForTimeout(1000);
     return await this.verifyElementVisible(this.createTournamentButton);
   }
 
