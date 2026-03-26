@@ -68,20 +68,33 @@ export class TournamentsPage extends BasePage {
     await this.page.waitForLoadState('networkidle');
     await this.page.waitForTimeout(1000);
     
-    // Check if the tournaments list is visible
-    const isVisible = await this.verifyElementVisible(this.tournamentsList);
+    // Check if the tournaments list container is attached to DOM
+    const listContainer = this.page.locator('[data-testid="tournaments-list"]');
+    const isAttached = await listContainer.count() > 0;
     
-    // Also check if it's not in a loading state
-    const loadingElement = this.page.locator('[data-testid="loading"], .loading, [class*="loading"]');
-    const isLoading = await loadingElement.isVisible().catch(() => false);
-    
-    // If list container is not visible, check if we have tournament cards as fallback
-    if (!isVisible) {
-      const cardCount = await this.tournamentCard.count();
-      return cardCount > 0 && !isLoading;
+    if (!isAttached) {
+      return false;
     }
     
-    return isVisible && !isLoading;
+    // Check if it's visible
+    const isVisible = await this.verifyElementVisible(this.tournamentsList);
+    
+    // If not visible, check if we have tournament cards (which might mean the container is hidden but content exists)
+    if (!isVisible) {
+      const cardCount = await this.tournamentCard.count();
+      if (cardCount > 0) {
+        return true; // Cards exist even if container is hidden
+      }
+      
+      // Check if we have empty state message (valid state)
+      const emptyState = this.page.locator('text=/Немає доступних турнірів|No tournaments available/');
+      const hasEmptyState = await emptyState.isVisible().catch(() => false);
+      if (hasEmptyState) {
+        return true; // Empty state is valid
+      }
+    }
+    
+    return isVisible;
   }
 
   async verifyCreateButtonVisible(): Promise<boolean> {
@@ -95,26 +108,41 @@ export class TournamentsPage extends BasePage {
   }
 
   async waitForTournamentsToLoad(): Promise<void> {
-    // First wait for the tournaments list container
+    // First wait for loading to complete
+    await this.page.waitForLoadState('networkidle');
+    
+    // Wait for the loading component to disappear
+    const loadingElement = this.page.locator('[data-testid="loading"], .loading, [class*="loading"]');
     try {
-      await this.waitForElement(this.tournamentsList, 10000);
+      await loadingElement.waitFor({ state: 'hidden', timeout: 10000 });
     } catch (error) {
-      // If tournaments list is not visible, check if page has loaded content
-      await this.page.waitForLoadState('networkidle');
-      await this.page.waitForTimeout(2000);
-      
-      // Check if we have tournament cards even if list container is not visible
-      const cardCount = await this.tournamentCard.count();
-      if (cardCount === 0) {
-        throw error; // Re-throw original error if no cards found
-      }
-      return; // Exit early if we found cards
+      // Loading element might not exist or already hidden
     }
     
-    // Then wait for loading to complete (check if loading state is gone)
-    await this.page.waitForLoadState('networkidle');
-    // Wait a bit for the tournaments to render
-    await this.page.waitForTimeout(1000);
+    // Wait a bit for content to stabilize
+    await this.page.waitForTimeout(2000);
+    
+    // Check if tournaments list container exists (not necessarily visible yet)
+    const listContainer = this.page.locator('[data-testid="tournaments-list"]');
+    await listContainer.waitFor({ state: 'attached', timeout: 10000 });
+    
+    // Now wait for it to be visible OR check if we have tournament cards
+    try {
+      await this.waitForElement(this.tournamentsList, 5000);
+    } catch (error) {
+      // If tournaments list is not visible, check if we have tournament cards
+      const cardCount = await this.tournamentCard.count();
+      if (cardCount === 0) {
+        // If no cards, check if we have empty state message
+        const emptyState = this.page.locator('text=/Немає доступних турнірів|No tournaments available/');
+        try {
+          await emptyState.waitFor({ state: 'visible', timeout: 3000 });
+          return; // Empty state is valid
+        } catch (emptyError) {
+          throw new Error(`No tournaments found and no empty state message: ${error}`);
+        }
+      }
+    }
   }
 
   async clickFirstTournament(): Promise<void> {

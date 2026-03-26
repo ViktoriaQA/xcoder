@@ -41,6 +41,14 @@ export class BasePage {
     await locator.waitFor({ state: 'visible', timeout });
   }
 
+  async waitForElementAttached(locator: Locator, timeout: number = 5000): Promise<void> {
+    await locator.waitFor({ state: 'attached', timeout });
+  }
+
+  async waitForElementHidden(locator: Locator, timeout: number = 5000): Promise<void> {
+    await locator.waitFor({ state: 'hidden', timeout });
+  }
+
   async verifyTextContent(locator: Locator, expectedText: string): Promise<boolean> {
     const text = await locator.textContent();
     return text?.includes(expectedText) || false;
