@@ -8,8 +8,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 jobs:
   e2e-tests:
@@ -85,7 +83,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: playwright-report
+        name: playwright-report-${{ github.run_number }}
         path: playwright-report/
         retention-days: 30
     
@@ -93,7 +91,7 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: playwright-screenshots
+        name: playwright-screenshots-${{ github.run_number }}
         path: test-results/screenshots/
         retention-days: 30
     
@@ -101,15 +99,21 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: playwright-videos
+        name: playwright-videos-${{ github.run_number }}
         path: test-results/videos/
         retention-days: 30
     
-    - name: Publish Test Report
+    - name: Test Summary
       if: always()
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./playwright-report
-        destination_dir: test-reports/${{ github.run_number }}
-        keep_files: true
+      run: |
+        echo "# 🧪 E2E Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "## 📊 Test Report Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- 📄 [HTML Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 📸 [Screenshots](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎥 [Videos](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## 📋 How to View Reports" >> $GITHUB_STEP_SUMMARY
+        echo "1. Go to **Actions** tab" >> $GITHUB_STEP_SUMMARY
+        echo "2. Click on the workflow run" >> $GITHUB_STEP_SUMMARY
+        echo "3. Download artifacts from the bottom" >> $GITHUB_STEP_SUMMARY
+        echo "4. Extract and open \`index.html\` in browser" >> $GITHUB_STEP_SUMMARY
