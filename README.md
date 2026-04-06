@@ -1,4 +1,4 @@
-# olimpX
+# xcode
 
 **CodeArena** - a comprehensive programming tournament platform with full-featured task and tournament management system.
 
@@ -37,7 +37,7 @@
 ## 📁 Project Structure
 
 ```
-olimpX/
+xcode/
 ├── frontend/          # React application
 │   ├── src/
 │   │   ├── components/  # UI components
