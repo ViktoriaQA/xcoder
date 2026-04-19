@@ -159,7 +159,7 @@ npm run test:e2e:prod
 
 **Test Environments:**
 - **Staging**: https://olimpxx.pp.ua
-- **Production**: https://xcode24.com
+- **Production**:
 
 **Pre-push Checks:**
 - Automatic smoke tests run before pushing to stage branch
@@ -190,7 +190,7 @@ npm run test:e2e:prod
 
 ## 👨‍💻 Authors
 
-- **Victoria Frantsukh** - Project lead & full-stack developer
+- **Victoriia Frantsukh** - Project lead & full-stack developer
 - **Contributors** - Open source community
 
 
