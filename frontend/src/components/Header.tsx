@@ -143,6 +143,7 @@ export function Header({
               <Button 
                 variant="ghost" 
                 size="sm" 
+                data-testid="tournaments-link"
                 className="font-mono text-xs h-8 px-3 hover:bg-primary/5 text-muted-foreground hover:text-primary"
                 onClick={() => navigate("/tournaments")}
               >
@@ -150,6 +151,15 @@ export function Header({
                 <span className="hidden md:inline">{t('navigation.tournaments')}</span>
               </Button>
             )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              data-testid="tasks-link"
+              className="font-mono text-xs h-8 px-3 hover:bg-primary/5 text-muted-foreground hover:text-primary"
+              onClick={() => navigate("/tasks")}
+            >
+              <span className="hidden md:inline">{t('navigation.tasks')}</span>
+            </Button>
             {showMyTournamentsButton && (
               <Button 
                 variant="ghost" 
@@ -165,8 +175,9 @@ export function Header({
               <Button 
                 variant="outline" 
                 size="sm" 
+                data-testid="login-btn"
                 className="font-mono text-xs h-8 px-3 border-primary/20 hover:bg-primary/5 hover:text-green-500"
-                onClick={() => setShowEmailForm(true)}
+                onClick={() => navigate("/auth")}
               >
                 <LogIn className="h-4 w-4" />
                 {t('auth.login')}
@@ -176,14 +187,16 @@ export function Header({
                 <Button 
                   variant="outline" 
                   size="sm" 
+                  data-testid="login-btn"
                   className="font-mono text-xs h-8 px-3 border-primary/20 hover:bg-primary/5 hover:text-green-500"
-                  onClick={() => setShowEmailForm(true)}
+                  onClick={() => navigate("/auth")}
                 >
                   <LogIn className="h-4 w-4 mr-1" />
                   {t('auth.login')}
                 </Button>
                 <Button 
                   size="lg" 
+                  data-testid="register-btn"
                   className="font-mono text-xs h-8 px-3"
                   onClick={() => setShowRegisterSheet(true)}
                 >

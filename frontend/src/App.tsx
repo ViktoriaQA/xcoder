@@ -36,10 +36,17 @@ import '@/i18n';
 import { isMobileDevice } from '@/utils/deviceDetection';
 import { useEffect } from 'react';
 import VConsole from 'vconsole';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 const queryClient = new QueryClient();
 
+const PageTitleManager = () => {
+  usePageTitle();
+  return null;
+};
+
 const App = () => {
+  
   useEffect(() => {
     // Initialize vConsole based on environment variable and mobile device detection
     const enableVConsole = import.meta.env.VITE_ENABLE_VCONSOLE === 'true';
@@ -65,6 +72,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <PageTitleManager />
             <AuthProvider>
               <Routes>
               <Route path="/" element={<Home />} />

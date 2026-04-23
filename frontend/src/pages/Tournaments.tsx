@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Loading } from "@/components/ui/loading";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Terminal, Trophy, Users, Clock, Calendar, ArrowRight, Gamepad2, ArrowLeft, Plus, Search, Filter } from "lucide-react";
 import { AuthFab } from "@/components/AuthFab";
 import { RegistrationSheet } from "@/components/RegistrationSheet";
 import { Header } from "@/components/Header";
@@ -33,12 +35,15 @@ const Tournaments = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { loginWithGoogle, register } = useAuth();
+  const { loginWithGoogle, register, user } = useAuth();
   const { toast } = useToast();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [filteredTournaments, setFilteredTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRegistrationSheet, setShowRegistrationSheet] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('available');
 
   useEffect(() => {
     const fetchPublicTournaments = async () => {
@@ -85,10 +90,12 @@ const Tournaments = () => {
           });
 
         setTournaments(transformedTournaments);
+        setFilteredTournaments(transformedTournaments);
       } catch (error) {
         console.error('Error fetching public tournaments:', error);
         // Show empty state when API fails
         setTournaments([]);
+        setFilteredTournaments([]);
       } finally {
         setLoading(false);
       }
@@ -96,6 +103,19 @@ const Tournaments = () => {
 
     fetchPublicTournaments();
   }, []);
+
+  // Search effect
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredTournaments(tournaments);
+    } else {
+      const filtered = tournaments.filter(tournament => 
+        tournament.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tournament.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredTournaments(filtered);
+    }
+  }, [searchQuery, tournaments]);
 
   const getStatusColor = (status: Tournament["status"]) => {
     switch (status) {
@@ -207,10 +227,44 @@ const Tournaments = () => {
               <h1 className="text-3xl font-bold font-mono text-primary neon-text">
                 {t('tournaments.title')}
               </h1>
+              {(user?.role === 'admin' || user?.role === 'trainer') && (
+                <div className="absolute right-0">
+                  <Button 
+                    className="font-mono text-sm gap-2 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 hover:text-primary/90 hover:border-primary/30 transition-all"
+                    onClick={() => navigate("/admin/tournaments")}
+                    data-testid="create-tournament-btn"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Створити турнір
+                  </Button>
+                </div>
+              )}
             </div>
             <p className="text-muted-foreground font-mono max-w-2xl mx-auto">
               {t('tournaments.pageSubtitle')}
             </p>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Пошук турнірів..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 font-mono"
+                data-testid="search-input"
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              className="font-mono gap-2 border-border/60 hover:bg-primary/10"
+              data-testid="filter-btn"
+            >
+              <Filter className="h-4 w-4" />
+              Фільтр
+            </Button>
           </div>
 
           {/* Stats
@@ -241,88 +295,116 @@ const Tournaments = () => {
             </Card>
           </div> */}
 
-          {/* Tournaments Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tournaments.map((tournament) => (
-              <Card 
-                key={tournament.id} 
-                className="border-border/50 bg-card/50 backdrop-blur-sm hover:neon-border transition-all duration-300 group cursor-pointer"
-                onClick={() => {
-                  if (tournament.status === "active" || tournament.status === "upcoming") {
-                    setShowRegistrationSheet(true);
-                  }
-                }}
-              >
-                <CardHeader className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Badge className={`${getStatusColor(tournament.status)} font-mono text-xs`}>
-                      {getStatusText(tournament.status)}
-                    </Badge>
-                    <Badge className={`${getDifficultyColor(tournament.difficulty)} font-mono text-xs`}>
-                      {getDifficultyText(tournament.difficulty)}
-                    </Badge>
-                  </div>
-                  <CardTitle className="font-mono text-lg group-hover:text-primary transition-colors">
-                    {tournament.name}
-                  </CardTitle>
-                  <CardDescription className="font-mono text-sm line-clamp-2">
-                    {tournament.description}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-muted-foreground">
-                        {tournament.minParticipants && tournament.minParticipants > 0
-                          ? `${tournament.minParticipants + tournament.participants}/${tournament.maxParticipants} учасників`
-                          : `${tournament.participants}/${tournament.maxParticipants} учасників`
-                        }
-                      </span>
-                    </div>
-                    {/* <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-mono text-muted-foreground">
-                        {new Date(tournament.startDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')} - {new Date(tournament.endDate).toLocaleDateString(i18n.language === 'ua' ? 'uk-UA' : 'en-US')}
-                      </span>
-                    </div> */}
-                    {tournament.prize && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Trophy className="h-4 w-4 text-primary" />
-                        <span className="font-mono text-primary font-medium">
-                          {tournament.prize}
-                        </span>
+          {/* Tournaments Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+              <TabsTrigger value="available" className="font-mono" data-testid="available-tournaments-tab">
+                Доступні турніри
+              </TabsTrigger>
+              <TabsTrigger value="my" className="font-mono" data-testid="my-tournaments-tab">
+                Мої турніри
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="available" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="tournaments-list">
+                {filteredTournaments.map((tournament) => (
+                  <Card 
+                    key={tournament.id} 
+                    className="border-border/50 bg-card/50 backdrop-blur-sm hover:neon-border transition-all duration-300 group cursor-pointer"
+                    data-testid="tournament-card"
+                    onClick={() => {
+                      // Navigate to tournament detail page
+                      navigate(`/tournaments/${tournament.id}`);
+                    }}
+                  >
+                    <CardHeader className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Badge className={`${getStatusColor(tournament.status)} font-mono text-xs`}>
+                          {getStatusText(tournament.status)}
+                        </Badge>
+                        <Badge className={`${getDifficultyColor(tournament.difficulty)} font-mono text-xs`}>
+                          {getDifficultyText(tournament.difficulty)}
+                        </Badge>
                       </div>
-                    )}
-                  </div>
+                      <CardTitle className="font-mono text-lg group-hover:text-primary transition-colors" data-testid="tournament-title">
+                        {tournament.name}
+                      </CardTitle>
+                      <CardDescription className="font-mono text-sm line-clamp-2" data-testid="tournament-description">
+                        {tournament.description}
+                      </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono text-muted-foreground">
+                            {tournament.minParticipants && tournament.minParticipants > 0
+                              ? `${tournament.minParticipants + tournament.participants}/${tournament.maxParticipants} учасників`
+                              : `${tournament.participants}/${tournament.maxParticipants} учасників`
+                            }
+                          </span>
+                        </div>
+                        {tournament.prize && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Trophy className="h-4 w-4 text-primary" />
+                            <span className="font-mono text-primary font-medium">
+                              {tournament.prize}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${((tournament.minParticipants || 0) + tournament.participants) / tournament.maxParticipants * 100}%` 
-                      }}
-                    />
-                  </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ 
+                            width: `${((tournament.minParticipants || 0) + tournament.participants) / tournament.maxParticipants * 100}%` 
+                          }}
+                        />
+                      </div>
 
-                  {(tournament.status === "active" || tournament.status === "upcoming") && (
-                    <Button 
-                      className="w-full font-mono text-sm group-hover:bg-primary/90 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowRegistrationSheet(true);
-                      }}
-                    >
-                      <Gamepad2 className="h-4 w-4 mr-2" />
-                      {tournament.status === "active" ? t('tournaments.join') : t('tournaments.register')}
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      {(tournament.status === "active" || tournament.status === "upcoming") && (
+                        <Button 
+                          className="w-full font-mono text-sm group-hover:bg-primary/90 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Navigate to tournament detail page
+                            navigate(`/tournaments/${tournament.id}`);
+                          }}
+                        >
+                          <Gamepad2 className="h-4 w-4 mr-2" />
+                          {tournament.status === "active" ? t('tournaments.viewDetails', 'Переглянути') : t('tournaments.viewDetails', 'Переглянути')}
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {filteredTournaments.length === 0 && (
+                <div className="text-center py-12">
+                  <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-xl text-muted-foreground font-mono">Немає доступних турнірів</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="my" className="space-y-6">
+              <div className="text-center py-12">
+                <Trophy className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-mono font-semibold mb-2">Увійдіть, щоб побачити ваші турніри</h3>
+                <p className="text-sm text-muted-foreground font-mono mb-4">
+                  Після реєстрації ви зможете відстежувати свої турніри
+                </p>
+                <Button onClick={() => navigate("/auth")} className="font-mono">
+                  Увійти / Зареєструватися
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Call to Action */}
           <div className="text-center space-y-4 pt-8">

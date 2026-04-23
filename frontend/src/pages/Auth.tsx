@@ -24,10 +24,13 @@ const Auth = () => {
   const [countryCode, setCountryCode] = useState("+380");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [usePhone, setUsePhone] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const isMobile = useIsMobile();
 
   const validateEmail = (email: string) => {
@@ -46,55 +49,47 @@ const Auth = () => {
     e.preventDefault();
     
     // Validation
+    setErrorMessage("");
+    setSuccessMessage("");
+    
+    const errors = [];
+    
     if (usePhone ? !phone : !email) {
-      toast({
-        title: "Error",
-        description: `Please fill in ${usePhone ? 'phone number' : 'email'}`,
-        variant: "destructive",
-      });
-      return;
+      errors.push(`Please fill in ${usePhone ? 'phone number' : 'email'}`);
+    } else if (!usePhone && email && !validateEmail(email)) {
+      errors.push("Please enter a valid email address");
     }
 
     if (!isLogin && (!firstName || !lastName)) {
-      toast({
-        title: "Error",
-        description: "Please fill in first name and last name",
-        variant: "destructive",
-      });
-      return;
+      errors.push("Please fill in first name and last name");
     }
 
     if (!password) {
-      toast({
-        title: "Error",
-        description: "Please fill in password",
-        variant: "destructive",
-      });
-      return;
+      errors.push("Please fill in password");
+    }
+
+    if (password.length < 6) {
+      errors.push("password must be at least 6 characters");
     }
 
     if (!isLogin && !validatePassword(password)) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 8 characters with uppercase, lowercase, and number",
-        variant: "destructive",
-      });
-      return;
+      errors.push("password must be at least 8 characters with uppercase, lowercase, and number");
     }
 
-    if (usePhone && !validatePhone(phone)) {
-      toast({
-        title: "Error",
-        description: "Please enter a valid phone number",
-        variant: "destructive",
-      });
-      return;
+    if (!isLogin && password !== confirmPassword) {
+      errors.push("passwords do not match");
     }
 
-    if (!usePhone && !validateEmail(email)) {
+    if (usePhone && phone && !validatePhone(phone)) {
+      errors.push("Please enter a valid phone number");
+    }
+
+    if (errors.length > 0) {
+      const errorMsg = errors.join(". ");
+      setErrorMessage(errorMsg);
       toast({
         title: "Error",
-        description: "Please enter a valid email address",
+        description: errorMsg,
         variant: "destructive",
       });
       return;
@@ -187,6 +182,7 @@ const Auth = () => {
             <div className="flex items-center justify-between p-0.5 bg-muted/30 rounded-lg border border-border h-9">
               <button
                 type="button"
+                data-testid="login-tab"
                 onClick={() => setIsLogin(true)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
@@ -195,6 +191,7 @@ const Auth = () => {
               </button>
               <button
                 type="button"
+                data-testid="register-tab"
                 onClick={() => setIsLogin(false)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-1 px-3 rounded-md text-sm transition-colors ${!isLogin ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
@@ -204,6 +201,13 @@ const Auth = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Error and Success Messages */}
+              <div data-testid="error-message" className={`text-red-500 text-sm ${!errorMessage ? 'hidden' : ''}`}>
+                {errorMessage}
+              </div>
+              <div data-testid="success-message" className={`text-green-500 text-sm ${!successMessage ? 'hidden' : ''}`}>
+                {successMessage}
+              </div>
               {/* Email/Phone toggle */}
               {/* <div className="space-y-2">
                 <Label className="block text-sm font-mono text-muted-foreground mb-2">
@@ -240,6 +244,7 @@ const Auth = () => {
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="phone"
+                        name="phone"
                         type="tel"
                         placeholder="+380123456789"
                         className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -253,6 +258,7 @@ const Auth = () => {
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
+                        name="email"
                         type="email"
                         placeholder="your@email.com"
                         className="pl-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -275,6 +281,7 @@ const Auth = () => {
                       </Label>
                       <Input
                         id="firstName"
+                        name="firstName"
                         type="text"
                         placeholder="John"
                         className="font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -289,6 +296,7 @@ const Auth = () => {
                       </Label>
                       <Input
                         id="lastName"
+                        name="lastName"
                         type="text"
                         placeholder="Doe"
                         className="font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -296,6 +304,33 @@ const Auth = () => {
                         onChange={(e) => setLastName(e.target.value)}
                         disabled={isLoading}
                       />
+                    </div>
+                  </div>
+                  
+                  {/* Confirm Password field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword" className="font-mono text-sm">
+                      <span className="text-primary">$</span> confirm_password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
                 </>
@@ -310,6 +345,7 @@ const Auth = () => {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     className="pl-10 pr-10 font-mono text-sm h-11 bg-card border-border text-foreground placeholder:text-muted-foreground"
@@ -330,8 +366,13 @@ const Auth = () => {
               {/* Submit button */}
               <Button
                 type="submit"
+                data-testid="login-submit-btn"
                 className="w-full h-11 font-mono text-sm mt-6"
                 disabled={isLoading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit(e as any);
+                }}
               >
                 {isLoading ? (isLogin ? 'Signing in...' : 'Registering...') : (isLogin ? 'Sign in' : 'Register')}
               </Button>
