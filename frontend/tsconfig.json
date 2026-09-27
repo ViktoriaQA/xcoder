@@ -16,7 +16,8 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
-    "baseUrl": ".",
+    /* baseUrl прибрано: застарілий (TS5101 у TS 6, видалений у TS 7).
+       "paths" без baseUrl резолвиться відносно цього tsconfig — TS 4.1+ */
     "paths": {
       "@/*": ["./src/*"]
     }

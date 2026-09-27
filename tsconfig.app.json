@@ -20,12 +20,10 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitAny": false,
-    "noFallthroughCasesInSwitch": false,
+    "noFallthroughCasesInSwitch": false
 
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    /* baseUrl і paths прибрано: застарілі (TS5101/TS5102 у TS 6+),
+       а шлях "./src/*" тут не існує — код фронтенду в ./frontend/src */
   },
   "include": ["src"]
 }
