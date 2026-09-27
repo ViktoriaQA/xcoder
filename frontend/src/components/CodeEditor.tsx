@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { TestResultsDisplay } from "./TestResultsDisplay";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./ui/resizable";
+import { cachedGetJson, cachedPostJson } from "@/utils/executionCache";
 
 /**
  * Інтерфейс для мови програмування
@@ -190,9 +191,10 @@ func main() {
   useEffect(() => {
     const loadLanguages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/languages`);
-        const data = await response.json();
-        
+        // Список мов статичний — кешуємо на клієнті, щоб не смикати бекенд
+        // при кожному відкритті редактора
+        const data = await cachedGetJson<any>(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/languages`);
+
         if (data.success) {
           setAvailableLanguages(data.data);
           // Встановити першу доступну версію для поточної мови
@@ -265,22 +267,15 @@ func main() {
     setActiveTab('output');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          language: selectedLanguage,
-          version: selectedVersion,
-          code,
-          stdin,
-          time_limit: timeLimit,
-          memory_limit: memoryLimit * 1024 * 1024, // Конвертуємо MB в байти
-        }),
+      // Кеш на клієнті: той самий код+stdin не смикає бекенд повторно
+      const data = await cachedPostJson<any>(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/execute`, {
+        language: selectedLanguage,
+        version: selectedVersion,
+        code,
+        stdin,
+        time_limit: timeLimit,
+        memory_limit: memoryLimit * 1024 * 1024, // Конвертуємо MB в байти
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setResult(data.data);
@@ -351,22 +346,16 @@ func main() {
       setTestResults(null);
       setActiveTab('tests');
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/run-tests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          language: selectedLanguage,
-          code,
-          test_cases: testCases,
-          run_only_visible: true, // RUN: тільки видимі тести
-          time_limit: timeLimit,
-          memory_limit: memoryLimit * 1024 * 1024,
-        }),
+      // Кеш на клієнті: повторний RUN того ж коду не створює нових записів
+      // у серверному кеші (кожен тест-кейс = окремий запис у пам'яті Node-процесу)
+      const data = await cachedPostJson<any>(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/code-execution/run-tests`, {
+        language: selectedLanguage,
+        code,
+        test_cases: testCases,
+        run_only_visible: true, // RUN: тільки видимі тести
+        time_limit: timeLimit,
+        memory_limit: memoryLimit * 1024 * 1024,
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setTestResults(data.data);

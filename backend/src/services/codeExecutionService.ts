@@ -110,6 +110,8 @@ export class CodeExecutionManager extends EventEmitter {
   private processing = false;
   private cache = new Map<string, { result: CodeExecutionResult; timestamp: number }>();
   private readonly cache_ttl = 5 * 60 * 1000; // 5 хвилин
+  /** Серверний кеш можна вимкнути (кеш переїхав на клієнт): EXECUTION_CACHE_ENABLED=false */
+  private readonly cache_enabled = process.env.EXECUTION_CACHE_ENABLED !== 'false';
   private readonly max_queue_size = 100;
   private readonly max_concurrent = 5;
   /** Максимальна кількість записів у кеші (захист від необмеженого росту RAM) */
@@ -185,15 +187,15 @@ export class CodeExecutionManager extends EventEmitter {
    * Виконати код з автоматичним перемиканням між сервісами
    */
   async executeCode(request: CodeExecutionRequest): Promise<CodeExecutionResult> {
-    // Генеруємо ключ для кешування
-    const cacheKey = this.generateCacheKey(request);
+    // Генеруємо ключ для кешування (пропускаємо хешування, якщо кеш вимкнено)
+    const cacheKey = this.cache_enabled ? this.generateCacheKey(request) : '';
 
     // Прибираємо протерміновані та зайві записи ПЕРЕД роботою з кешем.
     // Раніше TTL перевірявся лише при читанні, тому Map росла безмежно.
     this.pruneCache();
 
     // Перевіряємо кеш
-    const cached = this.cache.get(cacheKey);
+    const cached = this.cache_enabled ? this.cache.get(cacheKey) : undefined;
     if (cached && Date.now() - cached.timestamp < this.cache_ttl) {
       console.log(`📋 Cache hit for ${request.language} execution`);
       return cached.result;
@@ -370,6 +372,8 @@ export class CodeExecutionManager extends EventEmitter {
    * Додати результат у кеш з урахуванням розміру запису та ліміту кількості
    */
   private cacheResult(cacheKey: string, result: CodeExecutionResult, request: CodeExecutionRequest): void {
+    if (!this.cache_enabled) return;
+
     const approxBytes =
       request.code.length +
       (request.stdin ? request.stdin.length : 0) +
