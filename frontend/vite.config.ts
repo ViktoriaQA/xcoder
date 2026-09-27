@@ -27,17 +27,16 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     ...(mode === 'development' && {
-      // Локальний бекенд у dev-режимі слухає 3001 (8080 — це порт docker/prod-образу)
-      proxy: Object.fromEntries(
-        ['/api', '/auth', '/payment', '/swagger-docs'].map((prefix) => [
-          prefix,
-          {
-            target: 'http://localhost:3001',
-            changeOrigin: true,
-            secure: false,
-          },
-        ]),
-      ),
+      // Локальний бекенд у dev-режимі слухає 3001 (8080 — це порт docker/prod-образу).
+      // Проксіюємо ЛИШЕ /api: префікси на кшталт /auth збігаються з роутами SPA,
+      // і Vite починає віддавати навігації браузера на бекенд замість index.html.
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false,
+        },
+      },
     }),
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

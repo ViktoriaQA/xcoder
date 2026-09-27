@@ -24,13 +24,19 @@ const routeTitles: Record<string, string> = {
   '/contract': 'Contract Offer',
 };
 
+// Логи потрібні лише під час розробки: у прод-збірці import.meta.env.DEV === false,
+// тому мініфікатор вирізає ці виклики повністю і консоль користувача чиста
+const debugLog = (...args: unknown[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args);
+  }
+};
+
 export const usePageTitle = () => {
   const location = useLocation();
 
   useEffect(() => {
     const currentPath = location.pathname;
-    
-    console.log('🔍 usePageTitle: Path changed to:', currentPath);
     
     // Handle dynamic routes
     let title = routeTitles[currentPath];
@@ -50,16 +56,16 @@ export const usePageTitle = () => {
       title = 'Xcode';
     }
     
-    console.log('🎯 usePageTitle: Setting title to:', title);
+    debugLog('🔍 usePageTitle: Path changed to:', currentPath, '→ title:', title);
     
-    // Function to force update title
+    // Function to force update title.
+    // Логуємо лише реальну зміну: таймери та інтервал нижче викликають її
+    // ~34 рази на кожен перехід, тому лог про «вже правильний» title засмічував консоль
     const updateTitle = () => {
       const currentTitle = document.title;
       if (currentTitle !== title) {
-        console.log('🔄 usePageTitle: Changing title from', currentTitle, 'to', title);
+        debugLog('🔄 usePageTitle: Changing title from', currentTitle, 'to', title);
         document.title = title;
-      } else {
-        console.log('✅ usePageTitle: Title already correct:', title);
       }
     };
     
@@ -72,13 +78,11 @@ export const usePageTitle = () => {
     const timeout3 = setTimeout(updateTitle, 500);
     
     // Use MutationObserver to detect and fix title changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList' && document.title !== title) {
-          console.log('🚨 usePageTitle: Title changed by external source, fixing...');
-          updateTitle();
-        }
-      });
+    const observer = new MutationObserver(() => {
+      if (document.title !== title) {
+        debugLog('🚨 usePageTitle: Title changed by external source, fixing...');
+        updateTitle();
+      }
     });
     
     // Observe the title element
@@ -88,9 +92,8 @@ export const usePageTitle = () => {
     }
     
     // Also check periodically for first few seconds
-    const interval = setInterval(() => {
-      updateTitle();
-    }, 100);
+    // (деякі зовнішні скрипти переписують <title> із затримкою)
+    const interval = setInterval(updateTitle, 100);
     
     // Clear all timers and observer after 3 seconds
     const clearAll = setTimeout(() => {
@@ -100,7 +103,7 @@ export const usePageTitle = () => {
       clearTimeout(timeout3);
       clearTimeout(clearAll);
       observer.disconnect();
-      console.log('🛑 usePageTitle: Cleanup completed');
+      debugLog('🛑 usePageTitle: Cleanup completed');
     }, 3000);
     
     return () => {
