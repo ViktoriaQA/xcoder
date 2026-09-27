@@ -109,6 +109,12 @@ RUN echo "NODE_ENV=production" > .env
 ENV PORT=8080
 ENV NODE_ENV=production
 
+# Обмежуємо V8 heap: за замовчуванням Node дозволяє ~4 GB old space,
+# тому при ліміті контейнера 500 MB процес не має зворотного зв'язку від
+# збирача сміття і легко доходить до OOM. Явний ліміт змушує GC
+# прибирати раніше і робить пік RSS передбачуваним.
+ENV NODE_OPTIONS="--max-old-space-size=384"
+
 # Change to app user
 USER nodejs
 

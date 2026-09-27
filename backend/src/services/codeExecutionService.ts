@@ -112,6 +112,10 @@ export class CodeExecutionManager extends EventEmitter {
   private readonly cache_ttl = 5 * 60 * 1000; // 5 хвилин
   private readonly max_queue_size = 100;
   private readonly max_concurrent = 5;
+  /** Максимальна кількість записів у кеші (захист від необмеженого росту RAM) */
+  private readonly max_cache_size = 100;
+  /** Не кешуємо «важкі» результати (код + вивід > 100 KB) */
+  private readonly max_cache_entry_bytes = 100 * 1024;
   private current_requests = 0;
 
   constructor() {
@@ -183,7 +187,11 @@ export class CodeExecutionManager extends EventEmitter {
   async executeCode(request: CodeExecutionRequest): Promise<CodeExecutionResult> {
     // Генеруємо ключ для кешування
     const cacheKey = this.generateCacheKey(request);
-    
+
+    // Прибираємо протерміновані та зайві записи ПЕРЕД роботою з кешем.
+    // Раніше TTL перевірявся лише при читанні, тому Map росла безмежно.
+    this.pruneCache();
+
     // Перевіряємо кеш
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cache_ttl) {
@@ -244,9 +252,9 @@ export class CodeExecutionManager extends EventEmitter {
       const result = await this.executeWithFallback(item.request);
       result.request_time_ms = Date.now() - startTime;
 
-      // Кешуємо результат
+      // Кешуємо результат (тільки якщо він не «важкий»)
       const cacheKey = this.generateCacheKey(item.request);
-      this.cache.set(cacheKey, { result, timestamp: Date.now() });
+      this.cacheResult(cacheKey, result, item.request);
 
       item.resolve(result);
       this.emit('execution_completed', { item, result });
@@ -356,6 +364,46 @@ export class CodeExecutionManager extends EventEmitter {
         available: service.is_available
       }))
     };
+  }
+
+  /**
+   * Додати результат у кеш з урахуванням розміру запису та ліміту кількості
+   */
+  private cacheResult(cacheKey: string, result: CodeExecutionResult, request: CodeExecutionRequest): void {
+    const approxBytes =
+      request.code.length +
+      (request.stdin ? request.stdin.length : 0) +
+      (result.output.stdout ? result.output.stdout.length : 0) +
+      (result.output.stderr ? result.output.stderr.length : 0) +
+      (result.output.compile_output ? result.output.compile_output.length : 0);
+
+    if (approxBytes > this.max_cache_entry_bytes) {
+      // Результат завеликий — не тримаємо його в пам'яті
+      return;
+    }
+
+    this.cache.set(cacheKey, { result, timestamp: Date.now() });
+    this.pruneCache();
+  }
+
+  /**
+   * Видалити протерміновані записи кешу та обмежити його розмір.
+   * Map зберігає порядок вставки, тому найстаріші записи видаляються першими.
+   */
+  private pruneCache(): void {
+    const now = Date.now();
+
+    for (const [key, entry] of this.cache) {
+      if (now - entry.timestamp >= this.cache_ttl) {
+        this.cache.delete(key);
+      }
+    }
+
+    while (this.cache.size > this.max_cache_size) {
+      const oldestKey = this.cache.keys().next().value as string | undefined;
+      if (!oldestKey) break;
+      this.cache.delete(oldestKey);
+    }
   }
 
   /**
