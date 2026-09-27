@@ -27,13 +27,17 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     ...(mode === 'development' && {
-      proxy: {
-        '/api': {
-          target: 'http://localhost:8080',
-          changeOrigin: true,
-          secure: false,
-        },
-      },
+      // Локальний бекенд у dev-режимі слухає 3001 (8080 — це порт docker/prod-образу)
+      proxy: Object.fromEntries(
+        ['/api', '/auth', '/payment', '/swagger-docs'].map((prefix) => [
+          prefix,
+          {
+            target: 'http://localhost:3001',
+            changeOrigin: true,
+            secure: false,
+          },
+        ]),
+      ),
     }),
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
