@@ -16,7 +16,17 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowSyntheticDefaultImports": true,
-    "moduleResolution": "node"
+
+    /* У TS 6 типове значення "types" змінилося з "усі @types у node_modules"
+       на []. Без цього рядка globals з @types/node (process, Buffer тощо)
+       перестають бути видимими — TS2591. Явний список також прискорює збірку. */
+    "types": ["node"]
+
+    /* moduleResolution прибрано: "node" — це node10, застарілий (TS5107 у TS 6)
+       і видалений у TS 7 (TS5108). Для "module": "commonjs" резолюція береться
+       за замовчуванням — поведінка не змінюється (перевірено на TS 5.9.3 / 6.0.0-beta / 7.0.2).
+       "ignoreDeprecations": "6.0" з підказки компілятора не рятує: TS 7 усе одно
+       видає TS5108 і вимагає прибрати опцію з конфіга. */
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
